@@ -56,7 +56,7 @@ def cli(ctx: Context):
         p_view.wait()
     finally:
         p_serve.send_signal(signal.SIGINT)
-        p_view.send_signal(signal.SIGINT)
+        p_serve.wait()
 
 
 @click.option('-h', '--host')

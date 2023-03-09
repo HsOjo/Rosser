@@ -9,4 +9,7 @@ def get_free_port():
 
 
 def get_launch_argv():
-    return [sys.executable, *sys.argv]
+    if hasattr(sys, '_MEIPASS'):
+        return sys.argv[:1]
+    else:
+        return [sys.executable, *sys.argv]
