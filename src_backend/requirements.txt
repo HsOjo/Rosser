@@ -1,0 +1,5 @@
+pywebview
+flask
+simple-websocket
+flask-cors
+flask-socketio
