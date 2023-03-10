@@ -30,7 +30,9 @@ onMounted(() => {
       @toggle_menu="state.menu_visible = !state.menu_visible"
   ></Header>
   <div class="body">
+    <div class="menu">
     <Menu v-show="state.menu_visible"></Menu>
+      </div>
     <div class="content">
       <a href="https://vitejs.dev" target="_blank">
         <img src="/vite.svg" class="logo" alt="Vite logo"/>
@@ -51,6 +53,12 @@ onMounted(() => {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
   display: flex;
+}
+
+.menu {
+  width: 256px;
+  height: 100%;
+  overflow: auto;
 }
 
 .content {
