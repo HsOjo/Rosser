@@ -1,29 +1,62 @@
-<script setup lang="ts">
+<script setup>
 import HelloWorld from './components/HelloWorld.vue'
-</script>
+import Header from "./components/Header.vue";
+import Menu from "./components/Menu.vue";
 
+import {nextTick, onMounted, reactive} from "vue";
+import * as pywebview from "./utils/pywebview.js";
+
+const state = reactive({menu_visible: true})
+
+onMounted(() => {
+  nextTick(pywebview.init)
+})
+</script>
 <template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <Header
+      @toggle_menu="state.menu_visible = !state.menu_visible"
+  ></Header>
+  <div class="body">
+    <Menu v-show="state.menu_visible"></Menu>
+    <div class="content">
+      <a href="https://vitejs.dev" target="_blank">
+        <img src="/vite.svg" class="logo" alt="Vite logo"/>
+      </a>
+      <a href="https://vuejs.org/" target="_blank">
+        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo"/>
+      </a>
+      <HelloWorld msg="Vite + Vue"/>
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>
+.body {
+  height: calc(100% - 40px);
+  border: #DEDEDE solid 1px;
+  box-sizing: border-box;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  display: flex;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
