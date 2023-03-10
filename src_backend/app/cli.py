@@ -8,7 +8,8 @@ import webview
 from click import Context
 
 from . import common
-from .utils.window import EventHandler, helper
+from .utils.pywebview_api import PyWebViewAPI
+from .utils.window import EventHandler
 
 
 @click.group(invoke_without_command=True)
@@ -67,10 +68,12 @@ def view(url: str, title: str, **kwargs):
     def on_loaded(window: 'webview.Window'):
         window.evaluate_js(f'''
             localStorage.setItem('PY_CONTEXT', '{context}');
-        ''')
-        window.set_title(helper.get_title(window))
+        '''.strip())
 
-    event.register(webview.create_window(title, html=f'''
+    api = PyWebViewAPI()
+    main_window = api.window = webview.create_window(title, js_api=api, html=f'''
         <script> setInterval(() => location.href = "{url}", 500) </script>
-    '''))
+    ''', frameless=True, easy_drag=False, transparent=True, vibrancy=True)
+
+    event.register(main_window)
     webview.start(**kwargs)
