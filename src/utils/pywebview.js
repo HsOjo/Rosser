@@ -70,7 +70,9 @@ export const api = {
   },
 };
 
-export function init() {
-  if (window.pywebview)
+export function init(callback) {
+  if (window.pywebview) {
     for (let k in api) api[k] = window.pywebview.api[k]
+    callback && callback()
+  }
 }

@@ -72,8 +72,19 @@ def view(url: str, title: str, **kwargs):
 
     api = PyWebViewAPI()
     main_window = api.window = webview.create_window(title, js_api=api, html=f'''
-        <script> setInterval(() => location.href = "{url}", 500) </script>
-    ''', frameless=True, easy_drag=False, transparent=True, vibrancy=True)
+    <body style="display: flex;
+        align-items: center;
+        height: 100%;
+        color: #6D6867;
+        border: #BABBBC solid 1px;
+        margin: 0;
+        padding: 0 16px;
+        font-size: 1.25rem;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        ">
+    <p>⌛️ Now Loading...</p>
+    <script> setInterval(() => location.href = "{url}", 100)</script>
+    </body>''', width=675, height=50, frameless=True, easy_drag=False, transparent=True, vibrancy=True)
 
     event.register(main_window)
     webview.start(**kwargs)

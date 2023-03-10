@@ -3,13 +3,26 @@ import HelloWorld from './components/HelloWorld.vue'
 import Header from "./components/Header.vue";
 import Menu from "./components/Menu.vue";
 
-import {nextTick, onMounted, reactive} from "vue";
+import {onMounted, reactive} from "vue";
 import * as pywebview from "./utils/pywebview.js";
 
 const state = reactive({menu_visible: true})
 
 onMounted(() => {
-  nextTick(pywebview.init)
+  let timer = setInterval(() => {
+    pywebview.init(() => {
+      clearInterval(timer)
+      pywebview.api.get_properties().then(
+          properties => {
+            let screen_w = (properties.x + properties.width * 0.5) * 2
+            let window_w = 1280
+            let window_h = 720
+            pywebview.api.set_window_size(window_w, window_h)
+            pywebview.api.move((screen_w - window_w) * 0.5, properties.y)
+          }
+      )
+    })
+  }, 100)
 })
 </script>
 <template>
