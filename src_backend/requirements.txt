@@ -3,3 +3,5 @@ flask
 simple-websocket
 flask-cors
 flask-socketio
+flask-wtf
+wtforms_json
