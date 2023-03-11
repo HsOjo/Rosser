@@ -1,15 +1,22 @@
 if __import__('os').environ.get('GEVENT_SUPPORT'):
     __import__('gevent.monkey').monkey.patch_all()
 
-from flask import Flask
 from flask_cors import CORS
+from flask_migrate import Migrate
 from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
+from wtforms_json import init
 
-from . import common, api
-from .cli import cli
+from .application import create_app
+from .cli import create_cli
+from .libs.celery import Celery
 
-app = Flask(__name__, static_url_path='/')
-cors = CORS(app, origins=['*'])
-socket_io = SocketIO(app)
+cors = CORS()
+socket_io = SocketIO()
+db = SQLAlchemy()
+migrate = Migrate()
+celery = Celery()
+init()
 
-app.register_blueprint(api.blueprint)
+app = create_app()
+cli = create_cli()

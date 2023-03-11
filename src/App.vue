@@ -1,24 +1,28 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import Header from "./components/Header.vue";
-import Menu from "./components/Menu.vue";
+import Header from "@/components/Header.vue";
+import Menu from "@/components/Menu.vue";
 
-import {onMounted, reactive} from "vue";
-import * as pywebview from "./utils/pywebview.js";
+import {onMounted, ref} from "vue";
+import * as pywebview from "@/utils/pywebview.js";
+import store from "@/plugins/store";
+import Index from "@/components/Index.vue";
 
-const state = reactive({menu_visible: true})
+const is_loaded = ref(false)
+const menu_visible = ref(true)
 
 onMounted(() => {
   let timer = setInterval(() => {
     pywebview.init(() => {
       clearInterval(timer)
+      store.commit('loadPyContext')
       pywebview.api.get_properties().then(
           properties => {
             let screen_w = (properties.x + properties.width * 0.5) * 2
             let window_w = 1280
             let window_h = 720
-            pywebview.api.set_window_size(window_w, window_h)
+            pywebview.api.resize(window_w, window_h)
             pywebview.api.move((screen_w - window_w) * 0.5, properties.y)
+            is_loaded.value = true
           }
       )
     })
@@ -26,23 +30,36 @@ onMounted(() => {
 })
 </script>
 <template>
-  <Header
-      @toggle_menu="state.menu_visible = !state.menu_visible"
-  ></Header>
-  <div class="body">
-    <div class="menu">
-    <Menu v-show="state.menu_visible"></Menu>
-      </div>
-    <div class="content">
-      <a href="https://vitejs.dev" target="_blank">
-        <img src="/vite.svg" class="logo" alt="Vite logo"/>
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo"/>
-      </a>
-      <HelloWorld msg="Vite + Vue"/>
+  <template v-if="is_loaded">
+    <transition
+        enter-active-class="animate__animated animate__fadeInDown" appear
+        leave-active-class="animate__animated animate__fadeOutDown"
+    >
+      <Header
+          @toggle_menu="menu_visible = !menu_visible"
+      ></Header>
+    </transition>
+
+    <div class="body">
+      <transition
+          enter-active-class="animate__animated animate__fadeInLeft" appear
+          leave-active-class="animate__animated animate__fadeOutLeft"
+      >
+        <div class="menu" v-show="menu_visible">
+          <Menu></Menu>
+        </div>
+      </transition>
+
+      <transition
+          enter-active-class="animate__animated animate__zoomIn" appear
+          leave-active-class="animate__animated animate__zoomOut"
+      >
+        <div class="content parent-size">
+          <Index></Index>
+        </div>
+      </transition>
     </div>
-  </div>
+  </template>
 </template>
 
 <style scoped>
@@ -61,24 +78,13 @@ onMounted(() => {
   overflow: auto;
 }
 
-.content {
+.parent-size {
   width: 100%;
   height: 100%;
+}
+
+.content {
   overflow: auto;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+  --animate-duration: 1s;
 }
 </style>

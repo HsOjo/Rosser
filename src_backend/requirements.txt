@@ -5,3 +5,4 @@ flask-cors
 flask-socketio
 flask-wtf
 wtforms_json
+celery[gevent]

@@ -12,6 +12,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --animate-duration: 0.5s;
 }
 
 a {
@@ -24,8 +26,7 @@ a:hover {
 }
 
 body {
-  margin: 0;
-  place-items: center;
+  /*place-items: center;*/
   width: 100vw;
   height: 100vh;
   /*background: #F7F8FA;*/

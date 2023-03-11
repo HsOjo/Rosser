@@ -1,89 +1,107 @@
+<script setup lang="ts">
+import {computed, ref} from 'vue';
+import {NotificationOutlined} from '@ant-design/icons-vue';
+import axios from "@/plugins/axios";
+import lodash from 'lodash'
+import store from "@/plugins/store";
+
+const categories = ref<object[]>([]);
+const subscriptions = ref<object[]>([]);
+const subscriptionsTree = computed(() => {
+  let category_default = {id: null, title: '（未分类）'}
+  let _categories = lodash.cloneDeep(categories.value)
+  _categories.push(category_default)
+  let _categories_mapping = {}
+  let _subscriptions = lodash.cloneDeep(subscriptions.value)
+
+  _categories.map(category => {
+    _categories_mapping[category.id] = category
+    category.subscriptions = []
+  })
+
+  _subscriptions.map(subscription => {
+    let category = _categories_mapping[subscription.category_id]
+    category.subscriptions.push(subscription)
+  })
+
+  return _categories
+})
+const subscriptionsMapping = computed(() => {
+  let mapping = {}
+  subscriptions.value.map(subscription => mapping[subscription.id] = subscription)
+  return mapping
+})
+
+function getAllCategories() {
+  axios().get('/api/category/all').then(
+      resp => {
+        categories.value = resp.data
+      }
+  )
+}
+
+function getAllSubscriptions() {
+  axios().get('/api/subscription/all').then(
+      resp => {
+        subscriptions.value = resp.data
+      }
+  )
+}
+
+function handleClick({key}) {
+  store.commit('openSubscription', subscriptionsMapping.value[key])
+}
+
+getAllCategories()
+getAllSubscriptions()
+</script>
+
 <template>
   <a-menu
-      id="dddddd"
-      v-model:openKeys="openKeys"
-      v-model:selectedKeys="selectedKeys"
-      style="min-height: 100%;"
+      style="min-height: 100%; background: #F7F8FA"
       mode="inline"
       @click="handleClick"
   >
-    <a-sub-menu key="sub1" @titleClick="titleClick">
-      <template #icon>
-        <MailOutlined/>
-      </template>
-      <template #title>Navigation One</template>
-      <a-menu-item-group key="g1">
+    <a-menu-item>
+      所有订阅
+    </a-menu-item>
+    <template v-for="category in subscriptionsTree">
+      <a-sub-menu
+          :key="`category-${category.id}`"
+          v-if="category && category.subscriptions.length">
         <template #icon>
-          <QqOutlined/>
+          <NotificationOutlined/>
         </template>
-        <template #title>Item 1</template>
-        <a-menu-item key="1">Option 1</a-menu-item>
-        <a-menu-item key="2">Option 2</a-menu-item>
-      </a-menu-item-group>
-      <a-menu-item-group key="g2" title="Item 2">
-        <a-menu-item key="3">Option 3</a-menu-item>
-        <a-menu-item key="4">Option 4</a-menu-item>
-      </a-menu-item-group>
-    </a-sub-menu>
-    <a-sub-menu key="sub2" @titleClick="titleClick">
-      <template #icon>
-        <AppstoreOutlined/>
-      </template>
-      <template #title>Navigation Two</template>
-      <a-menu-item key="5">Option 5</a-menu-item>
-      <a-menu-item key="6">Option 6</a-menu-item>
-      <a-sub-menu key="sub3" title="Submenu">
-        <a-menu-item key="7">Option 7</a-menu-item>
-        <a-menu-item key="8">Option 8</a-menu-item>
+        <template #title>{{ category.title }}</template>
+        <a-menu-item
+            :key="subscription.id"
+            v-for="subscription in category.subscriptions"
+        >
+          <div class="menu-item">
+            <img :src="subscription.icon_url" class="menu-icon" alt="icon"/>
+            <span class="menu-title">{{ subscription.title }}</span>
+          </div>
+        </a-menu-item>
       </a-sub-menu>
-    </a-sub-menu>
-    <a-sub-menu key="sub4">
-      <template #icon>
-        <SettingOutlined/>
-      </template>
-      <template #title>Navigation Three</template>
-      <a-menu-item key="9">Option 9</a-menu-item>
-      <a-menu-item key="10">Option 10</a-menu-item>
-      <a-menu-item key="11">Option 11</a-menu-item>
-      <a-menu-item key="12">Option 12</a-menu-item>
-    </a-sub-menu>
+    </template>
   </a-menu>
 </template>
-<script lang="ts">
-import {defineComponent, ref, watch} from 'vue';
-import {AppstoreOutlined, MailOutlined, QqOutlined, SettingOutlined} from '@ant-design/icons-vue';
-import type {MenuProps} from 'ant-design-vue';
 
-export default defineComponent({
-  components: {
-    MailOutlined,
-    QqOutlined,
-    AppstoreOutlined,
-    SettingOutlined,
-  },
-  setup() {
-    const selectedKeys = ref<string[]>(['1']);
-    const openKeys = ref<string[]>(['sub1']);
-    const handleClick: MenuProps['onClick'] = e => {
-      console.log('click', e);
-    };
-    const titleClick = (e: Event) => {
-      console.log('titleClick', e);
-    };
-    watch(
-        () => openKeys,
-        val => {
-          console.log('openKeys', val);
-        },
-    );
-    return {
-      selectedKeys,
-      openKeys,
+<style scoped>
+.menu-icon {
+  width: 1rem;
+  height: 1rem;
+}
 
-      handleClick,
-      titleClick,
-    };
-  },
-});
-</script>
+.menu-title {
+  text-indent: 8px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
+.menu-item {
+  display: flex;
+  align-items: center;
+  font-size: small;
+}
+</style>

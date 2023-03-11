@@ -50,12 +50,6 @@ export const api = {
   set_title(title) {
   },
 
-  // 设置一个WebView窗口的大小
-  // @param width {number} 新窗口的宽度
-  // @param height {number} 新窗口的高度
-  set_window_size(width, height) {
-  },
-
   // 显示一个WebView窗口
   show() {
   },
@@ -66,6 +60,7 @@ export const api = {
 
   get_properties() {
   },
+
   interupt() {
   },
 };

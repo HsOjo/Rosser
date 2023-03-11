@@ -7,7 +7,6 @@ import webview
 class PyWebViewAPI:
     window: 'webview.Window'
 
-
     def get_properties(self):
         return {k: getattr(self, k) for k in ['x', 'y', 'width', 'height', 'on_top']}
 
@@ -18,7 +17,7 @@ class PyWebViewAPI:
         return list(set(list(super().__dir__()) + [
             'create_confirmation_dialog', 'create_file_dialog', 'destroy',
             'hide', 'minimize', 'move', 'resize', 'restore', 'set_title',
-            'set_window_size', 'show', 'toggle_fullscreen'
+            'show', 'toggle_fullscreen'
         ]))
 
     def __getattribute__(self, item):

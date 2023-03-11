@@ -1,8 +1,17 @@
-<script setup>
-import {startDrag} from "../utils/drag.js";
-import * as pywebview from "../utils/pywebview.js";
-
+<script lang="ts" setup>
+import {startDrag} from "@/utils/drag.js";
+import * as pywebview from "@/utils/pywebview.js";
+import axios from "@/plugins/axios";
 import {BellFilled, EyeFilled, LayoutFilled, ScheduleFilled, SettingFilled, UndoOutlined} from "@ant-design/icons-vue";
+import store from "@/plugins/store";
+import {computed} from "vue";
+
+const title = computed(() => {
+  let slogan = 'A simple RSS Reader'
+  let subscription = store.getters.subscription
+  slogan = (subscription && subscription.title) || slogan
+  return `Rosser - ${slogan}`
+})
 
 function toggleFullScreen() {
   pywebview.api.toggle_fullscreen()
@@ -16,6 +25,23 @@ function close() {
   pywebview.api.interupt()
 }
 
+function fetchSubscriptions() {
+  let subscription_id = store.getters.subscriptionId
+  if (subscription_id)
+    axios().post('/api/subscription/fetch', {ids: [subscription_id]})
+  else
+    axios().post('/api/subscription/fetch-all')
+}
+
+function importOPML() {
+  pywebview.api.create_file_dialog(
+      0, '', false,
+      null, ['OPML Files (*.opml)']).then(
+      (paths) => {
+        axios().post('/api/basic/import-opml', {path: paths.pop()})
+      }
+  )
+}
 </script>
 
 <template>
@@ -31,10 +57,10 @@ function close() {
       </button>
     </div>
     <div class="title" @mousedown="startDrag" @dblclick="toggleFullScreen">
-      Rosser - A simple RSS Reader
+      {{ title }}
     </div>
     <div class="plugin-area" style="min-width: 200px">
-      <button class="icon-button" @click="$emit('refresh')">
+      <button class="icon-button" @click="fetchSubscriptions">
         <undo-outlined style="font-weight: bolder"/>
       </button>
       <button class="icon-button" @click="$emit('mark-read')">
@@ -46,7 +72,7 @@ function close() {
       <button class="icon-button" @click="$emit('view-options')">
         <eye-filled/>
       </button>
-      <button class="icon-button" @click="$emit('settings')"
+      <button class="icon-button" @click="importOPML"
               style="border-top-right-radius: 10px">
         <setting-filled/>
       </button>
