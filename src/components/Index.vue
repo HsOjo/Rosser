@@ -51,5 +51,6 @@ getPagiArticles({subscription_id: subscriptionId.value})
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   /*grid-auto-rows: 224px;*/
   grid-gap: 10px;
+  align-items: center;
 }
 </style>

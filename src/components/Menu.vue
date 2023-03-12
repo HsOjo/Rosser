@@ -5,6 +5,7 @@ import axios from "@/plugins/axios";
 import lodash from 'lodash'
 import store from "@/plugins/store";
 
+const backendURL = store.getters.backendURL
 const categories = ref<object[]>([]);
 const subscriptions = ref<object[]>([]);
 const subscriptionsTree = computed(() => {
@@ -78,7 +79,7 @@ getAllSubscriptions()
             v-for="subscription in category.subscriptions"
         >
           <div class="menu-item">
-            <img :src="subscription.icon_url" class="menu-icon" alt="icon"/>
+            <img :src="`${backendURL}/api/basic/file/download/${subscription.site.favicon_id}`" class="menu-icon" alt="icon"/>
             <span class="menu-title">{{ subscription.title }}</span>
           </div>
         </a-menu-item>

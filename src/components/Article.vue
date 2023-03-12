@@ -1,7 +1,10 @@
 <template>
   <a-card hoverable class="card">
     <template #cover>
-      <img :src="thumb_img" v-if="thumb_img" @error="no_thumb = true" alt="预览图"/>
+      <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
+           v-if="thumb_id && !no_thumb"
+           @error="no_thumb = true"
+           alt="预览图" class="thumb-img"/>
       <div class="card-title">{{ title }}</div>
     </template>
   </a-card>
@@ -10,7 +13,7 @@
 <script lang="ts">
 import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons-vue';
 import {defineComponent, ref} from 'vue';
-import axios from "@/plugins/axios";
+import store from "@/plugins/store";
 
 
 export default defineComponent({
@@ -22,16 +25,11 @@ export default defineComponent({
   props: {
     title: {type: String, default: '无标题'},
     summary: {type: String, default: '无摘要'},
-    thumb_img: {type: String, default: null},
+    thumb_id: {type: Number, default: null},
   },
   setup(props) {
-    axios().get(props.thumb_img).then(
-        resp => {
-          console.log(resp)
-        }
-    )
     const no_thumb = ref(false)
-    return {no_thumb}
+    return {no_thumb, backendURL: store.getters.backendURL}
   }
 });
 </script>
@@ -39,6 +37,7 @@ export default defineComponent({
 <style scoped>
 .card {
   width: 250px;
+  height: fit-content;
   padding: 0;
 }
 
@@ -48,5 +47,10 @@ export default defineComponent({
   bottom: 0;
   z-index: 1;
   background: rgba(255, 255, 255, 0.5);
+}
+
+.thumb-img{
+  max-height: 192px;
+  object-fit: cover;
 }
 </style>

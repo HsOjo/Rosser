@@ -1,15 +1,17 @@
-from io import BytesIO
+from typing import Union
 
-from flask import Blueprint, jsonify, abort, send_file
-from opyml import OPML
+from flask import Blueprint, jsonify, abort
+from opyml import OPML, Outline, Body
 
+from . import file
 from .forms import FileForm
-from .models import File
 from ..category.models import Category
+from ..category.service import CategoryService
 from ..subscription.models import Subscription
-from ... import db
+from ..subscription.service import SubscriptionService
 
 blueprint = Blueprint('basic', __name__, url_prefix='/basic')
+blueprint.register_blueprint(file.blueprint)
 
 
 @blueprint.route('/import-opml', methods=['POST'])
@@ -21,34 +23,29 @@ def import_opml():
     with open(form.path.data) as io:
         opml_str = io.read()
 
+    cs = CategoryService()
+    ss = SubscriptionService()
     opml = OPML.from_xml(opml_str)
-    for category_outline in opml.body.outlines:
-        category = Category.query.filter(Category.title == category_outline.title).first()
-        if not category:
-            category = Category(
-                title=category_outline.title,
-                description=category_outline.text,
-            )
-            db.session.add(category)
-            db.session.commit()
 
-        for subscription_outline in category_outline.outlines:
-            if subscription_outline.type != 'rss' or Subscription.query.filter(
-                    Subscription.category_id == category.id,
-                    Subscription.url == subscription_outline.xml_url,
-            ).count():
-                continue
+    def outline_scan(outline: 'Union[Outline, Body]', depth=0, category=None):
+        if getattr(outline, 'type', None) == 'rss':
+            if not ss.count(Subscription.category_id == category.id, Subscription.url == outline.xml_url):
+                ss.add(
+                    category_id=getattr(category, 'id', None),
+                    title=outline.title,
+                    description=outline.text,
+                    url=outline.xml_url,
+                )
+        else:
+            if depth:
+                category = cs.get_by_field(Category.title, outline.title)
+                if not category:
+                    category = cs.add(title=outline.title, description=outline.text)
 
-            subscription = Subscription(
-                category_id=category.id,
-                title=subscription_outline.title,
-                description=subscription_outline.text,
-                url=subscription_outline.xml_url,
-            )
-            db.session.add(subscription)
-            db.session.commit()
+            for sub_outline in outline.outlines:
+                outline_scan(sub_outline, depth=depth + 1, category=category)
 
-    # Todo: 重构
+    outline_scan(opml.body)
 
     return jsonify(dict(finished=1))
 
@@ -60,16 +57,8 @@ def export_opml():
         abort(401)
 
     opml = OPML()
-    categories = Category.query.all()
-    no_category_subscriptions = Subscription.query.filter(Subscription.category_id == None).all()
-
+    cs = CategoryService()
+    ss = SubscriptionService()
     # Todo
 
     return jsonify(dict(finished=1))
-
-
-@blueprint.route('/file/<int:id>')
-def file(id: int):
-    file = File.query.get(id)
-    with BytesIO(file.raw_data) as io:
-        return send_file(io, as_attachment=True, download_name=f'{file.id}{file.extension}')

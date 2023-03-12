@@ -2,6 +2,7 @@ import base64
 import hashlib
 import socket
 import sys
+import uuid
 
 
 def get_free_port():
@@ -18,9 +19,14 @@ def get_launch_argv():
 
 
 def model_to_dict(model):
-    data = model.__dict__.copy()  # type: dict
-    data.pop('_sa_instance_state')
-    return data
+    if model:
+        data = model.__dict__.copy()  # type: dict
+        data.pop('_sa_instance_state')
+        return data
+
+
+def generate_uuid():
+    return str(uuid.uuid4())
 
 
 def md5(content: str):

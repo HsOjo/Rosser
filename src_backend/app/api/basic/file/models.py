@@ -1,10 +1,10 @@
 import base64
 
 from app import db
+from app.api.base.models import BaseModel
 
 
-class File(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class File(BaseModel):
     hash = db.Column(db.String, index=True)
     extension = db.Column(db.String, index=True)
     url = db.Column(db.String)
@@ -12,4 +12,7 @@ class File(db.Model):
 
     @property
     def raw_data(self):
-        return base64.b64decode(self.data.encode())
+        if self.data:
+            return base64.b64decode(self.data.encode())
+
+
