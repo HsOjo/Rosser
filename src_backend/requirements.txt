@@ -6,3 +6,10 @@ flask-socketio
 flask-wtf
 wtforms_json
 celery[gevent]
+flask-migrate
+flask-sqlalchemy
+opyml
+feedparser
+beautifulsoup4
+requests
+simple-websocket

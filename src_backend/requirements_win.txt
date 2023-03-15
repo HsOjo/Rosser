@@ -1,0 +1,4 @@
+windows-curses
+pypiwin32
+greenlet==1.1.3
+gevent==21.12.0

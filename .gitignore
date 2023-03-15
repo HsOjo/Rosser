@@ -189,3 +189,4 @@ cython_debug/
 
 data/
 migrations/
+venv_win/
