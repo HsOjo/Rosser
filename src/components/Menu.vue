@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
-import {NotificationOutlined} from '@ant-design/icons-vue';
+import {BarsOutlined, HomeOutlined, NotificationOutlined} from '@ant-design/icons-vue';
 import axios from "@/plugins/axios";
 import lodash from 'lodash'
 import store from "@/plugins/store";
@@ -60,11 +60,13 @@ getAllSubscriptions()
 <template>
   <a-menu
       style="min-height: 100%; background: #F7F8FA"
-      mode="inline"
-      @click="handleClick"
+      mode="inline" @click="handleClick"
   >
     <a-menu-item>
-      所有订阅
+      <template #icon>
+        <home-outlined/>
+      </template>
+      <span class="menu-title">所有订阅</span>
     </a-menu-item>
     <template v-for="category in subscriptionsTree">
       <a-sub-menu
@@ -78,10 +80,13 @@ getAllSubscriptions()
             :key="subscription.id"
             v-for="subscription in category.subscriptions"
         >
-          <div class="menu-item">
-            <img :src="`${backendURL}/api/basic/file/download/${subscription.site.favicon_id}`" class="menu-icon" alt="icon"/>
-            <span class="menu-title">{{ subscription.title }}</span>
-          </div>
+          <template #icon>
+            <img :src="`${backendURL}/api/basic/file/download/${subscription.site.favicon_id}`"
+                 v-if="subscription.site && subscription.site.favicon_id"
+                 class="menu-icon" alt="icon"/>
+            <bars-outlined v-else/>
+          </template>
+          <span class="menu-title">{{ subscription.title }}</span>
         </a-menu-item>
       </a-sub-menu>
     </template>
@@ -100,9 +105,8 @@ getAllSubscriptions()
   text-overflow: ellipsis;
 }
 
-.menu-item {
-  display: flex;
-  align-items: center;
-  font-size: small;
+/deep/ .ant-menu-sub.ant-menu-inline > .ant-menu-item, /deep/ .ant-menu-sub.ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title {
+  height: 32px;
+  margin: 0;
 }
 </style>

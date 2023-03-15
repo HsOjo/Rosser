@@ -36,7 +36,7 @@ export default defineComponent({
 
 <style scoped>
 .card {
-  width: 250px;
+  width: 240px;
   height: fit-content;
   padding: 0;
 }

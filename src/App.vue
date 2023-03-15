@@ -73,7 +73,7 @@ onMounted(() => {
 }
 
 .menu {
-  width: 256px;
+  width: 320px;
   height: 100%;
   overflow: auto;
 }
@@ -84,7 +84,6 @@ onMounted(() => {
 }
 
 .content {
-  overflow: auto;
   --animate-duration: 1s;
 }
 </style>
