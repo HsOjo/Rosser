@@ -1,12 +1,8 @@
-from wtforms import StringField, IntegerField
+from wtforms import StringField
 
 from app.api.base.forms import JSONForm
 
 
-class AddForm(JSONForm):
+class BodyForm(JSONForm):
     title = StringField('标题')
     description = StringField('描述')
-
-
-class EditForm(AddForm):
-    id = IntegerField('ID')

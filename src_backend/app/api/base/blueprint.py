@@ -3,15 +3,15 @@ from typing import TypeVar, Type
 from flask import Blueprint, abort, jsonify
 from flask_wtf import FlaskForm
 
-from app import common
-from app.api.base.forms import PaginateForm, MutipleItemsForm
-from app.api.base.models import BaseModel
+from app.api.base.forms import MutipleItemsForm, QueryForm
+from app.api.base.service import BaseService
 
 T = TypeVar('T')
 
 
 class BaseBlueprint(Blueprint):
-    model_class: 'Type[BaseModel]'
+    service_class: 'Type[BaseService]'
+    body_form_class: 'Type[FlaskForm]'
     add_form_class: 'Type[FlaskForm]'
     edit_form_class: 'Type[FlaskForm]'
 
@@ -20,23 +20,32 @@ class BaseBlueprint(Blueprint):
         self.register_rules()
 
     def register_rules(self):
-        self.add_url_rule('/all', methods=['GET'], view_func=self.all)
-        self.add_url_rule('/paginate', methods=['POST'], view_func=self.paginate)
+        self.add_url_rule('/all', methods=['GET', 'POST'], view_func=self.all)
+        self.add_url_rule('/paginate/<int:per_page>/<int:page>', methods=['GET', 'POST'], view_func=self.paginate)
         self.add_url_rule('/get/<int:id>', methods=['GET'], view_func=self.get_)
 
-        if getattr(self, 'add_form_class', None):
+        body_form_class = getattr(self, 'body_form_class', None)
+        if getattr(self, 'add_form_class', body_form_class):
             self.add_url_rule('/add', methods=['POST'], view_func=self.add)
-        if getattr(self, 'edit_form_class', None):
+        if getattr(self, 'edit_form_class', body_form_class):
             self.add_url_rule('/edit/<int:id>', methods=['POST'], view_func=self.edit)
 
         self.add_url_rule('/delete', methods=['POST'], view_func=self.delete_)
 
-    def paginate(self):
-        form = PaginateForm()
+    @property
+    def service(self):
+        return self.service_class()
+
+    def paginate(self, page: int, per_page: int):
+        form = QueryForm()
         if not form.validate():
             abort(401)
 
-        pagi = self.model_class.query.paginate(**form.data)
+        pagi = self.service.paginate(
+            page=page, per_page=per_page,
+            query_func=form.query_func,
+        )
+
         return jsonify(dict(
             page=pagi.page,
             per_page=pagi.per_page,
@@ -45,11 +54,15 @@ class BaseBlueprint(Blueprint):
         ))
 
     def all(self):
-        items = self.model_class.query.all()
+        form = QueryForm()
+        if not form.validate():
+            abort(401)
+
+        items = self.service.all(form.query_func)
         return jsonify(list(map(lambda item: item.dict, items)))
 
     def get_(self, id: int):
-        item = self.model_class.query_by_id(id)
+        item = self.service.get(id)
         return jsonify(item.dict)
 
     def add(self):
@@ -57,7 +70,7 @@ class BaseBlueprint(Blueprint):
         if not form.validate():
             abort(401)
 
-        item = self.model_class.create(**form.data)
+        item = self.service.add(**form.data)
         return jsonify(dict(id=item.id))
 
     def edit(self, id: int):
@@ -65,15 +78,13 @@ class BaseBlueprint(Blueprint):
         if not form.validate():
             abort(401)
 
-        item = self.model_class.query_by_id(id)
-        item.update(**form.data)
-
-        return jsonify(dict(id=item.id))
+        result = self.service.edit(id, **form.data)
+        return jsonify(dict(result=result))
 
     def delete_(self):
         form = MutipleItemsForm()
         if not form.validate():
             abort(401)
 
-        num = self.model_class.query.filter(self.model_class.id.in_(form.ids.data)).delete()
-        return jsonify(dict(num=num))
+        result = self.service.delete(*form.ids.data)
+        return jsonify(dict(result=result))

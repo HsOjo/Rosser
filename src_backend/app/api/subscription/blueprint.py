@@ -2,15 +2,14 @@ from flask import abort, jsonify
 
 from app.api.base.forms import MutipleItemsForm
 from . import article, tasks
-from .forms import AddForm, EditForm
-from .models import Subscription
+from .forms import BodyForm
+from .service import SubscriptionService
 from ..base.blueprint import BaseBlueprint
 
 
 class Blueprint(BaseBlueprint):
-    model_class = Subscription
-    add_form_class = AddForm
-    edit_form_class = EditForm
+    service_class = SubscriptionService
+    body_form_class = BodyForm
 
     def register_rules(self):
         super().register_rules()

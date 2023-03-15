@@ -1,11 +1,12 @@
 from flask import abort, request, Response
 
 from .models import File
+from .service import FileService
 from ...base.blueprint import BaseBlueprint
 
 
 class Blueprint(BaseBlueprint):
-    model_class = File
+    service_class = FileService
 
     def register_rules(self):
         super().register_rules()
@@ -14,7 +15,7 @@ class Blueprint(BaseBlueprint):
     def download(self, id: int):
         if request.method != 'GET':
             return
-        file = File.query_by_id(id)
+        file = self.service.get(id)  # type: File
         data = file.raw_data
         if not data:
             abort(404)
