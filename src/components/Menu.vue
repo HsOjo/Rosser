@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {computed, inject, ref} from 'vue';
 import {BarsOutlined, HomeOutlined, NotificationOutlined} from '@ant-design/icons-vue';
-import axios from "@/plugins/axios";
 import lodash from 'lodash'
 import store from "@/plugins/store";
+import {AxiosInstanceKey} from "@/plugins/axios";
 
+const axios = inject(AxiosInstanceKey)
 const backendURL = store.getters.backendURL
 const categories = ref<object[]>([]);
 const subscriptions = ref<object[]>([]);
@@ -34,7 +35,7 @@ const subscriptionsMapping = computed(() => {
 })
 
 function getAllCategories() {
-  axios().get('/api/category/all').then(
+  axios.get('/api/category/all').then(
       resp => {
         categories.value = resp.data
       }
@@ -42,7 +43,7 @@ function getAllCategories() {
 }
 
 function getAllSubscriptions() {
-  axios().get('/api/subscription/all').then(
+  axios.get('/api/subscription/all').then(
       resp => {
         subscriptions.value = resp.data
       }

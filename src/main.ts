@@ -8,8 +8,10 @@ import 'animate.css'
 import '@/style.css'
 
 import store from "@/plugins/store";
+import axios from "@/plugins/axios";
 
 let app = createApp(App)
+app.use(axios)
 app.use(store)
 app.use(Antd)
 app.mount('#app')

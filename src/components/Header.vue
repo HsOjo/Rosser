@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 import {startDrag} from "@/utils/drag.js";
 import * as pywebview from "@/utils/pywebview.js";
-import axios from "@/plugins/axios";
 import {BellFilled, EyeFilled, LayoutFilled, ScheduleFilled, SettingFilled, UndoOutlined} from "@ant-design/icons-vue";
 import store from "@/plugins/store";
-import {computed} from "vue";
+import {computed, inject} from "vue";
+import {AxiosInstanceKey} from "@/plugins/axios";
 
+const axios = inject(AxiosInstanceKey)
 const title = computed(() => {
   let slogan = 'A simple RSS Reader'
   let subscription = store.getters.subscription
@@ -28,9 +29,9 @@ function close() {
 function fetchSubscriptions() {
   let subscription_id = store.getters.subscriptionId
   if (subscription_id)
-    axios().post('/api/subscription/fetch', {ids: [subscription_id]})
+    axios.post('/api/subscription/fetch', {ids: [subscription_id]})
   else
-    axios().post('/api/subscription/fetch-all')
+    axios.post('/api/subscription/fetch-all')
 }
 
 function importOPML() {
@@ -38,7 +39,7 @@ function importOPML() {
       0, '', false,
       null, ['OPML Files (*.opml)']).then(
       (paths) => {
-        axios().post('/api/basic/import-opml', {path: paths.pop()})
+        axios.post('/api/basic/import-opml', {path: paths.pop()})
       }
   )
 }

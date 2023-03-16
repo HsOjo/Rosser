@@ -2,11 +2,13 @@
 import Header from "@/components/Header.vue";
 import Menu from "@/components/Menu.vue";
 
-import {onMounted, ref} from "vue";
+import {inject, onMounted, ref} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
 import store from "@/plugins/store";
 import Index from "@/components/Index.vue";
+import {AxiosInstanceKey} from "@/plugins/axios";
 
+const axios = inject(AxiosInstanceKey)
 const is_loaded = ref(false)
 const menu_visible = ref(true)
 
@@ -15,6 +17,7 @@ onMounted(() => {
     pywebview.init(() => {
       clearInterval(timer)
       store.commit('loadPyContext')
+      axios.defaults.baseURL = store.getters.backendURL
       pywebview.api.get_properties().then(
           properties => {
             let screen_w = (properties.x + properties.width * 0.5) * 2

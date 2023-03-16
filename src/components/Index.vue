@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, inject, onMounted, ref, watch} from "vue";
 import Article from "@/components/Article.vue";
-import axios from "@/plugins/axios";
 import store from "@/plugins/store";
+import {AxiosInstanceKey} from "@/plugins/axios";
 
+const axios = inject(AxiosInstanceKey)
 const scroll_container = ref()
 const page = ref(0)
 const per_page = ref(10)
@@ -26,7 +27,7 @@ function getPagiArticles(page_ = page.value, per_page_ = per_page.value, subscri
   let filters = []
   if (subscription_id)
     filters.push({field: 'subscription_id', operate: 'eq', value: subscription_id})
-  return axios().post(`/api/subscription/article/paginate/${per_page_}/${page_}`,
+  return axios.post(`/api/subscription/article/paginate/${per_page_}/${page_}`,
       {filters}
   ).then(
       resp => {
