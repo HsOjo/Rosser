@@ -90,7 +90,8 @@ onMounted(() => {
 <style scoped>
 .scroll-container {
   max-height: 100%;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .index {
@@ -105,5 +106,10 @@ onMounted(() => {
 
 /deep/ .no-more > span {
   opacity: 0.66;
+}
+
+.no-more {
+  overflow: hidden;
+  min-width: 100%;
 }
 </style>
