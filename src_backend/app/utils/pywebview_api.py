@@ -1,7 +1,9 @@
 import os
-import signal
+import platform
 
 import webview
+
+from app import common
 
 
 class PyWebViewAPI:
@@ -10,8 +12,11 @@ class PyWebViewAPI:
     def get_properties(self):
         return {k: getattr(self, k) for k in ['x', 'y', 'width', 'height', 'on_top']}
 
+    def get_platform(self):
+        return platform.platform()
+
     def interupt(self):
-        os.kill(os.getpid(), signal.SIGINT)
+        common.send_interrupt(os.getpid())
 
     def __dir__(self):
         return list(set(list(super().__dir__()) + [

@@ -1,5 +1,9 @@
 import base64
+import ctypes
 import hashlib
+import os
+import platform
+import signal
 import socket
 import sys
 import uuid
@@ -50,3 +54,10 @@ def obj_standard(obj, str_key=False, str_obj=False, str_type=False):
         return obj.__name__
     else:
         return str(obj) if str_obj else obj
+
+
+def send_interrupt(pid):
+    if platform.platform() == 'Windows':
+        ctypes.windll.kernel32.GenerateConsoleCtrlEvent(0, pid)
+    else:
+        os.kill(pid, signal.SIGINT)

@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 import signal
 import subprocess
 
@@ -36,9 +37,16 @@ def view(url: str, title: str, **kwargs):
             localStorage.setItem('PY_CONTEXT', '{context}');
         '''.strip())
 
+    if platform.platform() == 'Darwin':
+        opts = dict(height=50, frameless=True, easy_drag=False, transparent=True, vibrancy=True)
+    else:
+        opts = dict(easy_drag=False, height=160)
+
     api = PyWebViewAPI()
     main_window = api.window = webview.create_window(title, js_api=api, html=f'''
-    <body style="display: flex;
+    <body style="
+        overflow: hidden;
+        display: flex;
         align-items: center;
         height: 100%;
         color: #6D6867;
@@ -50,7 +58,7 @@ def view(url: str, title: str, **kwargs):
         ">
     <p>⌛️ Now Loading...</p>
     <script> setInterval(() => location.href = "{url}", 100)</script>
-    </body>''', width=675, height=50, frameless=True, easy_drag=False, transparent=True, vibrancy=True)
+    </body>''', width=675, **opts)
 
     event.register(main_window)
     webview.start(**kwargs)
@@ -91,6 +99,6 @@ def start():
         p_view.wait()
     finally:
         for p in processes:
-            p.send_signal(signal.SIGINT)
+            common.send_interrupt(p.pid)
         for p in processes:
             p.wait()
