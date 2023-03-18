@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import {computed, inject, onMounted, ref, watch} from "vue";
+import {LoadingOutlined} from "@ant-design/icons-vue";
 import Article from "@/components/Article.vue";
 import store from "@/plugins/store";
 import {AxiosInstanceKey} from "@/plugins/axios";
 
 const axios = inject(AxiosInstanceKey)
 const scroll_container = ref()
+const loading_id = ref(0)
 const page = ref(0)
 const per_page = ref(10)
 const total = ref(null)
@@ -60,9 +62,13 @@ function autoLoad() {
 
 function loadMore() {
   loading.value = true
+  let _loading_id = ++loading_id.value
   return getPagiArticles(++page.value).then(
       items => articles.value = articles.value.concat(items)
-  ).finally(() => loading.value = false)
+  ).finally(() => {
+    if (loading_id.value == _loading_id)
+      loading.value = false
+  })
 }
 
 onMounted(() => {
@@ -83,7 +89,15 @@ onMounted(() => {
       </template>
     </div>
     <transition enter-active-class="animate__animated animate__bounceIn" appear>
-      <a-divider v-if="noMore && !loading" class="no-more">抹得更多了</a-divider>
+      <template v-if="loading">
+        <a-divider class="divider">
+          <loading-outlined/>
+          加载中...
+        </a-divider>
+      </template>
+      <template v-else>
+        <a-divider v-if="noMore" class="divider">抹得更多了</a-divider>
+      </template>
     </transition>
   </div>
 </template>
@@ -109,7 +123,7 @@ onMounted(() => {
   opacity: 0.66;
 }
 
-.no-more {
+.divider {
   overflow: hidden;
   min-width: 100%;
 }
