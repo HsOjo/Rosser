@@ -1,12 +1,21 @@
 <script lang="ts" setup>
 import {startDrag} from "@/utils/drag.js";
 import * as pywebview from "@/utils/pywebview.js";
-import {BellFilled, EyeFilled, LayoutFilled, ScheduleFilled, SettingFilled, UndoOutlined} from "@ant-design/icons-vue";
+import {
+  BellFilled,
+  EyeFilled,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  RedoOutlined,
+  ScheduleFilled,
+  SettingFilled
+} from "@ant-design/icons-vue";
 import store from "@/plugins/store";
-import {computed, inject, onMounted, watch} from "vue";
+import {computed, inject, onMounted, ref, watch} from "vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 
 const isMac = computed(() => store.getters.platform === 'Darwin');
+const emits = defineEmits(['menu_collapse'])
 const axios = inject(AxiosInstanceKey)
 const slogan = computed(() => {
   let slogan = 'A simple RSS Reader'
@@ -17,11 +26,13 @@ const slogan = computed(() => {
 const title = computed(() => {
   return `Rosser - ${slogan.value}`
 })
+const menu_collapsed = ref(false)
 
 watch(title, () => {
   store.commit('updateTitle', title.value)
 })
 onMounted(() => store.commit('updateTitle', title.value))
+
 
 function toggleFullScreen() {
   pywebview.api.toggle_fullscreen()
@@ -54,8 +65,13 @@ function importOPML() {
 }
 
 function titleMouseDown(...args) {
-  if (isMac)
+  if (isMac.value)
     startDrag(...args)
+}
+
+function toggleCollapse() {
+  menu_collapsed.value = !menu_collapsed.value
+  emits('menu_collapse', menu_collapsed.value)
 }
 </script>
 
@@ -67,27 +83,49 @@ function titleMouseDown(...args) {
       <button class="control-button maximize" @click="toggleFullScreen"></button>
     </div>
     <div class="plugin-area">
-      <button class="icon-button" @click="$emit('toggle_menu')">
-        <layout-filled/>
+      <button class="icon-button" @click="toggleCollapse">
+        <MenuUnfoldOutlined v-if="menu_collapsed"/>
+        <MenuFoldOutlined v-else/>
       </button>
     </div>
     <div class="title" @mousedown="titleMouseDown" @dblclick="toggleFullScreen">
       {{ isMac ? title : slogan }}
     </div>
     <div class="plugin-area" style="min-width: 200px">
-      <button class="icon-button" @click="fetchSubscriptions">
-        <undo-outlined style="font-weight: bolder"/>
-      </button>
-      <button class="icon-button" @click="$emit('mark-read')">
-        <schedule-filled/>
-      </button>
-      <button class="icon-button" @click="$emit('notifications')">
-        <bell-filled/>
-      </button>
-      <button class="icon-button" @click="$emit('view-options')">
-        <eye-filled/>
-      </button>
-      <button class="icon-button" @click="importOPML" :class="{'mac-top-right-radius': isMac}">
+      <a-dropdown :trigger="['contextmenu']">
+        <button class="icon-button hover-rotate" @click="fetchSubscriptions">
+          <redo-outlined style="font-weight: bolder"/>
+        </button>
+        <template #overlay>
+          <slot name="fetch-overlay"></slot>
+        </template>
+      </a-dropdown>
+      <a-dropdown :trigger="['click']">
+        <button class="icon-button hover-rotate-y">
+          <schedule-filled/>
+        </button>
+        <template #overlay>
+          <slot name="read-overlay"></slot>
+        </template>
+      </a-dropdown>
+      <a-dropdown :trigger="['click']">
+        <button class="icon-button hover-rotate-y">
+          <bell-filled/>
+        </button>
+        <template #overlay>
+          <slot name="notification-overlay"></slot>
+        </template>
+      </a-dropdown>
+      <a-dropdown :trigger="['click']">
+        <button class="icon-button hover-rotate-x">
+          <eye-filled/>
+        </button>
+        <template #overlay>
+          <slot name="view-overlay"></slot>
+        </template>
+      </a-dropdown>
+      <button class="icon-button hover-rotate" @click="$emit('open_settings')"
+              :class="{'mac-top-right-radius': isMac}">
         <setting-filled/>
       </button>
     </div>
@@ -169,5 +207,44 @@ function titleMouseDown(...args) {
 
 .icon-button:active {
   opacity: 0.8;
+}
+
+.hover-rotate:hover > span {
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hover-rotate-y:hover > span {
+  animation: rotate-y 0.5s linear;
+}
+
+@keyframes rotate-y {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.hover-rotate-x:hover > span {
+  animation: rotate-x 0.5s linear;
+}
+
+@keyframes rotate-x {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(360deg);
+  }
 }
 </style>

@@ -7,6 +7,7 @@ import * as pywebview from "@/utils/pywebview.js";
 import store from "@/plugins/store";
 import Index from "@/components/Index.vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
+import Settings from "@/components/Settings.vue";
 
 const isMac = computed(() => store.getters.platform === 'Darwin');
 const axios = inject(AxiosInstanceKey)
@@ -42,7 +43,8 @@ onMounted(() => {
         leave-active-class="animate__animated animate__fadeOutDown"
     >
       <Header
-          @toggle_menu="menu_collapsed = !menu_collapsed"
+          @menu_collapse="x => menu_collapsed = x"
+          @open_settings="$refs.settings.open()"
       ></Header>
     </transition>
 
@@ -62,6 +64,7 @@ onMounted(() => {
           <Index></Index>
         </div>
       </transition>
+      <Settings ref="settings"></Settings>
     </div>
   </template>
 </template>
