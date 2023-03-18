@@ -58,7 +58,7 @@ class BaseBlueprint(Blueprint):
         if not form.validate():
             abort(401)
 
-        items = self.service.all(form.query_func)
+        items = self.service.all(query_func=form.query_func)
         return jsonify(list(map(lambda item: item.dict, items)))
 
     def get_(self, id: int):

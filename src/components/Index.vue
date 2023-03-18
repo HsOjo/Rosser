@@ -16,7 +16,7 @@ const subscription = computed(() => store.getters.subscription)
 const subscriptionId = computed(() => subscription.value && subscription.value.id)
 const noMore = computed(() => articles.value && articles.value.length >= total.value)
 
-watch(subscriptionId, (nv, ov) => {
+watch(subscriptionId, () => {
   page.value = 0
   total.value = null
   articles.value = []
@@ -31,6 +31,8 @@ function getPagiArticles(page_ = page.value, per_page_ = per_page.value, subscri
       {filters}
   ).then(
       resp => {
+        if (subscription_id != subscriptionId.value)
+          return []
         total.value = resp.data.total
         return resp.data.items
       }
@@ -80,10 +82,8 @@ onMounted(() => {
         </transition>
       </template>
     </div>
-    <transition
-        enter-active-class="animate__animated animate__bounceIn" appear
-        leave-active-class="animate__animated animate__bounceOut">
-      <a-divider v-if="noMore" class="no-more">抹得更多了</a-divider>
+    <transition enter-active-class="animate__animated animate__bounceIn" appear>
+      <a-divider v-if="noMore && !loading" class="no-more">抹得更多了</a-divider>
     </transition>
   </div>
 </template>
