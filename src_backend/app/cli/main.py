@@ -1,7 +1,5 @@
 import json
 import os
-import platform
-import signal
 import subprocess
 
 import click
@@ -37,7 +35,7 @@ def view(url: str, title: str, **kwargs):
             localStorage.setItem('PY_CONTEXT', '{context}');
         '''.strip())
 
-    if platform.platform() == 'Darwin':
+    if common.get_platform_system() == 'Darwin':
         opts = dict(height=50, frameless=True, easy_drag=False, transparent=True, vibrancy=True)
     else:
         opts = dict(easy_drag=False, height=160)

@@ -13,7 +13,7 @@ class PyWebViewAPI:
         return {k: getattr(self, k) for k in ['x', 'y', 'width', 'height', 'on_top']}
 
     def get_platform(self):
-        return platform.platform()
+        return common.get_platform_system()
 
     def interupt(self):
         common.send_interrupt(os.getpid())

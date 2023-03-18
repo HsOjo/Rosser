@@ -3,16 +3,25 @@ import {startDrag} from "@/utils/drag.js";
 import * as pywebview from "@/utils/pywebview.js";
 import {BellFilled, EyeFilled, LayoutFilled, ScheduleFilled, SettingFilled, UndoOutlined} from "@ant-design/icons-vue";
 import store from "@/plugins/store";
-import {computed, inject} from "vue";
+import {computed, inject, onMounted, watch} from "vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 
+const isMac = computed(() => store.getters.platform === 'Darwin');
 const axios = inject(AxiosInstanceKey)
-const title = computed(() => {
+const slogan = computed(() => {
   let slogan = 'A simple RSS Reader'
   let subscription = store.getters.subscription
   slogan = (subscription && subscription.title) || slogan
-  return `Rosser - ${slogan}`
+  return slogan
 })
+const title = computed(() => {
+  return `Rosser - ${slogan.value}`
+})
+
+watch(title, () => {
+  store.commit('updateTitle', title.value)
+})
+onMounted(() => store.commit('updateTitle', title.value))
 
 function toggleFullScreen() {
   pywebview.api.toggle_fullscreen()
@@ -47,7 +56,7 @@ function importOPML() {
 
 <template>
   <div class="header">
-    <div class="control-area">
+    <div class="control-area" v-if="isMac">
       <button class="control-button close" @click="close"></button>
       <button class="control-button minimize" @click="minimize"></button>
       <button class="control-button maximize" @click="toggleFullScreen"></button>
@@ -57,8 +66,8 @@ function importOPML() {
         <layout-filled/>
       </button>
     </div>
-    <div class="title" @mousedown="startDrag" @dblclick="toggleFullScreen">
-      {{ title }}
+    <div class="title" @mousedown="isMac ? startDrag: null" @dblclick="toggleFullScreen">
+      {{ isMac ? title : slogan }}
     </div>
     <div class="plugin-area" style="min-width: 200px">
       <button class="icon-button" @click="fetchSubscriptions">
@@ -73,8 +82,7 @@ function importOPML() {
       <button class="icon-button" @click="$emit('view-options')">
         <eye-filled/>
       </button>
-      <button class="icon-button" @click="importOPML"
-              style="border-top-right-radius: 10px">
+      <button class="icon-button" @click="importOPML" :class="{'mac-top-right-radius': isMac}">
         <setting-filled/>
       </button>
     </div>
@@ -98,6 +106,10 @@ function importOPML() {
 
 .plugin-area {
   margin: 0;
+}
+
+.mac-top-right-radius {
+  border-top-right-radius: 10px !important;
 }
 
 .control-button {

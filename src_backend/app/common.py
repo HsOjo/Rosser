@@ -57,7 +57,11 @@ def obj_standard(obj, str_key=False, str_obj=False, str_type=False):
 
 
 def send_interrupt(pid):
-    if platform.platform() == 'Windows':
+    if platform.system() == 'Windows':
         ctypes.windll.kernel32.GenerateConsoleCtrlEvent(0, pid)
     else:
         os.kill(pid, signal.SIGINT)
+
+
+def get_platform_system():
+    return os.environ.get('PLATFORM') or platform.system()

@@ -58,6 +58,9 @@ export const api = {
   toggle_fullscreen() {
   },
 
+  get_platform() {
+  },
+
   get_properties() {
   },
 

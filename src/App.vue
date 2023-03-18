@@ -2,29 +2,32 @@
 import Header from "@/components/Header.vue";
 import Menu from "@/components/Menu.vue";
 
-import {inject, onMounted, ref} from "vue";
+import {computed, inject, onMounted, ref} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
 import store from "@/plugins/store";
 import Index from "@/components/Index.vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 
+const isMac = computed(() => store.getters.platform === 'Darwin');
 const axios = inject(AxiosInstanceKey)
 const is_loaded = ref(false)
-const menu_visible = ref(true)
+const menu_collapsed = ref(false)
 
 onMounted(() => {
   let timer = setInterval(() => {
     pywebview.init(() => {
       clearInterval(timer)
-      store.commit('loadPyContext')
+      store.commit('initialize')
       axios.defaults.baseURL = store.getters.backendURL
       pywebview.api.get_properties().then(
           properties => {
-            let screen_w = (properties.x + properties.width * 0.5) * 2
             let window_w = 1280
             let window_h = 720
             pywebview.api.resize(window_w, window_h)
-            pywebview.api.move((screen_w - window_w) * 0.5, properties.y)
+            pywebview.api.move(
+                properties.x - (window_w - properties.width) * 0.5,
+                properties.y - (window_h - properties.height) * 0.1
+            )
             is_loaded.value = true
           }
       )
@@ -39,18 +42,16 @@ onMounted(() => {
         leave-active-class="animate__animated animate__fadeOutDown"
     >
       <Header
-          @toggle_menu="menu_visible = !menu_visible"
+          @toggle_menu="menu_collapsed = !menu_collapsed"
       ></Header>
     </transition>
 
-    <div class="body">
+    <div class="body" :class="{'body-border': isMac}">
       <transition
           enter-active-class="animate__animated animate__fadeInLeft" appear
           leave-active-class="animate__animated animate__fadeOutLeft"
       >
-        <div class="menu" v-show="menu_visible">
-          <Menu></Menu>
-        </div>
+        <Menu :collapsed="menu_collapsed"></Menu>
       </transition>
 
       <transition
@@ -68,17 +69,14 @@ onMounted(() => {
 <style scoped>
 .body {
   height: calc(100% - 40px);
+  display: flex;
+}
+
+.body-border {
   border: #DEDEDE solid 1px;
   box-sizing: border-box;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
-  display: flex;
-}
-
-.menu {
-  width: 320px;
-  height: 100%;
-  overflow: auto;
 }
 
 .parent-size {
