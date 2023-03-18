@@ -14,12 +14,24 @@ const axios = inject(AxiosInstanceKey)
 const is_loaded = ref(false)
 const menu_collapsed = ref(false)
 
+function waitBackend(callback) {
+  axios.get('/404-test').then(null, err => {
+    if (err && err.response && err.response.status === 404)
+      callback()
+    else
+      setTimeout(() => waitBackend(callback), 1000)
+  })
+}
+
 onMounted(() => {
   let timer = setInterval(() => {
     pywebview.init(() => {
       clearInterval(timer)
       store.commit('initialize')
       axios.defaults.baseURL = store.getters.backendURL
+      waitBackend(() => {
+        is_loaded.value = true
+      })
       pywebview.api.get_properties().then(
           properties => {
             let window_w = 1366
@@ -29,7 +41,6 @@ onMounted(() => {
                 properties.x - (window_w - properties.width) * 0.5,
                 properties.y - (window_h - properties.height) * 0.1
             )
-            is_loaded.value = true
           }
       )
     })
@@ -65,6 +76,10 @@ onMounted(() => {
         </div>
       </transition>
       <Settings ref="settings"></Settings>
+  </template>
+  <template v-else>
+    <div class="parent-size" style="display: flex;align-items: center;justify-content: center">
+      <a-spin tip="Loading..."/>
     </div>
   </template>
 </template>
@@ -89,5 +104,6 @@ onMounted(() => {
 
 .content {
   --animate-duration: 1s;
+  position: relative;
 }
 </style>
