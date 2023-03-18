@@ -1,22 +1,35 @@
 <script lang="ts">
-import {ref, watch} from "vue";
+import {DatabaseFilled, RobotFilled} from "@ant-design/icons-vue";
+import {ref} from "vue";
+import * as pywebview from "@/utils/pywebview.js";
+import About from "@/components/settings/About.vue";
+import Subscriptions from "@/components/settings/Subscriptions.vue";
 
 export default {
-  props: {
-    visible: {type: Boolean}
+  components: {
+    Subscriptions,
+    About,
+    DatabaseFilled,
+    RobotFilled,
   },
   setup(props) {
     const visible = ref(false)
-    watch(props, (nv, ov) => {
-      visible.value = nv.visible
-    })
+    const tab_key = ref('subscriptions')
 
-    function open() {
-      visible.value = true
+    function toggleVisible() {
+      visible.value = !visible.value
+    }
+
+    function onClose() {
+      visible.value = false
     }
 
     return {
-      open, visible
+      pywebview,
+      tab_key,
+      visible,
+      toggleVisible,
+      onClose,
     }
   }
 }
@@ -24,15 +37,34 @@ export default {
 
 <template>
   <a-drawer
-      title="Basic Drawer"
+      title="设定"
       placement="right"
       :closable="true"
       :visible="visible"
       :get-container="false"
-      :style="{ position: 'absolute' }"
-      @close="visible = false"
+      :mask="false"
+      size="large"
+      style="position: absolute"
+      @close="onClose"
   >
-    <p>Some contents...</p>
+    <a-tabs v-model:activeKey="tab_key" tab-position="right">
+      <a-tab-pane key="subscriptions">
+        <template #tab>
+        <span>
+          <database-filled/> 订阅源
+        </span>
+        </template>
+        <Subscriptions></Subscriptions>
+      </a-tab-pane>
+      <a-tab-pane key="about">
+        <template #tab>
+        <span>
+          <robot-filled/> 关于
+        </span>
+        </template>
+        <About></About>
+      </a-tab-pane>
+    </a-tabs>
   </a-drawer>
 </template>
 

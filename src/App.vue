@@ -12,7 +12,6 @@ import Settings from "@/components/Settings.vue";
 const isMac = computed(() => store.getters.platform === 'Darwin');
 const axios = inject(AxiosInstanceKey)
 const is_loaded = ref(false)
-const menu_collapsed = ref(false)
 
 function waitBackend(callback) {
   axios.get('/404-test').then(null, err => {
@@ -54,8 +53,8 @@ onMounted(() => {
         leave-active-class="animate__animated animate__fadeOutDown"
     >
       <Header
-          @menu_collapse="x => menu_collapsed = x"
-          @open_settings="$refs.settings.open()"
+          @menu_collapse="$refs.menu.toggleCollapse()"
+          @settings_toggle="$refs.settings.toggleVisible()"
       ></Header>
     </transition>
 
@@ -64,7 +63,7 @@ onMounted(() => {
           enter-active-class="animate__animated animate__fadeInLeft" appear
           leave-active-class="animate__animated animate__fadeOutLeft"
       >
-        <Menu :collapsed="menu_collapsed"></Menu>
+        <Menu ref="menu"></Menu>
       </transition>
 
       <transition
@@ -73,9 +72,10 @@ onMounted(() => {
       >
         <div class="content parent-size">
           <Index></Index>
+          <Settings ref="settings"></Settings>
         </div>
       </transition>
-      <Settings ref="settings"></Settings>
+    </div>
   </template>
   <template v-else>
     <div class="parent-size" style="display: flex;align-items: center;justify-content: center">

@@ -66,6 +66,9 @@ export const api = {
 
   interupt() {
   },
+
+  window_open(url) {
+  }
 };
 
 export function init(callback) {

@@ -1,5 +1,5 @@
 import os
-import platform
+from urllib.parse import urlparse
 
 import webview
 
@@ -17,6 +17,10 @@ class PyWebViewAPI:
 
     def interupt(self):
         common.send_interrupt(os.getpid())
+
+    def window_open(self, url):
+        url_obj = urlparse(url)
+        webview.create_window(url_obj.netloc, url, width=1280, height=720)
 
     def __dir__(self):
         return list(set(list(super().__dir__()) + [

@@ -15,7 +15,7 @@ import {computed, inject, onMounted, ref, watch} from "vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 
 const isMac = computed(() => store.getters.platform === 'Darwin');
-const emits = defineEmits(['menu_collapse'])
+const emits = defineEmits(['menu_collapse', 'settings_toggle'])
 const axios = inject(AxiosInstanceKey)
 const slogan = computed(() => {
   let slogan = 'A simple RSS Reader'
@@ -124,7 +124,7 @@ function toggleCollapse() {
           <slot name="view-overlay"></slot>
         </template>
       </a-dropdown>
-      <button class="icon-button hover-rotate" @click="$emit('open_settings')"
+      <button class="icon-button hover-rotate" @click="emits('settings_toggle')"
               :class="{'mac-top-right-radius': isMac}">
         <setting-filled/>
       </button>
