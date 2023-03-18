@@ -7,11 +7,9 @@
       <bars-outlined v-else/>
     </template>
     <a-dropdown ref="dropdown" :trigger="['contextmenu']">
-      <div style="display: flex; align-items: center">
-        <div class="menu-title">
+        <span class="menu-title">
           {{ subscription.title }}
-        </div>
-      </div>
+        </span>
       <template #overlay>
         {{ subscription.title }}
       </template>
@@ -48,8 +46,8 @@ export default {
   display: inline-block;
   width: 100%;
   height: 100%;
-  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
 </style>

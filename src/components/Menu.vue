@@ -129,7 +129,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-/deep/ .ant-menu-sub.ant-menu-inline > .ant-menu-item, /deep/ .ant-menu-sub.ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title {
+/deep/ .ant-menu.ant-menu-inline > .ant-menu-item {
   height: 32px;
   margin: 0;
 }
