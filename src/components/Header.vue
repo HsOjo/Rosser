@@ -148,7 +148,7 @@ function titleMouseDown(...args) {
   font-weight: bold;
   width: 100%;
   padding: 8px;
-  text-indent: 4rem;
+  text-indent: 100px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
