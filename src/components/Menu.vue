@@ -63,50 +63,51 @@ getAllSubscriptions()
 </script>
 
 <template>
-  <div class="menu" :style="{
-    'min-width': props.collapsed ? '85px' : '256px',
-    'width': !props.collapsed ? 'max-content' : undefined,
-  }">
-    <a-menu
-        style="min-height: 100%; background: #F7F8FA"
-        mode="inline" @click="handleClick"
-        :inline-collapsed="props.collapsed"
-    >
-      <a-menu-item>
-        <template #icon>
-          <home-outlined/>
-        </template>
-        <span class="menu-title">所有订阅</span>
-      </a-menu-item>
-      <template v-for="category in subscriptionsTree">
-        <a-sub-menu
-            :key="`category-${category.id}`"
-            v-if="category && category.subscriptions.length">
-          <template #icon>
-            <NotificationOutlined/>
-          </template>
-          <template #title>{{ category.title }}</template>
-          <a-menu-item
-              :key="subscription.id"
-              v-for="subscription in category.subscriptions"
-          >
-            <template #icon>
-              <img :src="`${backendURL}/api/basic/file/download/${subscription.site.favicon_id}`"
-                   v-if="subscription.site && subscription.site.favicon_id"
-                   class="menu-icon" alt="icon"/>
-              <bars-outlined v-else/>
-            </template>
-            <span class="menu-title">{{ subscription.title }}</span>
-          </a-menu-item>
-        </a-sub-menu>
+  <a-menu
+      :style="{
+        'min-width': props.collapsed ? '80px' : '256px',
+        'width': props.collapsed ? '80px' : 'max-content',
+      }"
+      class="menu" mode="inline"
+      @click="handleClick"
+      :inline-collapsed="props.collapsed"
+  >
+    <a-menu-item>
+      <template #icon>
+        <home-outlined/>
       </template>
-    </a-menu>
-  </div>
+      <span class="menu-title">所有订阅</span>
+    </a-menu-item>
+    <template v-for="category in subscriptionsTree">
+      <a-sub-menu
+          :key="`category-${category.id}`"
+          v-if="category && category.subscriptions.length">
+        <template #icon>
+          <NotificationOutlined/>
+        </template>
+        <template #title>{{ category.title }}</template>
+        <a-menu-item
+            :key="subscription.id"
+            v-for="subscription in category.subscriptions"
+        >
+          <template #icon>
+            <img :src="`${backendURL}/api/basic/file/download/${subscription.site.favicon_id}`"
+                 v-if="subscription.site && subscription.site.favicon_id"
+                 class="menu-icon" alt="icon"/>
+            <bars-outlined v-else/>
+          </template>
+          <span class="menu-title">{{ subscription.title }}</span>
+        </a-menu-item>
+      </a-sub-menu>
+    </template>
+  </a-menu>
 </template>
 
 <style scoped>
 .menu {
+  background: #F7F8FA;
   height: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 

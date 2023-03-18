@@ -21,8 +21,8 @@ onMounted(() => {
       axios.defaults.baseURL = store.getters.backendURL
       pywebview.api.get_properties().then(
           properties => {
-            let window_w = 1280
-            let window_h = 720
+            let window_w = 1366
+            let window_h = 768
             pywebview.api.resize(window_w, window_h)
             pywebview.api.move(
                 properties.x - (window_w - properties.width) * 0.5,
