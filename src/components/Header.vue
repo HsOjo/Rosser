@@ -52,6 +52,11 @@ function importOPML() {
       }
   )
 }
+
+function titleMouseDown(...args) {
+  if (isMac)
+    startDrag(...args)
+}
 </script>
 
 <template>
@@ -66,7 +71,7 @@ function importOPML() {
         <layout-filled/>
       </button>
     </div>
-    <div class="title" @mousedown="isMac ? startDrag: null" @dblclick="toggleFullScreen">
+    <div class="title" @mousedown="titleMouseDown" @dblclick="toggleFullScreen">
       {{ isMac ? title : slogan }}
     </div>
     <div class="plugin-area" style="min-width: 200px">
