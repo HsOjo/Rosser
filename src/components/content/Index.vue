@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {computed, inject, onMounted, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
-import Article from "@/components/Article.vue";
+import Article from "@/components/content/Article.vue";
 import store from "@/plugins/store";
 import {AxiosInstanceKey} from "@/plugins/axios";
 
@@ -14,7 +14,7 @@ const total = ref(null)
 const loading = ref(false)
 const articles = ref<object[]>([])
 
-const subscription = computed(() => store.getters.subscription)
+const subscription = computed(() => store.getters.state.subscription)
 const subscriptionId = computed(() => subscription.value && subscription.value.id)
 const noMore = computed(() => articles.value && articles.value.length >= total.value)
 
@@ -55,11 +55,6 @@ function checkLoad() {
   return scroll_height - scroll_top - container_height < 50
 }
 
-function autoLoad() {
-  if (checkLoad() && !loading.value)
-    loadMore().then(autoLoad)
-}
-
 function loadMore() {
   loading.value = true
   let _loading_id = ++loading_id.value
@@ -71,9 +66,12 @@ function loadMore() {
   })
 }
 
-onMounted(() => {
-  autoLoad()
-})
+function autoLoad() {
+  if (checkLoad() && !loading.value)
+    loadMore().then(autoLoad)
+}
+
+onMounted(autoLoad)
 </script>
 
 <template>
@@ -119,7 +117,7 @@ onMounted(() => {
   justify-content: center;
 }
 
-/deep/ .no-more > span {
+:deep() .no-more > span {
   opacity: 0.66;
 }
 

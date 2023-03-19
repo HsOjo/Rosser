@@ -1,9 +1,11 @@
 <script lang="ts">
 import {DatabaseFilled, RobotFilled} from "@ant-design/icons-vue";
-import {ref} from "vue";
+import {computed, inject, ref} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
-import About from "@/components/settings/About.vue";
-import Subscriptions from "@/components/settings/Subscriptions.vue";
+import About from "@/components/content/settings/About.vue";
+import Subscriptions from "@/components/content/settings/Subscriptions.vue";
+import {AxiosInstanceKey} from "@/plugins/axios";
+import store from "@/plugins/store";
 
 export default {
   components: {
@@ -13,22 +15,28 @@ export default {
     RobotFilled,
   },
   setup(props) {
-    const visible = ref(false)
+    const axios = inject(AxiosInstanceKey)
+    const settings_visible = computed(() => store.getters.state.settings_visible)
     const tab_key = ref('subscriptions')
 
-    function toggleVisible() {
-      visible.value = !visible.value
+    function onClose() {
+      store.commit('updateState', {settings_visible: false})
     }
 
-    function onClose() {
-      visible.value = false
+    function importOPML() {
+      pywebview.api.create_file_dialog(
+          0, '', false,
+          null, ['OPML Files (*.opml)']).then(
+          (paths) => {
+            axios.post('/api/basic/import-opml', {path: paths.pop()})
+          }
+      )
     }
 
     return {
       pywebview,
       tab_key,
-      visible,
-      toggleVisible,
+      settings_visible,
       onClose,
     }
   }
@@ -40,7 +48,7 @@ export default {
       title="设定"
       placement="right"
       :closable="true"
-      :visible="visible"
+      :visible="settings_visible"
       :get-container="false"
       :mask="false"
       size="large"

@@ -9,8 +9,11 @@ const store = createStore({
         backend_url: null,
       },
       PLATFORM: null,
-      title: 'Rosser',
-      subscription: null,
+      STATE: {
+        subscription: null,
+        sider_collapsed: false,
+        settings_visible: false,
+      }
     }
   },
   mutations: {
@@ -20,26 +23,22 @@ const store = createStore({
         platform => state.PLATFORM = platform
       )
     },
-    openSubscription(state, item) {
-      state.subscription = item
-    },
-    updateTitle(state, title) {
-      state.title = String(title)
-      pywebview.api.set_title(title)
+    updateState(state, payload) {
+      Object.assign(state.STATE, payload)
     },
   },
   getters: {
     platform(state) {
       return state.PLATFORM
     },
+    isMac(state, getters) {
+      return getters.platform === 'Darwin'
+    },
     backendURL(state) {
       return state.PY_CONTEXT.backend_url
     },
-    subscription(state) {
-      return state.subscription
-    },
-    subscriptionId(state) {
-      return state.subscription && state.subscription.id
+    state(state) {
+      return state.STATE
     },
   }
 })
