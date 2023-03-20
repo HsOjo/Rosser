@@ -75,7 +75,7 @@ export default {
     })
 
     function handleClick({key}) {
-      store.commit('updateState', {subscription: subscriptionsMapping.value[key]})
+      store.commit('updateQuery', {subscription: subscriptionsMapping.value[key]})
     }
 
     return {
@@ -102,7 +102,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-:deep() .ant-menu.ant-menu-inline > .ant-menu-item {
+/deep/ .ant-menu.ant-menu-inline > .ant-menu-item {
   height: 32px;
   margin: 0;
 }

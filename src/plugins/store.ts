@@ -1,5 +1,6 @@
 import {createStore} from 'vuex'
 import * as pywebview from "@/utils/pywebview";
+import lodash from "lodash";
 
 // Create a new store instance.
 const store = createStore({
@@ -10,10 +11,14 @@ const store = createStore({
       },
       PLATFORM: null,
       STATE: {
-        subscription: null,
         sider_collapsed: false,
         settings_visible: false,
-      }
+      },
+      query: {
+        mode: null,
+        show_hide: false,
+        subscription: null,
+      },
     }
   },
   mutations: {
@@ -25,6 +30,12 @@ const store = createStore({
     },
     updateState(state, payload) {
       Object.assign(state.STATE, payload)
+    },
+    updateQuery(state, payload) {
+      let query = lodash.cloneDeep(state.query)
+      Object.assign(query, payload)
+      if (!lodash.isEqual(query, state.query))
+        state.query = query
     },
   },
   getters: {
@@ -39,6 +50,9 @@ const store = createStore({
     },
     state(state) {
       return state.STATE
+    },
+    query(state) {
+      return state.query
     },
   }
 })

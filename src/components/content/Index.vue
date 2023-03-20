@@ -14,26 +14,37 @@ const total = ref(null)
 const loading = ref(false)
 const articles = ref<object[]>([])
 
-const subscription = computed(() => store.getters.state.subscription)
+const query = computed(() => store.getters.query)
+const subscription = computed(() => store.getters.query.subscription)
 const subscriptionId = computed(() => subscription.value && subscription.value.id)
 const noMore = computed(() => articles.value && articles.value.length >= total.value)
+const filters = computed(() => {
+  let _query = query.value
+  let result = []
+  if (subscriptionId.value)
+    result.push({field: 'subscription_id', operate: 'eq', value: subscriptionId.value})
+  if (_query.mode === 'read-only')
+    result.push({field: 'article_state.is_read', operate: 'eq', value: true})
+  else if (_query.mode === 'favourite-only')
+    result.push({field: 'article_state.is_favourite', operate: 'eq', value: true})
+  if (!_query.show_hide)
+    result.push({field: 'article_state.is_hide', operate: 'neq', value: true})
+  return result
+})
 
-watch(subscriptionId, () => {
+watch(query, () => {
   page.value = 0
   total.value = null
   articles.value = []
   autoLoad()
 })
 
-function getPagiArticles(page_ = page.value, per_page_ = per_page.value, subscription_id = subscriptionId.value) {
-  let filters = []
-  if (subscription_id)
-    filters.push({field: 'subscription_id', operate: 'eq', value: subscription_id})
+function getPagiArticles(page_ = page.value, per_page_ = per_page.value, filters_ = filters.value) {
   return axios.post(`/api/subscription/article/paginate/${per_page_}/${page_}`,
-      {filters}
+      {filters: filters_}
   ).then(
       resp => {
-        if (subscription_id != subscriptionId.value)
+        if (filters_ != filters.value)
           return []
         total.value = resp.data.total
         return resp.data.items
@@ -117,7 +128,7 @@ onMounted(autoLoad)
   justify-content: center;
 }
 
-:deep() .no-more > span {
+/deep/ .no-more > span {
   opacity: 0.66;
 }
 
