@@ -7,9 +7,12 @@ from wtforms import IntegerField, FieldList, Form, StringField
 from wtforms.validators import DataRequired
 from wtforms_json import flatten_json, MultiDict
 
+from app import db
+from app.api.base.models import BaseModel
+
 
 class DataField(Field):
-    def process_formdata(self, valuelist:list):
+    def process_formdata(self, valuelist: list):
         setattr(self, 'data', valuelist.pop() if valuelist else None)
 
 
@@ -29,6 +32,12 @@ class FieldOperateForm(Form):
     value = DataField()
 
 
+class JoinForm(Form):
+    table = StringField(validators=[DataRequired()])
+    table_key = StringField()
+    key = StringField()
+
+
 class QueryForm(JSONForm):
     # 定义操作符及其对应的函数
     OPERATORS = {
@@ -44,17 +53,40 @@ class QueryForm(JSONForm):
         'not_in': ('notin_', lambda x: [int(v) for v in x] if isinstance(x, list) else [int(x)]),  # 不在列表中
     }
 
+    joins = FieldList(FormField(JoinForm))
     filters = FieldList(FormField(FieldOperateForm))
     orders = FieldList(FormField(FieldOperateForm))
 
-    def query_func(self, query: Query, model_cls=None):
+    def query_func(self, query: Query, model_cls: BaseModel):
+        tables = db.metadata.tables
+
+        # 联表查询
+        for join in self.joins:
+            table, table_key, key = join.table.data, join.table_key.data, join.key.data
+            if not tables.get(table):
+                continue
+            table_obj = tables.get(table)
+            if key and table_key:
+                query = query.join(table, getattr(model_cls, key) == table_obj.columns.get(table_key))
+            else:
+                query = query.join(table)
+
         # 应用筛选条件
         for filter in self.filters:
             field, operate, value = filter.field.data, filter.operate.data, filter.value.data
             if operate not in self.OPERATORS:  # 如果操作符不在 OPERATORS 字典中，则忽略此条件
                 continue
             func_name, value_transformer = self.OPERATORS[operate]
-            field_obj = getattr(model_cls, field)
+
+            field_parts = field.split('.')
+            if len(field_parts) == 1:
+                field_obj = getattr(model_cls, field_parts.pop())
+            elif len(field_parts) == 2:
+                [table, field_key] = field_parts
+                table_obj = tables.get(table)
+                field_obj = table_obj.columns.get(field_key)
+            else:
+                continue
 
             if func_name:
                 if value_transformer:
