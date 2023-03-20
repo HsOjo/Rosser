@@ -13,12 +13,10 @@ import {computed, onMounted, watch} from "vue";
 export default {
   name: "Title",
   setup() {
-    const isMac = store.getters.isMac;
+    const isMac = computed(() => store.getters.isMac);
     const slogan = computed(() => {
-      let slogan = 'A simple RSS Reader'
-      let subscription = store.getters.state.subscription
-      slogan = (subscription && subscription.title) || slogan
-      return slogan
+      let subscription = store.getters.query.subscription
+      return (subscription && subscription.title) || 'A simple RSS Reader'
     })
     const title = computed(() => {
       return `Rosser - ${slogan.value}`
@@ -36,7 +34,7 @@ export default {
     }
 
     function titleMouseDown(...args) {
-      if (isMac)
+      if (isMac.value)
         startDrag(...args)
     }
 

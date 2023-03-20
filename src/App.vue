@@ -9,7 +9,7 @@ import Sider from "@/components/Sider.vue";
 
 const axios = inject(AxiosInstanceKey)
 const is_loaded = ref(false)
-const isMac = computed(() => store.getters.platform === 'Darwin');
+const isMac = computed(() => store.getters.isMac);
 
 function waitBackend(callback) {
   axios.get('/').then(null, err => {

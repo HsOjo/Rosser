@@ -18,7 +18,7 @@ export default {
     Settings,
   },
   setup() {
-    const isMac = computed(() => store.getters.platform === 'Darwin');
+    const isMac = computed(() => store.getters.isMac);
     const settings = ref(null)
     return {
       settings,
