@@ -91,7 +91,7 @@ class QueryForm(JSONForm):
             func_name, value_transformer = self.OPERATORS[operate]
 
             field_obj = get_field_obj(field)
-            if not field_obj:
+            if field_obj is None:
                 continue
 
             if func_name:
@@ -104,7 +104,7 @@ class QueryForm(JSONForm):
             field, operate = order.field.data, order.operate.data
 
             field_obj = get_field_obj(field)
-            if not field_obj:
+            if field_obj is None:
                 continue
 
             if operate == 'desc':  # 降序排序
