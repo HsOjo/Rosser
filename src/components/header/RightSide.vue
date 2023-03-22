@@ -1,17 +1,10 @@
 <template>
   <a-dropdown :trigger="['click']">
     <IconButton class="hover-rotate">
-      <redo-outlined style="font-weight: bolder"/>
+      <sync-outlined style="font-weight: bolder"/>
     </IconButton>
     <template #overlay>
-      <a-menu>
-        <a-menu-item-group>
-          <template #title>抓取内容</template>
-          <a-menu-item>当前订阅</a-menu-item>
-          <a-menu-item>过期订阅</a-menu-item>
-          <a-menu-item>所有订阅</a-menu-item>
-        </a-menu-item-group>
-      </a-menu>
+      <CheckMenu :items="fetch_menu_items" @click="fetchClick"></CheckMenu>
     </template>
   </a-dropdown>
   <a-dropdown :trigger="['click']">
@@ -19,15 +12,7 @@
       <schedule-filled/>
     </IconButton>
     <template #overlay>
-      <a-menu>
-        <a-menu-item-group>
-          <template #title>标记已读</template>
-          <a-menu-item>全部</a-menu-item>
-          <a-menu-item>1 天前</a-menu-item>
-          <a-menu-item>3 天前</a-menu-item>
-          <a-menu-item>7 天前</a-menu-item>
-        </a-menu-item-group>
-      </a-menu>
+      <CheckMenu :items="read_menu_items"></CheckMenu>
     </template>
   </a-dropdown>
   <a-dropdown :trigger="['click']">
@@ -43,21 +28,7 @@
       <eye-filled/>
     </IconButton>
     <template #overlay>
-      <a-menu @click="viewClick">
-        <a-menu-item-group>
-          <template #title>筛选</template>
-          <a-menu-item :key="mode.key" v-for="mode in query_modes">
-            {{ mode.text }}
-          </a-menu-item>
-        </a-menu-item-group>
-        <a-menu-item key="show-hide">显示隐藏</a-menu-item>
-        <a-menu-item-group>
-          <template #title>排序</template>
-          <a-menu-item key="time-desc">时间降序</a-menu-item>
-          <a-menu-item key="time-asc">时间升序</a-menu-item>
-          <a-menu-item key="favourite-first">收藏优先</a-menu-item>
-        </a-menu-item-group>
-      </a-menu>
+      <CheckMenu :items="view_menu_items" @click="viewClick"></CheckMenu>
     </template>
   </a-dropdown>
   <IconButton class="hover-rotate"
@@ -68,55 +39,136 @@
 </template>
 
 <script>
-import {BellFilled, EyeFilled, RedoOutlined, ScheduleFilled, SettingFilled} from "@ant-design/icons-vue";
+import {
+  BellFilled,
+  CarryOutOutlined,
+  CheckOutlined,
+  ContainerOutlined,
+  ExceptionOutlined,
+  EyeFilled,
+  EyeOutlined,
+  FileDoneOutlined,
+  FileSearchOutlined,
+  FilterOutlined,
+  OrderedListOutlined,
+  RedoOutlined,
+  ScheduleFilled,
+  SettingFilled,
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+  StarFilled,
+  StarOutlined,
+  SyncOutlined,
+} from "@ant-design/icons-vue";
 import store from "@/plugins/store";
 import {inject} from "vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 import IconButton from "@/components/header/IconButton.vue";
+import CheckMenu from "@/components/common/CheckMenu.vue";
 
 export default {
   name: "RightSide",
-  components: {IconButton, BellFilled, EyeFilled, RedoOutlined, ScheduleFilled, SettingFilled},
+  components: {
+    CheckMenu,
+    IconButton,
+    BellFilled,
+    EyeFilled,
+    RedoOutlined,
+    ScheduleFilled,
+    SettingFilled,
+    CheckOutlined,
+    SyncOutlined,
+  },
   setup() {
     const isMac = store.getters.isMac
     const axios = inject(AxiosInstanceKey)
-    const query_modes = [
-      {key: 'all', text: '查看所有'},
-      {key: 'read-only', text: '仅已读'},
-      {key: 'favourite-only', text: '仅收藏'},
+    const view_menu_items = [
+      {key: 'filters', title: '筛选', items: [], select: true, icon: FilterOutlined},
+      {group: 'filters', key: 'all', title: '查看所有', icon: ContainerOutlined, checked: true},
+      {group: 'filters', key: 'read-only', title: '仅已读', icon: CarryOutOutlined},
+      {group: 'filters', key: 'favourite-only', title: '仅收藏', icon: StarOutlined},
+      {group: 'filters'},
+      {group: 'filters', key: 'show-hide', title: '显示隐藏', select: null, icon: EyeOutlined},
+      {key: 'orders', title: '排序', items: [], icon: OrderedListOutlined},
+      {
+        group: 'orders',
+        select: 'time-order',
+        key: 'time-desc',
+        value: 'desc',
+        title: '时间降序',
+        icon: SortDescendingOutlined,
+        checked: true,
+      },
+      {
+        group: 'orders',
+        select: 'time-order',
+        key: 'time-asc',
+        value: 'asc',
+        title: '时间升序',
+        icon: SortAscendingOutlined,
+      },
+      {group: 'orders'},
+      {group: 'orders', key: 'favourite-first', title: '收藏优先', icon: StarFilled},
+    ]
+    const read_menu_items = [
+      {key: 'read', title: '标记已读', items: [], trigger: true, icon: CarryOutOutlined},
+      {group: 'read', key: '1-days-before', title: '1⃣️ 天前发布'},
+      {group: 'read', key: '3-days-before', title: '3⃣️ 天前发布'},
+      {group: 'read', key: '7-days-before', title: '7⃣️ 天前发布'},
+      {group: 'read', key: 'all', title: '💾 全部文章'},
+    ]
+    const fetch_menu_items = [
+      {key: 'refresh', title: '重新加载', checkable: false, icon: RedoOutlined},
+      {},
+      {key: 'fetch', title: '抓取订阅', items: [], trigger: true, icon: CarryOutOutlined},
+      {group: 'fetch', key: 'current', title: '当前订阅', icon: FileSearchOutlined},
+      {group: 'fetch', key: 'expires', title: '过期订阅', icon: ExceptionOutlined},
+      {group: 'fetch', key: 'all', title: '所有订阅', icon: FileDoneOutlined},
     ]
 
-    function fetchSubscriptions() {
-      let subscription = store.getters.query.subscription
-      let subscription_id = subscription && subscription.id
-      if (subscription_id)
-        axios.post('/api/subscription/fetch', {ids: [subscription_id]})
-      else
+    function fetchClick({key}) {
+      if (key === 'current') {
+        let subscription = store.getters.query.subscription
+        let subscription_id = subscription && subscription.id
+        if (subscription_id)
+          axios.post('/api/subscription/fetch', {ids: [subscription_id]})
+      } else if (key === 'expires') {
+
+      } else if (key === 'all') {
         axios.post('/api/subscription/fetch-all')
+      } else if (key === 'refresh') {
+        store.commit('updateQuery', {refresh: true})
+      }
     }
 
     function toggleSettingsVisible() {
       store.commit('updateState', {settings_visible: !store.getters.state.settings_visible})
     }
 
-    function viewClick({key}) {
-      let query = store.getters.query
-
+    function viewClick({key, select, value, checked}) {
       let diff = {}
-      if (query_modes.map(x => x.key).indexOf(key) !== -1)
-        diff.mode = key
-      else if (key === 'show-hide')
-        diff.show_hide = !query.show_hide
+      if (select === 'time-order')
+        diff.time_order = value
+      else if (select === 'filters')
+        diff.mode = value
+      else {
+        if (key === 'show-hide')
+          diff.show_hide = checked
+        else if (key === 'favourite-first')
+          diff.favourite_first = checked
+      }
 
       store.commit('updateQuery', diff)
     }
 
     return {
       isMac,
-      query_modes,
-      fetchSubscriptions,
+      view_menu_items,
+      read_menu_items,
+      fetch_menu_items,
       toggleSettingsVisible,
       viewClick,
+      fetchClick,
     }
   }
 }

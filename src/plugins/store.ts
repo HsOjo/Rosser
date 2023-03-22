@@ -36,8 +36,10 @@ const store = createStore({
     updateQuery(state, payload) {
       let query = lodash.cloneDeep(state.query)
       Object.assign(query, payload)
-      if (!lodash.isEqual(query, state.query))
+      if (!lodash.isEqual(query, state.query)) {
+        delete query['refresh']
         state.query = query
+      }
     },
   },
   getters: {
