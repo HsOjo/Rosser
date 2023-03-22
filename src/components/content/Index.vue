@@ -63,7 +63,7 @@ function checkLoad() {
   let container_height = target.offsetHeight
   let scroll_height = target.scrollHeight
 
-  return scroll_height - scroll_top - container_height < 50
+  return scroll_height <= container_height || scroll_height - scroll_top - container_height < 50
 }
 
 function loadMore() {
@@ -78,8 +78,10 @@ function loadMore() {
 }
 
 function autoLoad() {
-  if (checkLoad() && !loading.value)
-    loadMore().then(autoLoad)
+  setTimeout(() => {
+    if (checkLoad() && !loading.value)
+      loadMore().then(autoLoad)
+  }, 100)
 }
 
 onMounted(autoLoad)
