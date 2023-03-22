@@ -18,6 +18,8 @@ const store = createStore({
         mode: null,
         show_hide: false,
         subscription: null,
+        time_order: 'desc',
+        favourite_first: false,
       },
     }
   },

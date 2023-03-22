@@ -60,6 +60,18 @@ class QueryForm(JSONForm):
     def query_func(self, query: Query, model_cls: BaseModel):
         tables = db.metadata.tables
 
+        def get_field_obj(field: str):
+            field_parts = field.split('.')
+            if len(field_parts) == 1:
+                field_obj = getattr(model_cls, field_parts.pop())
+            elif len(field_parts) == 2:
+                [table, field_key] = field_parts
+                table_obj = tables.get(table)
+                field_obj = table_obj.columns.get(field_key)
+            else:
+                field_obj = None
+            return field_obj
+
         # 联表查询
         for join in self.joins:
             table, table_key, key = join.table.data, join.table_key.data, join.key.data
@@ -78,14 +90,8 @@ class QueryForm(JSONForm):
                 continue
             func_name, value_transformer = self.OPERATORS[operate]
 
-            field_parts = field.split('.')
-            if len(field_parts) == 1:
-                field_obj = getattr(model_cls, field_parts.pop())
-            elif len(field_parts) == 2:
-                [table, field_key] = field_parts
-                table_obj = tables.get(table)
-                field_obj = table_obj.columns.get(field_key)
-            else:
+            field_obj = get_field_obj(field)
+            if not field_obj:
                 continue
 
             if func_name:
@@ -96,10 +102,15 @@ class QueryForm(JSONForm):
         # 应用排序条件
         for order in self.orders:
             field, operate = order.field.data, order.operate.data
+
+            field_obj = get_field_obj(field)
+            if not field_obj:
+                continue
+
             if operate == 'desc':  # 降序排序
-                query = query.order_by(desc(getattr(model_cls, field)))
+                query = query.order_by(desc(field_obj))
             elif operate == 'asc':  # 升序排序
-                query = query.order_by(asc(getattr(model_cls, field)))
+                query = query.order_by(asc(field_obj))
 
         return query
 

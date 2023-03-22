@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, inject, onMounted, ref, watch} from "vue";
+import {computed, inject, nextTick, onMounted, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
 import Article from "@/components/content/Article.vue";
 import store from "@/plugins/store";
@@ -18,6 +18,7 @@ const query = computed(() => store.getters.query)
 const subscription = computed(() => store.getters.query.subscription)
 const subscriptionId = computed(() => subscription.value && subscription.value.id)
 const noMore = computed(() => articles.value && articles.value.length >= total.value)
+
 const filters = computed(() => {
   let _query = query.value
   let result = []
@@ -32,6 +33,17 @@ const filters = computed(() => {
   return result
 })
 
+const orders = computed(() => {
+  let _query = query.value
+  let result = []
+  if (_query.time_order)
+    result.push({field: 'publish_time', operate: _query.time_order})
+  if (_query.favourite_first)
+    result.push({field: 'article_state.is_favourite', operate: 'desc'})
+
+  return result
+})
+
 watch(query, () => {
   page.value = 0
   total.value = null
@@ -39,9 +51,9 @@ watch(query, () => {
   autoLoad()
 })
 
-function getPagiArticles(page_ = page.value, per_page_ = per_page.value, filters_ = filters.value) {
+function getPagiArticles(page_ = page.value, per_page_ = per_page.value, filters_ = filters.value, orders_ = orders.value) {
   return axios.post(`/api/subscription/article/paginate/${per_page_}/${page_}`,
-      {filters: filters_}
+      {filters: filters_, orders: orders_}
   ).then(
       resp => {
         if (filters_ != filters.value)
