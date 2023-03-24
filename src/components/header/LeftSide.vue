@@ -8,8 +8,9 @@
 <script>
 import {MenuFoldOutlined, MenuUnfoldOutlined} from "@ant-design/icons-vue";
 import {computed} from "vue";
-import store from "@/plugins/store";
+import {useStore} from "vuex";
 import IconButton from "@/components/header/IconButton.vue";
+
 
 export default {
   components: {
@@ -19,6 +20,7 @@ export default {
   },
   name: "LeftSide",
   setup(props, {emit}) {
+    const store = useStore()
     const sider_collapsed = computed(() => store.getters.state.sider_collapsed)
 
     function toggleCollapse() {

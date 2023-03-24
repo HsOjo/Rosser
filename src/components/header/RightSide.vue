@@ -60,12 +60,11 @@ import {
   StarOutlined,
   SyncOutlined,
 } from "@ant-design/icons-vue";
-import store from "@/plugins/store";
-import {inject} from "vue";
-import {AxiosInstanceKey} from "@/plugins/axios";
+import {useStore} from "vuex";
 import IconButton from "@/components/header/IconButton.vue";
 import CheckMenu from "@/components/common/CheckMenu.vue";
 import api from "@/utils/api";
+
 
 export default {
   name: "RightSide",
@@ -81,8 +80,8 @@ export default {
     SyncOutlined,
   },
   setup() {
+    const store = useStore()
     const isMac = store.getters.isMac
-    const axios = inject(AxiosInstanceKey)
     const view_menu_items = [
       {key: 'filters', title: '筛选', items: [], select: true, icon: FilterOutlined},
       {group: 'filters', key: 'all', title: '查看所有', icon: ContainerOutlined, checked: true},

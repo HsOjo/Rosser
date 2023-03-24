@@ -1,8 +1,8 @@
-import {inject} from "vue";
-import {AxiosInstanceKey} from "@/plugins/axios";
+import {AxiosInstance} from "axios";
 
+let axios: AxiosInstance = null
 const api = {
-  axios: inject(AxiosInstanceKey),
+  axios,
   test() {
     return api.axios.get('/')
   },
@@ -37,6 +37,14 @@ const api = {
     all(filters = null, orders = null) {
       return api.axios.post(
         `/api/category/all`,
+        {filters, orders}
+      )
+    }
+  },
+  site: {
+    all(filters = null, orders = null) {
+      return api.axios.post(
+        `/api/site/all`,
         {filters, orders}
       )
     }

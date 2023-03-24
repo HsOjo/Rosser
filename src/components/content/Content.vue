@@ -7,9 +7,10 @@
 
 <script>
 import {computed, ref} from "vue";
-import store from "@/plugins/store";
+import {useStore} from "vuex";
 import Index from "@/components/content/Index.vue";
 import Settings from "@/components/content/Settings.vue";
+
 
 export default {
   name: "Content",
@@ -18,6 +19,7 @@ export default {
     Settings,
   },
   setup() {
+    const store = useStore()
     const isMac = computed(() => store.getters.isMac);
     const settings = ref(null)
     return {

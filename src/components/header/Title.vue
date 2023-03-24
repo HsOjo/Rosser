@@ -5,14 +5,16 @@
 </template>
 
 <script lang="ts">
-import store from "@/plugins/store";
+import {useStore} from "vuex";
 import {startDrag} from "@/utils/drag.js";
 import * as pywebview from "@/utils/pywebview.js";
 import {computed, onMounted, watch} from "vue";
 
+
 export default {
   name: "Title",
   setup() {
+    const store = useStore()
     const isMac = computed(() => store.getters.isMac);
     const slogan = computed(() => {
       let subscription = store.getters.query.subscription

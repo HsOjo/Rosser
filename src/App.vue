@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import {computed, inject, ref} from "vue";
+import {computed, inject, ref, watch} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
-import store from "@/plugins/store";
 import {AxiosInstanceKey} from "@/plugins/axios";
-import Header from "@/components/Header.vue";
-import Content from "@/components/Content.vue";
-import Sider from "@/components/Sider.vue";
+import Header from "@/components/header/Header.vue";
+import Content from "@/components/content/Content.vue";
+import Menu from "@/components/menu/Menu.vue";
 import api from "@/utils/api";
+import {useStore} from "vuex";
 
 api.axios = inject(AxiosInstanceKey)
-const is_loaded = ref(false)
+const store = useStore()
+const backend_loaded = ref(false)
 const isMac = computed(() => store.getters.isMac);
 
 function waitBackend(callback) {
@@ -27,7 +28,7 @@ let timer = setInterval(() => {
     store.commit('initialize')
     api.axios.defaults.baseURL = store.getters.backendURL
     waitBackend(() => {
-      is_loaded.value = true
+      backend_loaded.value = true
     })
     pywebview.api.get_properties().then(
         properties => {
@@ -42,15 +43,26 @@ let timer = setInterval(() => {
     )
   })
 }, 100)
+
+watch(backend_loaded, (nv) => {
+  if (nv) {
+    api.category.all().then(
+        resp => store.commit('updateState', {categories: resp.data}))
+    api.subscription.all().then(
+        resp => store.commit('updateState', {subscriptions: resp.data}))
+    api.site.all().then(
+        resp => store.commit('updateState', {sites: resp.data}))
+  }
+})
 </script>
 <template>
-  <template v-if="is_loaded">
+  <template v-if="backend_loaded">
     <transition enter-active-class="animate__animated animate__fadeInDown" appear>
       <Header></Header>
     </transition>
     <div class="parent-size body" :class="{'body-border': isMac}">
       <transition enter-active-class="animate__animated animate__fadeInLeft" appear>
-        <Sider ref="sider"></Sider>
+        <Menu></Menu>
       </transition>
       <transition enter-active-class="animate__animated animate__zoomIn" appear>
         <Content ref="content"></Content>

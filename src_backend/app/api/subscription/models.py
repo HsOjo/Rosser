@@ -1,6 +1,5 @@
 from app import db
 from app.api.base.models import BaseModel
-from app.common import model_to_dict
 
 
 class Subscription(BaseModel):
@@ -9,7 +8,6 @@ class Subscription(BaseModel):
     title = db.Column(db.String, index=True)
     description = db.Column(db.String)
     url = db.Column(db.String, index=True)
-    fetch_time = db.Column(db.DateTime)
 
     @property
     def category(self):
@@ -20,10 +18,3 @@ class Subscription(BaseModel):
     def site(self):
         from app.api.site.models import Site
         return Site.query_by_id(self.site_id)
-
-    @property
-    def dict(self):
-        return dict(
-            **model_to_dict(self),
-            site=model_to_dict(self.site),
-        )

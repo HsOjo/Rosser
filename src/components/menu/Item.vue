@@ -1,7 +1,7 @@
 <template>
   <a-menu-item :key="subscription.id">
     <template #icon>
-      <img :src="`${backendURL()}/api/basic/file/download/${subscription.site.favicon_id}`"
+      <img :src="`${backendURL}/api/basic/file/download/${subscription.site.favicon_id}`"
            v-if="subscription.site && subscription.site.favicon_id"
            class="menu-icon" alt="icon"/>
       <bars-outlined v-else/>
@@ -28,11 +28,9 @@ export default {
   props: {
     subscription: {type: Object}
   },
-  setup() {
-    return {
-      ...mapGetters(['backendURL'])
-    }
-  }
+  computed:{
+    ...mapGetters(['backendURL'])
+  },
 }
 </script>
 

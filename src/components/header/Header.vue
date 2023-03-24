@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import store from "@/plugins/store";
+import {useStore} from "vuex";
 import {computed} from "vue";
 import ControlArea from "@/components/header/ControlArea.vue";
 import LeftSide from "@/components/header/LeftSide.vue";
 import Title from "@/components/header/Title.vue";
 import RightSide from "@/components/header/RightSide.vue";
 
+const store = useStore()
 const isMac = computed(() => store.getters.isMac)
 </script>
 

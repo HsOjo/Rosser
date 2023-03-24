@@ -13,6 +13,9 @@ const store = createStore({
       STATE: {
         sider_collapsed: false,
         settings_visible: false,
+        categories: [],
+        subscriptions: [],
+        sites: [],
       },
       query: {
         mode: null,

@@ -1,12 +1,12 @@
 <script lang="ts">
 import {DatabaseFilled, RobotFilled} from "@ant-design/icons-vue";
-import {computed, inject, ref} from "vue";
+import {ref} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
 import About from "@/components/content/settings/About.vue";
 import Subscriptions from "@/components/content/settings/Subscriptions.vue";
-import {AxiosInstanceKey} from "@/plugins/axios";
-import store from "@/plugins/store";
+import {mapGetters, useStore} from "vuex";
 import api from "@/utils/api";
+
 
 export default {
   components: {
@@ -15,9 +15,12 @@ export default {
     DatabaseFilled,
     RobotFilled,
   },
+  computed: {
+    ...mapGetters(['state'])
+  },
   setup(props) {
-    const axios = inject(AxiosInstanceKey)
-    const settings_visible = computed(() => store.getters.state.settings_visible)
+const store = useStore()
+
     const tab_key = ref('subscriptions')
 
     function onClose() {
@@ -37,7 +40,6 @@ export default {
     return {
       pywebview,
       tab_key,
-      settings_visible,
       onClose,
     }
   }
@@ -49,27 +51,37 @@ export default {
       title="设定"
       placement="right"
       :closable="true"
-      :visible="settings_visible"
+      :visible="state.settings_visible"
       :get-container="false"
       :mask="false"
       size="large"
-      style="position: absolute"
+      style="position: absolute;"
       @close="onClose"
   >
     <a-tabs v-model:activeKey="tab_key" tab-position="right">
       <a-tab-pane key="subscriptions">
         <template #tab>
-        <span>
-          <database-filled/> 订阅源
-        </span>
+          <database-filled/>
+          订阅源
         </template>
         <Subscriptions></Subscriptions>
       </a-tab-pane>
+      <a-tab-pane key="categories">
+        <template #tab>
+          <database-filled/>
+          分类
+        </template>
+      </a-tab-pane>
+      <a-tab-pane key="sites">
+        <template #tab>
+          <database-filled/>
+          站点规则
+        </template>
+      </a-tab-pane>
       <a-tab-pane key="about">
         <template #tab>
-        <span>
-          <robot-filled/> 关于
-        </span>
+          <robot-filled/>
+          关于
         </template>
         <About></About>
       </a-tab-pane>

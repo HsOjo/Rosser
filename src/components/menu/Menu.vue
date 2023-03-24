@@ -1,12 +1,12 @@
 <template>
   <a-menu
       :style="{
-        'min-width': sider_collapsed ? '80px' : '256px',
-        'width': sider_collapsed ? '80px' : 'max-content',
+        'min-width': state.sider_collapsed ? '80px' : '256px',
+        'width': state.sider_collapsed ? '80px' : 'max-content',
       }"
       class="menu" mode="inline"
       @click="handleClick"
-      :inline-collapsed="sider_collapsed"
+      :inline-collapsed="state.sider_collapsed"
   >
     <a-menu-item>
       <template #icon>
@@ -29,11 +29,11 @@
 </template>
 
 <script lang="ts">
-import Subscription from "@/components/sider/Subscription.vue";
+import Subscription from "@/components/menu/Item.vue";
 import {BarsOutlined, HomeOutlined, NotificationOutlined} from "@ant-design/icons-vue";
-import {computed} from "vue";
 import lodash from "lodash";
-import store from "@/plugins/store";
+import {mapGetters, useStore} from "vuex";
+import {useMappings} from "@/utils/data";
 
 export default {
   name: "Menu",
@@ -43,18 +43,14 @@ export default {
     NotificationOutlined,
     BarsOutlined,
   },
-  props: {
-    categories: {type: Array<Object>},
-    subscriptions: {type: Array<Object>},
-  },
-  setup(props) {
-    const sider_collapsed = computed(() => store.getters.state.sider_collapsed)
-    const subscriptionsTree = computed(() => {
+  computed: {
+    ...mapGetters(['state']),
+    subscriptionsTree() {
       let category_default = {id: null, title: '（未分类）'}
-      let _categories = lodash.cloneDeep(props.categories)
+      let _categories = lodash.cloneDeep(this.state.categories)
       _categories.push(category_default)
       let _categories_mapping = {}
-      let _subscriptions = lodash.cloneDeep(props.subscriptions)
+      let _subscriptions = lodash.cloneDeep(this.state.subscriptions)
 
       _categories.map(category => {
         _categories_mapping[category.id] = category
@@ -62,29 +58,23 @@ export default {
       })
 
       _subscriptions.map(subscription => {
+        subscription.site = this.sitesMapping[subscription.site_id]
         let category = _categories_mapping[subscription.category_id]
         category.subscriptions.push(subscription)
       })
 
       return _categories
-    })
-    const subscriptionsMapping = computed(() => {
-      let mapping = {}
-      props.subscriptions.map(subscription => mapping[subscription.id] = subscription)
-      return mapping
-    })
-
-    function handleClick({key}) {
-      store.commit('updateQuery', {subscription: subscriptionsMapping.value[key]})
-    }
-
-    return {
-      sider_collapsed,
-      handleClick,
-      subscriptionsTree,
-      subscriptionsMapping,
+    },
+  },
+  methods: {
+    handleClick({key}) {
+      this.store.commit('updateQuery', {subscription: this.subscriptionsMapping[key]})
     }
   },
+  setup() {
+    const store = useStore()
+    return {store, ...useMappings(store)}
+  }
 }
 </script>
 

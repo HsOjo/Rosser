@@ -2,9 +2,10 @@
 import {computed, onMounted, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
 import Article from "@/components/content/Article.vue";
-import store from "@/plugins/store";
 import api from "@/utils/api";
+import {useStore} from "vuex";
 
+const store = useStore()
 const scroll_container = ref()
 const loading_id = ref(0)
 const page = ref(0)

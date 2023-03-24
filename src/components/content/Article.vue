@@ -13,7 +13,7 @@
 <script lang="ts">
 import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons-vue';
 import {defineComponent, ref} from 'vue';
-import store from "@/plugins/store";
+import {useStore} from "vuex";
 
 
 export default defineComponent({
@@ -28,6 +28,7 @@ export default defineComponent({
     thumb_id: {type: Number, default: null},
   },
   setup(props) {
+    const store = useStore()
     const no_thumb = ref(false)
     return {no_thumb, backendURL: store.getters.backendURL}
   }
@@ -49,7 +50,7 @@ export default defineComponent({
   background: rgba(255, 255, 255, 0.5);
 }
 
-.thumb-img{
+.thumb-img {
   max-height: 192px;
   object-fit: cover;
 }
