@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import {computed, inject, nextTick, onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
 import Article from "@/components/content/Article.vue";
 import store from "@/plugins/store";
-import {AxiosInstanceKey} from "@/plugins/axios";
+import api from "@/utils/api";
 
-const axios = inject(AxiosInstanceKey)
 const scroll_container = ref()
 const loading_id = ref(0)
 const page = ref(0)
@@ -52,9 +51,9 @@ watch(query, () => {
 })
 
 function getPagiArticles(page_ = page.value, per_page_ = per_page.value, filters_ = filters.value, orders_ = orders.value) {
-  return axios.post(`/api/subscription/article/paginate/${per_page_}/${page_}`,
-      {filters: filters_, orders: orders_}
-  ).then(
+  return api.article.paginate({
+    page: page_, per_page: per_page_, filters: filters_, orders: orders_
+  }).then(
       resp => {
         if (filters_ != filters.value)
           return []

@@ -6,6 +6,7 @@ import About from "@/components/content/settings/About.vue";
 import Subscriptions from "@/components/content/settings/Subscriptions.vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 import store from "@/plugins/store";
+import api from "@/utils/api";
 
 export default {
   components: {
@@ -28,7 +29,7 @@ export default {
           0, '', false,
           null, ['OPML Files (*.opml)']).then(
           (paths) => {
-            axios.post('/api/basic/import-opml', {path: paths.pop()})
+            api.basic.importOPML(paths.pop())
           }
       )
     }

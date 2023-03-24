@@ -65,6 +65,7 @@ import {inject} from "vue";
 import {AxiosInstanceKey} from "@/plugins/axios";
 import IconButton from "@/components/header/IconButton.vue";
 import CheckMenu from "@/components/common/CheckMenu.vue";
+import api from "@/utils/api";
 
 export default {
   name: "RightSide",
@@ -131,11 +132,11 @@ export default {
         let subscription = store.getters.query.subscription
         let subscription_id = subscription && subscription.id
         if (subscription_id)
-          axios.post('/api/subscription/fetch', {ids: [subscription_id]})
+          api.subscription.fetch([subscription_id])
       } else if (key === 'expires') {
 
       } else if (key === 'all') {
-        axios.post('/api/subscription/fetch-all')
+        api.subscription.fetchAll()
       } else if (key === 'refresh') {
         store.commit('updateQuery', {refresh: true})
       }

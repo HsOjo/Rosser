@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import {computed, inject, ref} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
 import store from "@/plugins/store";
@@ -6,13 +6,14 @@ import {AxiosInstanceKey} from "@/plugins/axios";
 import Header from "@/components/Header.vue";
 import Content from "@/components/Content.vue";
 import Sider from "@/components/Sider.vue";
+import api from "@/utils/api";
 
-const axios = inject(AxiosInstanceKey)
+api.axios = inject(AxiosInstanceKey)
 const is_loaded = ref(false)
 const isMac = computed(() => store.getters.isMac);
 
 function waitBackend(callback) {
-  axios.get('/').then(null, err => {
+  api.test().then(null, err => {
     if (err && err.response && err.response.status)
       callback()
     else
@@ -24,7 +25,7 @@ let timer = setInterval(() => {
   pywebview.init(() => {
     clearInterval(timer)
     store.commit('initialize')
-    axios.defaults.baseURL = store.getters.backendURL
+    api.axios.defaults.baseURL = store.getters.backendURL
     waitBackend(() => {
       is_loaded.value = true
     })
