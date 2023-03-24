@@ -42,10 +42,10 @@ const api = {
     }
   },
   article: {
-    paginate({page, per_page, filters, orders}) {
+    paginate({page, per_page, filters, orders, joins}) {
       return api.axios.post(
         `/api/subscription/article/paginate/${per_page}/${page}`,
-        {filters, orders}
+        {filters, orders, joins}
       )
     },
   }

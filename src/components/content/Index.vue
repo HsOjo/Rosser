@@ -52,7 +52,8 @@ watch(query, () => {
 
 function getPagiArticles(page_ = page.value, per_page_ = per_page.value, filters_ = filters.value, orders_ = orders.value) {
   return api.article.paginate({
-    page: page_, per_page: per_page_, filters: filters_, orders: orders_
+    page: page_, per_page: per_page_, filters: filters_, orders: orders_,
+    joins: [{table: 'article_state', outer: true}],
   }).then(
       resp => {
         if (filters_ != filters.value)

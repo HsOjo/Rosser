@@ -2,7 +2,7 @@ from flask import request
 from flask_sqlalchemy.query import Query
 from flask_wtf import FlaskForm
 from sqlalchemy import desc, asc
-from wtforms import Field, FormField
+from wtforms import Field, FormField, BooleanField
 from wtforms import IntegerField, FieldList, Form, StringField
 from wtforms.validators import DataRequired
 from wtforms_json import flatten_json, MultiDict
@@ -36,6 +36,7 @@ class JoinForm(Form):
     table = StringField(validators=[DataRequired()])
     table_key = StringField()
     key = StringField()
+    outer = BooleanField()
 
 
 class QueryForm(JSONForm):
@@ -75,13 +76,14 @@ class QueryForm(JSONForm):
         # 联表查询
         for join in self.joins:
             table, table_key, key = join.table.data, join.table_key.data, join.key.data
-            if not tables.get(table):
+            if tables.get(table) is None:
                 continue
             table_obj = tables.get(table)
+            join_func = query.outerjoin if join.outer.data else query.join
             if key and table_key:
-                query = query.join(table, getattr(model_cls, key) == table_obj.columns.get(table_key))
+                query = join_func(table_obj, getattr(model_cls, key) == table_obj.columns.get(table_key))
             else:
-                query = query.join(table)
+                query = join_func(table_obj)
 
         # 应用筛选条件
         for filter in self.filters:
