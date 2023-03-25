@@ -19,4 +19,4 @@ def download(self: 'ContextTask', id):
         resp = requests.get(file.url)
         fs.edit(file.id, data=base64.b64encode(resp.content).decode())
     except:
-        self.retry(eta=10)
+        self.retry(countdown=10)

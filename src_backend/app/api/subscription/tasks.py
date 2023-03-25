@@ -40,7 +40,7 @@ def fetch_one(self: 'ContextTask', id):
     try:
         feed = feedparser.parse(subscription.url)
     except:
-        raise self.retry(eta=10)
+        raise self.retry(countdown=10)
 
     for entry in feed.entries:
         entry = entry.copy()  # type: dict
