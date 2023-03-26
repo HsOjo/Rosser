@@ -42,6 +42,11 @@ const api = {
     }
   },
   site: {
+    fetch(id) {
+      return api.axios.post(
+        `/api/site/fetch/${id}`,
+      )
+    },
     all(filters = null, orders = null) {
       return api.axios.post(
         `/api/site/all`,
