@@ -1,25 +1,31 @@
 <script lang="ts">
-import {DatabaseFilled, RobotFilled} from "@ant-design/icons-vue";
+import {AppstoreFilled, DatabaseFilled, EnvironmentFilled, GiftFilled} from "@ant-design/icons-vue";
 import {ref} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
 import About from "@/components/content/settings/About.vue";
 import Subscriptions from "@/components/content/settings/Subscriptions.vue";
 import {mapGetters, useStore} from "vuex";
 import api from "@/utils/api";
+import Categories from "@/components/content/settings/Categories.vue";
+import Sites from "@/components/content/settings/Sites.vue";
 
 
 export default {
   components: {
     Subscriptions,
+    Categories,
+    Sites,
     About,
     DatabaseFilled,
-    RobotFilled,
+    GiftFilled,
+    EnvironmentFilled,
+    AppstoreFilled,
   },
   computed: {
     ...mapGetters(['state'])
   },
   setup(props) {
-const store = useStore()
+    const store = useStore()
 
     const tab_key = ref('subscriptions')
 
@@ -68,19 +74,21 @@ const store = useStore()
       </a-tab-pane>
       <a-tab-pane key="categories">
         <template #tab>
-          <database-filled/>
+          <appstore-filled/>
           分类
         </template>
+        <Categories></Categories>
       </a-tab-pane>
       <a-tab-pane key="sites">
         <template #tab>
-          <database-filled/>
-          站点规则
+          <environment-filled/>
+          站点
         </template>
+        <Sites></Sites>
       </a-tab-pane>
       <a-tab-pane key="about">
         <template #tab>
-          <robot-filled/>
+          <gift-filled/>
           关于
         </template>
         <About></About>
