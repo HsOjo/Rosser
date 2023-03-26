@@ -50,8 +50,8 @@ class BaseService:
 
     @with_commit
     def edit(self, id, query_func: 'QueryFunc' = None, **kwargs) -> 'int':
-        return self.query(query_func).filter(self.model_cls.id == id).update(kwargs)
+        return self.query(func=query_func).filter(self.model_cls.id == id).update(kwargs)
 
     @with_commit
     def delete(self, *ids, query_func: 'QueryFunc' = None) -> 'int':
-        return self.query(query_func).filter(self.model_cls.id.in_(ids)).delete(synchronize_session=False)
+        return self.query(func=query_func).filter(self.model_cls.id.in_(ids)).delete(synchronize_session=False)
