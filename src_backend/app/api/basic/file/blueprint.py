@@ -1,5 +1,6 @@
 from flask import abort, request, Response
 
+from . import tasks
 from .models import File
 from .service import FileService
 from ...base.blueprint import BaseBlueprint
@@ -18,6 +19,7 @@ class Blueprint(BaseBlueprint):
         file = self.service.get(id)  # type: File
         data = file.raw_data
         if not data:
+            tasks.download.delay(id)
             abort(404)
         return Response(data)
 
