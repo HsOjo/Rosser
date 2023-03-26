@@ -16,7 +16,7 @@ def download(self: 'ContextTask', id):
         return
 
     try:
-        resp = requests.get(file.url)
+        resp = requests.get(file.url, headers={'User-Agent': 'Mozilla/5.0'})
         fs.edit(file.id, data=base64.b64encode(resp.content).decode())
     except:
         self.retry(countdown=10)

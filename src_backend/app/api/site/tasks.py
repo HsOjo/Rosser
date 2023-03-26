@@ -16,7 +16,7 @@ def fetch_site(id):
     if not site:
         return
 
-    resp = requests.get(site.url)
+    resp = requests.get(site.url, headers={'User-Agent': 'Mozilla/5.0'})
     bs = BeautifulSoup(resp.content, 'html.parser')
 
     title = getattr(bs.title, 'string', None)
