@@ -1,5 +1,5 @@
 <template>
-  <a-card hoverable class="card">
+  <a-card hoverable class="card" @click="visible = true">
     <template #cover>
       <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
            v-if="thumb_id && !no_thumb"
@@ -8,13 +8,18 @@
       <div class="card-title">{{ title }}</div>
     </template>
   </a-card>
+  <a-modal v-model:visible="visible" width="80%" :title="title" style="top: 50px"
+           body-style="padding: 0; overflow-y: scroll; max-height: calc(100vh - 200px)">
+    <div v-html="truthSummary" class="content"></div>
+  </a-modal>
 </template>
 
 <script lang="ts">
 import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons-vue';
 import {defineComponent, ref} from 'vue';
-import {useStore} from "vuex";
-
+import {mapGetters} from "vuex";
+import api from "@/utils/api";
+import DOMPurify from "dompurify"
 
 export default defineComponent({
   components: {
@@ -27,10 +32,21 @@ export default defineComponent({
     summary: {type: String, default: '无摘要'},
     thumb_id: {type: Number, default: null},
   },
+  computed: {
+    ...mapGetters(['backendURL']),
+    truthSummary() {
+      let summary = DOMPurify.sanitize(this.summary)
+      summary = summary.replaceAll('$file@', api.url('api/basic/file/download/'))
+      return summary
+    }
+  },
   setup(props) {
-    const store = useStore()
     const no_thumb = ref(false)
-    return {no_thumb, backendURL: store.getters.backendURL}
+    const visible = ref(false)
+    return {
+      no_thumb,
+      visible
+    }
   }
 });
 </script>
@@ -54,4 +70,20 @@ export default defineComponent({
   max-height: 192px;
   object-fit: cover;
 }
+
+.content {
+  padding: 32px;
+  height: fit-content;
+}
+
+.content >>> img {
+  max-width: 80%;
+  max-height: 50vh;
+  object-fit: contain;
+}
+
+.content >>> span {
+  display: inline-block;
+}
+
 </style>

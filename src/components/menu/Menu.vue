@@ -17,7 +17,7 @@
     <template v-for="category in subscriptionsTree">
       <a-sub-menu
           :key="`category-${category.id}`"
-          v-if="category && category.subscriptions.length">
+          v-if="category && category.subscriptions && category.subscriptions.length">
         <template #icon>
           <NotificationOutlined/>
         </template>
@@ -92,7 +92,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-/deep/ .ant-menu.ant-menu-inline > .ant-menu-item {
+>>> .ant-menu.ant-menu-inline > .ant-menu-item {
   height: 32px;
   margin: 0;
 }

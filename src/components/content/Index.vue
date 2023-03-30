@@ -143,7 +143,7 @@ onMounted(autoLoad)
   justify-content: center;
 }
 
-/deep/ .no-more > span {
+>>> .no-more > span {
   opacity: 0.66;
 }
 

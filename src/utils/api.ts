@@ -6,6 +6,9 @@ const api = {
   test() {
     return api.axios.get('/')
   },
+  url(path) {
+    return `${api.axios.defaults.baseURL}/${path}`
+  },
   basic: {
     importOPML(path) {
       return api.axios.post(
