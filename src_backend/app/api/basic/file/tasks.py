@@ -1,5 +1,3 @@
-import base64
-
 import requests
 
 from app import celery
@@ -17,6 +15,6 @@ def download(self: 'ContextTask', id):
 
     try:
         resp = requests.get(file.url, headers={'User-Agent': 'Mozilla/5.0'})
-        fs.edit(file.id, data=base64.b64encode(resp.content).decode())
+        fs.edit(file.id, data=resp.content)
     except:
         self.retry(countdown=10)
