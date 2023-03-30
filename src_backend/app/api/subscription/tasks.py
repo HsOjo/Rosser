@@ -5,7 +5,7 @@ import feedparser
 from app import celery, db, common
 from app.api.subscription.article.models import Article
 from app.api.subscription.article.service import ArticleService
-from app.api.subscription.article.tasks import fetch_thumb
+from app.api.subscription.article.tasks import fetch_attachments
 from app.api.subscription.service import SubscriptionService
 from app.libs.celery import ContextTask
 
@@ -62,4 +62,4 @@ def fetch_one(self: 'ContextTask', id):
         article.meta = common.obj_standard(entry, True, True, True)
         db.session.commit()
 
-        fetch_thumb.delay(article.id)
+        fetch_attachments.delay(article.id)

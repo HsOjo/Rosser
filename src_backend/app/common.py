@@ -22,10 +22,13 @@ def get_launch_argv():
         return [sys.executable, *sys.argv]
 
 
-def model_to_dict(model):
+def model_to_dict(model, discard_keys=None):
     if model:
         data = model.__dict__.copy()  # type: dict
         data.pop('_sa_instance_state')
+        if discard_keys:
+            for key in discard_keys:
+                data.pop(key)
         return data
 
 

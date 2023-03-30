@@ -1,6 +1,11 @@
+from typing import List, TYPE_CHECKING
+
 from app import db
 from app.api.base.models import BaseModel
 from app.common import model_to_dict
+
+if TYPE_CHECKING:
+    from app.api.subscription.models import Subscription
 
 
 class Article(BaseModel):
@@ -22,20 +27,27 @@ class Article(BaseModel):
     def thumb_id(self):
         from app.api.basic.file.models import File
         return db.session.query(File.id).join(ArticleAttachment).filter(
-            ArticleAttachment.file_type == ArticleAttachment.FILE_TYPE_THUMB,
+            ArticleAttachment.file_type == ArticleAttachment.FILE_TYPE_IMAGE,
             ArticleAttachment.article_id == self.id,
         ).limit(1).scalar()
 
     @property
-    def state(self):
+    def attachments(self) -> 'List[ArticleAttachment]':
+        return ArticleAttachment.query.filter(
+            ArticleAttachment.article_id == self.id,
+        ).all()
+
+    @property
+    def state(self) -> 'ArticleState':
         return ArticleState.query_by_field(ArticleState.article_id, self.id)
 
     @property
     def dict(self):
         return dict(
-            **model_to_dict(self),
+            **model_to_dict(self, discard_keys=['meta']),
             thumb_id=self.thumb_id,
-            state=model_to_dict(self.state)
+            state=self.state and self.state.dict,
+            attachments=list(map(lambda x: x.dict, self.attachments)),
         )
 
 
@@ -47,7 +59,7 @@ class ArticleState(BaseModel):
 
 
 class ArticleAttachment(BaseModel):
-    FILE_TYPE_THUMB = 1
+    FILE_TYPE_IMAGE = 1
 
     article_id = db.Column(db.Integer, db.ForeignKey('article.id'), index=True)
     file_type = db.Column(db.Integer, index=True)
