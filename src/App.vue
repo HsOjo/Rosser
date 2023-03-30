@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, inject, ref, watch} from "vue";
+import {computed, inject, onMounted, ref, watch} from "vue";
 import * as pywebview from "@/utils/pywebview.js";
 import {AxiosInstanceKey} from "@/plugins/axios";
 import Header from "@/components/header/Header.vue";
@@ -7,11 +7,13 @@ import Content from "@/components/content/Content.vue";
 import Menu from "@/components/menu/Menu.vue";
 import api from "@/utils/api";
 import {useStore} from "vuex";
+import {useBrowser} from "@/utils/browser";
 
 api.axios = inject(AxiosInstanceKey)
 const store = useStore()
 const backend_loaded = ref(false)
 const isMac = computed(() => store.getters.isMac);
+useBrowser()
 
 function waitBackend(callback) {
   api.test().then(null, err => {
@@ -54,6 +56,7 @@ watch(backend_loaded, (nv) => {
         resp => store.commit('updateState', {sites: resp.data}))
   }
 })
+
 </script>
 <template>
   <template v-if="backend_loaded">
