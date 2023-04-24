@@ -9,8 +9,8 @@
     </template>
   </a-card>
   <a-modal v-model:visible="visible" width="80%" :title="title" style="top: 50px"
-           body-style="padding: 0; overflow-y: scroll; max-height: calc(100vh - 200px)">
-    <div v-html="truthSummary" class="content"></div>
+           :body-style="{'padding': '0', 'overflow-y': 'scroll', 'max-height': 'calc(100vh - 200px)'}">
+    <div v-html="truthSummary" class="content selectable"></div>
   </a-modal>
 </template>
 
