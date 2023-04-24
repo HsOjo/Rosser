@@ -10,15 +10,11 @@
       to exit...
     </a-typography-paragraph>
     <a-typography-paragraph>
-      <ul>
-        <li>
-          如果喜欢，请到
-          <a-typography-link @click="pywebview.api.window_open('https://github.com/HsOjo/Rosser')">
-            GitHub
-          </a-typography-link>
-          给个Star，谢谢。
-        </li>
-      </ul>
+      如果喜欢，请到
+      <a-typography-link @click="pywebview.api.window_open('https://github.com/HsOjo/Rosser')">
+        GitHub
+      </a-typography-link>
+      给个Star，谢谢。
     </a-typography-paragraph>
   </a-typography>
 </template>
