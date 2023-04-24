@@ -1,13 +1,18 @@
 <template>
-  <a-card hoverable class="card" @click="visible = true">
-    <template #cover>
-      <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
-           v-if="thumb_id && !no_thumb"
-           @error="no_thumb = true"
-           alt="预览图" class="thumb-img"/>
-      <div class="card-title">{{ title }}</div>
-    </template>
-  </a-card>
+  <transition
+    enter-active-class="animate__animated animate__zoomIn" appear
+    leave-active-class="animate__animated animate__zoomOut"
+  >
+    <a-card hoverable class="card" @click="visible = true">
+      <template #cover>
+        <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
+             v-if="thumb_id && !no_thumb"
+             @error="no_thumb = true"
+             alt="预览图" class="thumb-img"/>
+        <div class="card-title">{{ title }}</div>
+      </template>
+    </a-card>
+  </transition>
   <a-modal v-model:visible="visible" width="80%" :title="title" style="top: 50px"
            :body-style="{'padding': '0', 'overflow-y': 'scroll', 'max-height': 'calc(100vh - 200px)'}">
     <div v-html="truthSummary" class="content selectable"></div>

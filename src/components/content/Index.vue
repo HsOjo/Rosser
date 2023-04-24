@@ -104,12 +104,11 @@ onMounted(autoLoad)
   <div class="scroll-container" ref="scroll_container" @scroll="autoLoad">
     <div class="index">
       <template v-for="(article, index) in articles">
-        <transition
-            enter-active-class="animate__animated animate__zoomIn" appear
-            leave-active-class="animate__animated animate__zoomOut"
-        >
-          <Article v-bind="article"></Article>
-        </transition>
+        <Article
+          :title="article.title"
+          :summary="article.summary"
+          :thumb_id="article.thumb_id"
+        ></Article>
       </template>
     </div>
     <transition enter-active-class="animate__animated animate__bounceIn" appear>
