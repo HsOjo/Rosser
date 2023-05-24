@@ -37,8 +37,4 @@ const isMac = computed(() => store.getters.isMac)
   margin: 0;
 }
 
-.mac-top-right-radius {
-  border-top-right-radius: 10px !important;
-}
-
 </style>

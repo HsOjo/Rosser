@@ -182,6 +182,9 @@ export default {
 </script>
 
 <style scoped>
+.mac-top-right-radius {
+  border-top-right-radius: 10px !important;
+}
 
 .hover-rotate:hover > span {
   animation: rotate 1.5s linear infinite;
