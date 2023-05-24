@@ -13,7 +13,7 @@ from app.libs.celery import ContextTask
 @celery.task(bind=True)
 def fetch_many(self: 'ContextTask', ids=None):
     ss = SubscriptionService()
-    subscriptions = ss.get_many(*ids) if ids else ss.all()
+    subscriptions = ss.get_many(*ids) if ids is not None else ss.all()
 
     results = []
     for subscription in subscriptions:
