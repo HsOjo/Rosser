@@ -38,12 +38,15 @@
       </a-descriptions>
     </template>
   </a-table>
+  <a-button @click="importOPML">导入OPML</a-button>
+  <a-button @click="exportOPML">导出OPML</a-button>
 </template>
 
 <script>
 import {DeleteOutlined, DownOutlined, QuestionCircleOutlined, SmileOutlined} from "@ant-design/icons-vue";
 import {useCompositions} from "@/utils/data";
 import {mapGetters, useStore} from "vuex";
+import api from "@/utils/api";
 
 export default {
   name: "Subscriptions",
@@ -71,11 +74,33 @@ export default {
       },
     ];
 
+    function importOPML() {
+      let paths = store.getters.electron.ipcRenderer.sendSync('open_dialog', {
+        filters: [
+          {name: 'OPML Files', extensions: ['opml']},
+          {name: 'All Files', extensions: ['*']},
+        ]
+      })
+      api.basic.importOPML(paths.pop())
+    }
+
+    function exportOPML() {
+      let path = store.getters.electron.ipcRenderer.sendSync('save_dialog', {
+        filters: [
+          {name: 'OPML Files', extensions: ['opml']},
+          {name: 'All Files', extensions: ['*']},
+        ]
+      })
+      api.basic.exportOPML(path)
+    }
+
     return {
       store,
       ...useCompositions(store),
       colors,
       columns,
+      importOPML,
+      exportOPML,
     }
   },
 }
@@ -85,5 +110,10 @@ export default {
 .menu-icon {
   width: 1rem;
   height: 1rem;
+}
+
+button {
+  margin-left: 4px;
+  margin-right: 4px;
 }
 </style>

@@ -15,7 +15,13 @@ const api = {
         '/api/basic/import-opml',
         {path}
       )
-    }
+    },
+    exportOPML(path) {
+      return api.axios.post(
+        '/api/basic/export-opml',
+        {path}
+      )
+    },
   },
   subscription: {
     all(filters = null, orders = null) {

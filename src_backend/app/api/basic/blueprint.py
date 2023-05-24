@@ -58,7 +58,20 @@ def export_opml():
 
     opml = OPML()
     cs = CategoryService()
-    ss = SubscriptionService()
-    # Todo
+    for category in cs.all():
+        category: Category
+        outline = Outline(title=category.title, text=category.description)
+        for subscription in category.subscriptions:
+            subscription: Subscription
+            outline.outlines.append(Outline(
+                title=subscription.title,
+                text=subscription.description,
+                xml_url=subscription.url,
+                type='rss',
+            ))
+        opml.body.outlines.append(outline)
+
+    with open(form.path.data, 'w') as io:
+        io.write(opml.to_xml())
 
     return jsonify(dict(finished=1))
