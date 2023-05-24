@@ -1,3 +1,4 @@
+import celery.exceptions
 from flask import abort, request, Response
 
 from app import db
@@ -23,7 +24,7 @@ class Blueprint(BaseBlueprint):
             try:
                 res.wait(timeout=10)
                 db.session.refresh(file)
-            except TimeoutError:
+            except celery.exceptions.TimeoutError:
                 pass
 
         if not (file and file.data):
