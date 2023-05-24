@@ -1,33 +1,22 @@
 <template>
   <div class="control-area">
-    <button class="control-button close" @click="close"></button>
-    <button class="control-button minimize" @click="minimize"></button>
-    <button class="control-button maximize" @click="toggleFullScreen"></button>
+    <button class="control-button close" @click="browser.close(store)"></button>
+    <button class="control-button minimize" @click="browser.minimize(store)"></button>
+    <button class="control-button maximize" @click="browser.maximize(store)"></button>
   </div>
 </template>
 
 <script>
-import * as pywebview from "@/utils/pywebview.js";
+import {useStore} from "vuex";
+import * as browser from "@/utils/browser";
 
 export default {
   name: "ControlArea",
   setup() {
-    function toggleFullScreen() {
-      pywebview.api.toggle_fullscreen()
-    }
-
-    function minimize() {
-      pywebview.api.minimize()
-    }
-
-    function close() {
-      pywebview.api.interupt()
-    }
-
+    const store = useStore()
     return {
-      toggleFullScreen,
-      minimize,
-      close,
+      store,
+      browser,
     }
   }
 }

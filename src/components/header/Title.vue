@@ -1,15 +1,13 @@
 <template>
-  <div class="title" @mousedown="titleMouseDown" @dblclick="toggleFullScreen">
+  <div class="title" @dblclick="browser.maximize(store)">
     {{ isMac ? title : slogan }}
   </div>
 </template>
 
 <script lang="ts">
 import {useStore} from "vuex";
-import {startDrag} from "@/utils/drag.js";
-import * as pywebview from "@/utils/pywebview.js";
 import {computed, onMounted, watch} from "vue";
-
+import * as browser from "@/utils/browser";
 
 export default {
   name: "Title",
@@ -25,26 +23,18 @@ export default {
     })
 
     function syncTitle() {
-      pywebview.api.set_title(title.value)
+      store.getters.electron.ipcRenderer.send('set_title', title.value)
     }
 
     watch(title, syncTitle)
     onMounted(syncTitle)
 
-    function toggleFullScreen() {
-      pywebview.api.toggle_fullscreen()
-    }
-
-    function titleMouseDown(...args) {
-      if (isMac.value)
-        startDrag(...args)
-    }
-
     return {
+      store,
+      browser,
       isMac,
-      titleMouseDown,
-      toggleFullScreen,
-      title, slogan
+      title,
+      slogan,
     }
   },
 }
@@ -60,6 +50,7 @@ export default {
   text-indent: 100px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  -webkit-app-region: drag
 }
 
 </style>

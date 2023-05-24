@@ -11,7 +11,7 @@
     </a-typography-paragraph>
     <a-typography-paragraph>
       如果喜欢，请到
-      <a-typography-link @click="pywebview.api.window_open('https://github.com/HsOjo/Rosser')">
+      <a-typography-link href="https://github.com/HsOjo/Rosser">
         GitHub
       </a-typography-link>
       给个Star，谢谢。

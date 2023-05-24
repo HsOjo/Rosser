@@ -1,15 +1,14 @@
 import {createStore} from 'vuex'
-import * as pywebview from "@/utils/pywebview";
 import lodash from "lodash";
+import isElectron from "is-electron";
 
 // Create a new store instance.
 const store = createStore({
   state() {
     return {
-      PY_CONTEXT: {
-        backend_url: null,
-      },
-      PLATFORM: null,
+      is_mac: process.platform === 'darwin',
+      is_electron: isElectron(),
+      electron: null,
       STATE: {
         sider_collapsed: false,
         settings_visible: false,
@@ -22,17 +21,11 @@ const store = createStore({
         show_hide: false,
         subscription: null,
         time_order: 'desc',
-        favourite_first: false,
+        star_first: false,
       },
     }
   },
   mutations: {
-    initialize(state) {
-      state.PY_CONTEXT = JSON.parse(String(localStorage.getItem('PY_CONTEXT')))
-      pywebview.api.get_platform().then(
-        platform => state.PLATFORM = platform
-      )
-    },
     updateState(state, payload) {
       Object.assign(state.STATE, payload)
     },
@@ -46,14 +39,17 @@ const store = createStore({
     },
   },
   getters: {
-    platform(state) {
-      return state.PLATFORM
+    isElectron(state, getters) {
+      return state.is_electron
+    },
+    electron(state) {
+      return state.is_electron ? window.require('electron') : null
     },
     isMac(state, getters) {
-      return getters.platform === 'Darwin'
+      return state.is_mac
     },
     backendURL(state) {
-      return state.PY_CONTEXT.backend_url
+      return import.meta.env.VITE_APP_BASE_URL
     },
     state(state) {
       return state.STATE

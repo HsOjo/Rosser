@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {computed, inject, onMounted, ref, watch} from "vue";
-import * as pywebview from "@/utils/pywebview.js";
 import {AxiosInstanceKey} from "@/plugins/axios";
 import Header from "@/components/header/Header.vue";
 import Content from "@/components/content/Content.vue";
@@ -15,6 +14,7 @@ const backend_loaded = ref(false)
 const isMac = computed(() => store.getters.isMac);
 useBrowser()
 
+api.axios.defaults.baseURL = store.getters.backendURL
 function waitBackend(callback) {
   api.test().then(null, err => {
     if (err && err.response && err.response.status)
@@ -24,27 +24,9 @@ function waitBackend(callback) {
   })
 }
 
-let timer = setInterval(() => {
-  pywebview.init(() => {
-    clearInterval(timer)
-    store.commit('initialize')
-    api.axios.defaults.baseURL = store.getters.backendURL
-    waitBackend(() => {
-      backend_loaded.value = true
-    })
-    pywebview.api.get_properties().then(
-        properties => {
-          let window_w = 1366
-          let window_h = 768
-          pywebview.api.resize(window_w, window_h)
-          pywebview.api.move(
-              properties.x - (window_w - properties.width) * 0.5,
-              properties.y - (window_h - properties.height) * 0.1
-          )
-        }
-    )
-  })
-}, 100)
+waitBackend(() => {
+  backend_loaded.value = true
+})
 
 watch(backend_loaded, (nv) => {
   if (nv) {

@@ -3,18 +3,13 @@ from click import Context
 
 
 def create_cli():
-    @click.group(invoke_without_command=True)
+    @click.group()
     @click.pass_context
     def cli(ctx: 'Context'):
-        if ctx.invoked_subcommand:
-            return
-
-        main.start()
+        pass
 
     from . import main, worker
-    cli.command(main.view)
     cli.command(main.serve)
-    cli.command(main.start)
     cli.command(worker.worker)
     cli.command(worker.beat)
     cli.command(worker.events)

@@ -1,11 +1,9 @@
 <script lang="ts">
 import {AppstoreFilled, DatabaseFilled, EnvironmentFilled, GiftFilled} from "@ant-design/icons-vue";
 import {ref} from "vue";
-import * as pywebview from "@/utils/pywebview.js";
 import About from "@/components/content/settings/About.vue";
 import Subscriptions from "@/components/content/settings/Subscriptions.vue";
 import {mapGetters, useStore} from "vuex";
-import api from "@/utils/api";
 import Categories from "@/components/content/settings/Categories.vue";
 import Sites from "@/components/content/settings/Sites.vue";
 
@@ -33,18 +31,7 @@ export default {
       store.commit('updateState', {settings_visible: false})
     }
 
-    function importOPML() {
-      pywebview.api.create_file_dialog(
-          0, '', false,
-          null, ['OPML Files (*.opml)']).then(
-          (paths) => {
-            api.basic.importOPML(paths.pop())
-          }
-      )
-    }
-
     return {
-      pywebview,
       tab_key,
       onClose,
     }
@@ -54,15 +41,15 @@ export default {
 
 <template>
   <a-drawer
-      title="设定"
-      placement="right"
-      :closable="true"
-      :visible="state.settings_visible"
-      :get-container="false"
-      :mask="false"
-      size="large"
-      style="position: absolute;"
-      @close="onClose"
+    title="设定"
+    placement="right"
+    :closable="true"
+    :visible="state.settings_visible"
+    :get-container="false"
+    :mask="false"
+    size="large"
+    style="position: absolute;"
+    @close="onClose"
   >
     <a-tabs v-model:activeKey="tab_key" tab-position="right">
       <a-tab-pane key="subscriptions">
