@@ -8,6 +8,7 @@ class Subscription(BaseModel):
     title = db.Column(db.String, index=True)
     description = db.Column(db.String)
     url = db.Column(db.String, index=True)
+    fetch_time = db.Column(db.DateTime)
 
     @property
     def category(self):

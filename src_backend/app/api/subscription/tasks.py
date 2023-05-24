@@ -39,6 +39,7 @@ def fetch_one(self: 'ContextTask', id):
 
     try:
         feed = feedparser.parse(subscription.url)
+        ss.edit(id, fetch_time=datetime.now())
     except:
         raise self.retry(countdown=10)
 

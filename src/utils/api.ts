@@ -41,6 +41,11 @@ const api = {
         '/api/subscription/fetch-all',
       )
     },
+    fetchExpires() {
+      return api.axios.post(
+        '/api/subscription/fetch-expires',
+      )
+    },
   },
   category: {
     all(filters = null, orders = null) {

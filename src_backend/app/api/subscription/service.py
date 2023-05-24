@@ -10,8 +10,8 @@ class SubscriptionService(BaseService):
         kwargs.update(url=url, site_id=SiteService().get_by_url(url).id)
         return super().add(**kwargs)
 
-    def edit(self, id, **kwargs) -> 'int':
+    def edit(self, *ids, **kwargs) -> 'int':
         url = kwargs.get('url')
         if url:
             kwargs.update(site_id=SiteService().get_by_url(url).id)
-        return super().edit(id, **kwargs)
+        return super().edit(*ids, **kwargs)

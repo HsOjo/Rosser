@@ -133,7 +133,7 @@ export default {
         if (subscription_id)
           api.subscription.fetch([subscription_id])
       } else if (key === 'expires') {
-
+        api.subscription.fetchExpires()
       } else if (key === 'all') {
         api.subscription.fetchAll()
       } else if (key === 'refresh') {
