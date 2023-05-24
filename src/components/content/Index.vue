@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
-import Article from "@/components/content/Article.vue";
+import ArticleComp from "@/components/content/Article.vue";
+import {Article} from "@/utils/types";
 import api from "@/utils/api";
 import {useStore} from "vuex";
 
@@ -12,7 +13,7 @@ const page = ref(0)
 const per_page = ref(10)
 const total = ref(null)
 const loading = ref(false)
-const articles = ref<object[]>([])
+const articles = ref<Article[]>([])
 
 const query = computed(() => store.getters.query)
 const subscription = computed(() => store.getters.query.subscription)
@@ -26,20 +27,20 @@ const filters = computed(() => {
     result.push({field: 'subscription_id', operate: 'eq', value: subscriptionId.value})
   if (_query.mode === 'read-only')
     result.push({field: 'article_state.is_read', operate: 'eq', value: true})
-  else if (_query.mode === 'favourite-only')
-    result.push({field: 'article_state.is_favourite', operate: 'eq', value: true})
+  else if (_query.mode === 'star-only')
+    result.push({field: 'article_state.is_star', operate: 'eq', value: true})
   if (!_query.show_hide)
-    result.push({field: 'article_state.is_hide', operate: 'neq', value: true})
+    result.push({field: 'article_state.is_hide', operate: 'ne', value: true})
   return result
 })
 
 const orders = computed(() => {
   let _query = query.value
   let result = []
+  if (_query.star_first)
+    result.push({field: 'article_state.is_star', operate: 'desc'})
   if (_query.time_order)
     result.push({field: 'publish_time', operate: _query.time_order})
-  if (_query.favourite_first)
-    result.push({field: 'article_state.is_favourite', operate: 'desc'})
 
   return result
 })
@@ -56,12 +57,12 @@ function getPagiArticles(page_ = page.value, per_page_ = per_page.value, filters
     page: page_, per_page: per_page_, filters: filters_, orders: orders_,
     joins: [{table: 'article_state', outer: true}],
   }).then(
-      resp => {
-        if (filters_ != filters.value)
-          return []
-        total.value = resp.data.total
-        return resp.data.items
-      }
+    resp => {
+      if (filters_ != filters.value)
+        return []
+      total.value = resp.data.total
+      return resp.data.items
+    }
   )
 }
 
@@ -83,7 +84,7 @@ function loadMore() {
   loading.value = true
   let _loading_id = ++loading_id.value
   return getPagiArticles(++page.value).then(
-      items => articles.value = articles.value.concat(items)
+    items => articles.value = articles.value.concat(items)
   ).finally(() => {
     if (loading_id.value == _loading_id)
       loading.value = false
@@ -104,11 +105,7 @@ onMounted(autoLoad)
   <div class="scroll-container" ref="scroll_container" @scroll="autoLoad">
     <div class="index">
       <template v-for="(article, index) in articles">
-        <Article
-          :title="article.title"
-          :summary="article.summary"
-          :thumb_id="article.thumb_id"
-        ></Article>
+        <ArticleComp v-bind="article"></ArticleComp>
       </template>
     </div>
     <transition enter-active-class="animate__animated animate__bounceIn" appear>

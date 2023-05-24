@@ -3,6 +3,7 @@ from typing import Type, List, TypeVar, Callable, Iterable
 from flask_sqlalchemy.pagination import Pagination
 from flask_sqlalchemy.query import Query
 
+from app import db
 from app.api.base.decorators import with_commit
 from app.api.base.models import BaseModel
 
@@ -36,6 +37,12 @@ class BaseService:
     def all(self, *filters, query_func: 'QueryFunc' = None) -> 'List[Model]':
         return self.query(*filters, func=query_func).all()
 
+    def all_ids(self, *filters) -> 'List[int]':
+        return list(map(
+            lambda item: item[0],
+            self.all(*filters, query_func=lambda **_: db.session.query(self.model_cls.id))
+        ))
+
     def get_many(self, *ids) -> 'List[Model]':
         return self.all(self.model_cls.id.in_(ids))
 
@@ -49,9 +56,9 @@ class BaseService:
         return self.model_cls.create(**kwargs)
 
     @with_commit
-    def edit(self, id, query_func: 'QueryFunc' = None, **kwargs) -> 'int':
-        return self.query(func=query_func).filter(self.model_cls.id == id).update(kwargs)
+    def edit(self, *ids, **kwargs) -> 'int':
+        return self.query(self.model_cls.id.in_(ids)).update(kwargs)
 
     @with_commit
-    def delete(self, *ids, query_func: 'QueryFunc' = None) -> 'int':
-        return self.query(func=query_func).filter(self.model_cls.id.in_(ids)).delete(synchronize_session=False)
+    def delete(self, *ids) -> 'int':
+        return self.query(self.model_cls.id.in_(ids)).delete(synchronize_session=False)

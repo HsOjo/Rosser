@@ -1,4 +1,5 @@
-import {computed} from "vue";
+import {computed, ComputedRef} from "vue";
+import {Category, Site, Subscription} from "@/utils/types";
 
 function arrayToMapping(array: any[], key: string) {
   let mapping = {}
@@ -8,9 +9,9 @@ function arrayToMapping(array: any[], key: string) {
 
 export function useArrays(store) {
   const state = store.getters.state
-  const subscriptions = computed(() => state.subscriptions)
-  const sites = computed(() => state.sites)
-  const categories = computed(() => state.categories)
+  const subscriptions: ComputedRef<Subscription[]> = computed(() => state.subscriptions)
+  const sites: ComputedRef<Site[]> = computed(() => state.sites)
+  const categories: ComputedRef<Category[]> = computed(() => state.categories)
 
   return {subscriptions, sites, categories}
 }

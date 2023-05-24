@@ -15,42 +15,84 @@
   </transition>
   <a-modal v-model:visible="visible" width="80%" :title="title" style="top: 50px"
            :body-style="{'padding': '0', 'overflow-y': 'scroll', 'max-height': 'calc(100vh - 200px)'}">
-    <div v-html="truthSummary" class="content selectable"></div>
+    <DynamicContent :content="truthSummary" class="content selectable"></DynamicContent>
+    <template #footer>
+      <a-button v-if="state['is_hide']" @click="api.article.unhide(id)">
+        取消隐藏
+      </a-button>
+      <a-button v-else @click="api.article.hide(id)">
+        隐藏
+      </a-button>
+      <a-button v-if="state['is_star']" @click="api.article.unstar(id)">
+        取消星标
+      </a-button>
+      <a-button v-else @click="api.article.star(id)">
+        星标
+      </a-button>
+      <a-button v-if="state['is_read']" @click="api.article.unread(id)">
+        取消已读
+      </a-button>
+      <a-button v-else @click="api.article.read(id)">
+        已读
+      </a-button>
+    </template>
   </a-modal>
 </template>
 
 <script lang="ts">
 import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons-vue';
-import {defineComponent, ref} from 'vue';
+import {compile, defineComponent, h, ref} from 'vue';
 import {mapGetters} from "vuex";
 import api from "@/utils/api";
 import DOMPurify from "dompurify"
+import lodash from "lodash";
 
 export default defineComponent({
   components: {
     SettingOutlined,
     EditOutlined,
     EllipsisOutlined,
+    DynamicContent: {
+      props: {
+        content: {type: String, default: ''}
+      },
+      render() {
+        return h('div', [compile(this.content).call(this, this)])
+      }
+    }
   },
   props: {
+    id: {type: Number, default: null},
     title: {type: String, default: '无标题'},
     summary: {type: String, default: '无摘要'},
     thumb_id: {type: Number, default: null},
+    state: {type: Object, default: null},
   },
   computed: {
     ...mapGetters(['backendURL']),
     truthSummary() {
       let summary = DOMPurify.sanitize(this.summary)
       summary = summary.replaceAll('$file@', api.url('api/basic/file/download/'))
-      return summary
+
+      let doc = new DOMParser().parseFromString(summary, 'text/html')
+      lodash.forEachRight(doc.getElementsByTagName('img'), el => {
+        if (el) {
+          let img = doc.createElement('a-image')
+          img.setAttribute('src', el.getAttribute('src'))
+          el.replaceWith(img)
+        }
+      })
+
+      return doc.body.innerHTML
     }
   },
   setup(props) {
     const no_thumb = ref(false)
     const visible = ref(false)
     return {
+      api,
       no_thumb,
-      visible
+      visible,
     }
   }
 });

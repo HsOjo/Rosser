@@ -12,7 +12,7 @@
       <schedule-filled/>
     </IconButton>
     <template #overlay>
-      <CheckMenu :items="read_menu_items"></CheckMenu>
+      <CheckMenu :items="read_menu_items" @click="readClick"></CheckMenu>
     </template>
   </a-dropdown>
   <a-dropdown :trigger="['click']">
@@ -86,7 +86,7 @@ export default {
       {key: 'filters', title: '筛选', items: [], select: true, icon: FilterOutlined},
       {group: 'filters', key: 'all', title: '查看所有', icon: ContainerOutlined, checked: true},
       {group: 'filters', key: 'read-only', title: '仅已读', icon: CarryOutOutlined},
-      {group: 'filters', key: 'favourite-only', title: '仅收藏', icon: StarOutlined},
+      {group: 'filters', key: 'star-only', title: '仅收藏', icon: StarOutlined},
       {group: 'filters'},
       {group: 'filters', key: 'show-hide', title: '显示隐藏', select: null, icon: EyeOutlined},
       {key: 'orders', title: '排序', items: [], icon: OrderedListOutlined},
@@ -108,14 +108,14 @@ export default {
         icon: SortAscendingOutlined,
       },
       {group: 'orders'},
-      {group: 'orders', key: 'favourite-first', title: '收藏优先', icon: StarFilled},
+      {group: 'orders', key: 'star-first', title: '收藏优先', icon: StarFilled},
     ]
     const read_menu_items = [
       {key: 'read', title: '标记已读', items: [], trigger: true, icon: CarryOutOutlined},
-      {group: 'read', key: '1-days-before', title: '1⃣️ 天前发布'},
-      {group: 'read', key: '3-days-before', title: '3⃣️ 天前发布'},
-      {group: 'read', key: '7-days-before', title: '7⃣️ 天前发布'},
-      {group: 'read', key: 'all', title: '💾 全部文章'},
+      {group: 'read', key: '1-days-before', title: '1⃣️ 天前发布', days: 1},
+      {group: 'read', key: '3-days-before', title: '3⃣️ 天前发布', days: 3},
+      {group: 'read', key: '7-days-before', title: '7⃣️ 天前发布', days: 7},
+      {group: 'read', key: 'all', title: '💾 全部文章', days: 0},
     ]
     const fetch_menu_items = [
       {key: 'refresh', title: '重新加载', checkable: false, icon: RedoOutlined},
@@ -154,11 +154,17 @@ export default {
       else {
         if (key === 'show-hide')
           diff.show_hide = checked
-        else if (key === 'favourite-first')
-          diff.favourite_first = checked
+        else if (key === 'star-first')
+          diff.star_first = checked
       }
 
       store.commit('updateQuery', diff)
+    }
+
+    function readClick({days}) {
+      let subscription = store.getters.query.subscription
+      let subscription_id = subscription && subscription.id
+      api.article.readBeforeDays(subscription_id, days)
     }
 
     return {
@@ -169,6 +175,7 @@ export default {
       toggleSettingsVisible,
       viewClick,
       fetchClick,
+      readClick,
     }
   }
 }

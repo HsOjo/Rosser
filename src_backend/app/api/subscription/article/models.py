@@ -44,7 +44,7 @@ class Article(BaseModel):
     @property
     def dict(self):
         return dict(
-            **model_to_dict(self, discard_keys=['meta']),
+            **model_to_dict(self),
             thumb_id=self.thumb_id,
             state=self.state and self.state.dict,
             attachments=list(map(lambda x: x.dict, self.attachments)),
@@ -55,7 +55,7 @@ class ArticleState(BaseModel):
     article_id = db.Column(db.Integer, db.ForeignKey('article.id'), index=True)
     is_read = db.Column(db.Boolean, index=True, default=False)
     is_hide = db.Column(db.Boolean, index=True, default=False)
-    is_favourite = db.Column(db.Boolean, index=True, default=False)
+    is_star = db.Column(db.Boolean, index=True, default=False)
 
 
 class ArticleAttachment(BaseModel):

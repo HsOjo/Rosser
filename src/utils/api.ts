@@ -70,6 +70,48 @@ const api = {
         {filters, orders, joins}
       )
     },
+    read(...ids) {
+      return api.axios.post(
+        `/api/subscription/article/read`,
+        {ids}
+      )
+    },
+    unread(...ids) {
+      return api.axios.post(
+        `/api/subscription/article/unread`,
+        {ids}
+      )
+    },
+    hide(...ids) {
+      return api.axios.post(
+        `/api/subscription/article/hide`,
+        {ids}
+      )
+    },
+    unhide(...ids) {
+      return api.axios.post(
+        `/api/subscription/article/unhide`,
+        {ids}
+      )
+    },
+    star(...ids) {
+      return api.axios.post(
+        `/api/subscription/article/star`,
+        {ids}
+      )
+    },
+    unstar(...ids) {
+      return api.axios.post(
+        `/api/subscription/article/unstar`,
+        {ids}
+      )
+    },
+    readBeforeDays(subscription_id, days) {
+      return api.axios.post(
+        `/api/subscription/article/read-before-days`,
+        {subscription_id, days}
+      )
+    }
   }
 }
 export default api 
