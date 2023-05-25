@@ -165,6 +165,7 @@ export default {
       let subscription = store.getters.query.subscription
       let subscription_id = subscription && subscription.id
       api.article.readBeforeDays(subscription_id, days)
+      store.commit('updateQuery', {refresh: true})
     }
 
     return {
