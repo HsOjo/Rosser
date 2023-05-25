@@ -12,6 +12,8 @@ const createWindow = () => {
     width: 1440,
     height: 900,
     frame: false,
+    vibrancy: "under-window",
+    transparent: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
