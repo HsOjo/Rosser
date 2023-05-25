@@ -17,22 +17,22 @@
            :body-style="{'padding': '0', 'overflow-y': 'scroll', 'max-height': 'calc(100vh - 200px)'}">
     <DynamicContent :content="truthSummary" class="content selectable"></DynamicContent>
     <template #footer>
-      <a-button v-if="state['is_hide']" @click="api.article.unhide(id)">
+      <a-button v-if="state['is_hide']" @click="unhide(id)">
         取消隐藏
       </a-button>
-      <a-button v-else @click="api.article.hide(id)">
+      <a-button v-else @click="hide(id)">
         隐藏
       </a-button>
-      <a-button v-if="state['is_star']" @click="api.article.unstar(id)">
+      <a-button v-if="state['is_star']" @click="unstar(id)">
         取消星标
       </a-button>
-      <a-button v-else @click="api.article.star(id)">
+      <a-button v-else @click="star(id)">
         星标
       </a-button>
-      <a-button v-if="state['is_read']" @click="api.article.unread(id)">
+      <a-button v-if="state['is_read']" @click="unread(id)">
         取消已读
       </a-button>
-      <a-button v-else @click="api.article.read(id)">
+      <a-button v-else @click="read(id)">
         已读
       </a-button>
     </template>
@@ -61,6 +61,7 @@ export default defineComponent({
       }
     }
   },
+  emits: ['patch'],
   props: {
     id: {type: Number, default: null},
     title: {type: String, default: '无标题'},
@@ -86,13 +87,49 @@ export default defineComponent({
       return doc.body.innerHTML
     }
   },
-  setup(props) {
+  setup(props, {emit}) {
     const no_thumb = ref(false)
     const visible = ref(false)
+
+    function patch_decorator(func) {
+      return function (...args) {
+        return func(...args).then(() => {
+          emit('patch')
+        })
+      }
+    }
+
+    const hide = patch_decorator((id) => {
+      return api.article.hide(id)
+    })
+
+    const unhide = patch_decorator((id) => {
+      return api.article.unhide(id)
+    })
+
+    const star = patch_decorator((id) => {
+      return api.article.star(id)
+    })
+
+    const unstar = patch_decorator((id) => {
+      return api.article.unstar(id)
+    })
+
+    const read = patch_decorator((id) => {
+      return api.article.read(id)
+    })
+
+    const unread = patch_decorator((id) => {
+      return api.article.unread(id)
+    })
+
     return {
       api,
       no_thumb,
       visible,
+      hide, unhide,
+      star, unstar,
+      read, unread,
     }
   }
 });

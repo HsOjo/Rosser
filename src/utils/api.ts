@@ -75,6 +75,11 @@ const api = {
         {filters, orders, joins}
       )
     },
+    get(id) {
+      return api.axios.get(
+        `/api/subscription/article/get/${id}`,
+      )
+    },
     read(...ids) {
       return api.axios.post(
         `/api/subscription/article/read`,

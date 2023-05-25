@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
 import ArticleComp from "@/components/content/Article.vue";
 import {Article} from "@/utils/types";
@@ -14,11 +14,19 @@ const per_page = ref(10)
 const total = ref(null)
 const loading = ref(false)
 const articles = ref<Article[]>([])
+const patch_articles = ref<Map<Number, Article>>(new Map())
 
 const query = computed(() => store.getters.query)
 const subscription = computed(() => store.getters.query.subscription)
 const subscriptionId = computed(() => subscription.value && subscription.value.id)
 const noMore = computed(() => articles.value && articles.value.length >= total.value)
+const patchArticles = computed(() => {
+  let result = []
+  for (let article of articles.value)
+    result.push(patch_articles.value.get(article.id) || article)
+
+  return result
+})
 
 const filters = computed(() => {
   let _query = query.value
@@ -48,7 +56,8 @@ const orders = computed(() => {
 watch(query, () => {
   page.value = 0
   total.value = null
-  articles.value = []
+  articles.value = reactive([])
+  patch_articles.value.clear()
   autoLoad()
 })
 
@@ -98,14 +107,23 @@ function autoLoad() {
   }, 100)
 }
 
+function patchArticle(id) {
+  api.article.get(id).then(
+    resp => {
+      let article = resp.data
+      patch_articles.value.set(article.id, article)
+    }
+  )
+}
+
 onMounted(autoLoad)
 </script>
 
 <template>
   <div class="scroll-container" ref="scroll_container" @scroll="autoLoad">
     <div class="index">
-      <template v-for="(article, index) in articles">
-        <ArticleComp v-bind="article"></ArticleComp>
+      <template v-for="(article, index) in patchArticles">
+        <ArticleComp v-bind="article" @patch="patchArticle(article.id)"></ArticleComp>
       </template>
     </div>
     <transition enter-active-class="animate__animated animate__bounceIn" appear>
