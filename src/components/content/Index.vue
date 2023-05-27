@@ -138,6 +138,7 @@ onMounted(autoLoad)
       </template>
     </transition>
   </div>
+  <a-back-top :target="() => $refs.scroll_container"/>
 </template>
 
 <style scoped>
