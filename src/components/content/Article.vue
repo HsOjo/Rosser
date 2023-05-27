@@ -3,55 +3,92 @@
     enter-active-class="animate__animated animate__zoomIn" appear
     leave-active-class="animate__animated animate__zoomOut"
   >
-    <a-card hoverable class="card" @click="visible = true">
+    <a-card hoverable class="card">
       <template #cover>
         <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
              v-if="thumb_id && !no_thumb"
              @error="no_thumb = true"
-             alt="预览图" class="thumb-img"/>
-        <div class="card-title">{{ title }}</div>
+             alt="预览图" class="thumb-img"
+             @click="open"
+        />
+        <template v-else-if="!isLongTitle">
+          <div style="padding: 12px" @click="open">
+            <a-typography-paragraph :ellipsis="{ rows: 3 }">
+              {{ textSummary }}
+            </a-typography-paragraph>
+          </div>
+        </template>
+        <div
+          class="card-title"
+          :class="{
+            'read-title': state['is_read'],
+            'hide-title': state['is_hide'],
+          }"
+          @click="open"
+        >
+          {{ viewTitle }}
+        </div>
       </template>
     </a-card>
   </transition>
-  <a-modal v-model:visible="visible" width="80%" :title="title" style="top: 50px"
+  <a-modal v-model:visible="visible" width="80%" :title="viewTitle" style="top: 50px"
            :body-style="{'padding': '0', 'overflow-y': 'scroll', 'max-height': 'calc(100vh - 200px)'}">
-    <DynamicContent :content="truthSummary" class="content selectable"></DynamicContent>
+    <template v-if="visible">
+      <iframe v-if="raw_mode" :src="link" class="raw-content"></iframe>
+      <DynamicContent v-else :content="truthSummary" class="content selectable"></DynamicContent>
+    </template>
+    <a-skeleton active :paragraph="{rows: 10}" v-else></a-skeleton>
     <template #footer>
-      <a-button v-if="state['is_hide']" @click="unhide(id)">
-        取消隐藏
-      </a-button>
-      <a-button v-else @click="hide(id)">
-        隐藏
-      </a-button>
-      <a-button v-if="state['is_star']" @click="unstar(id)">
-        取消星标
-      </a-button>
-      <a-button v-else @click="star(id)">
-        星标
-      </a-button>
-      <a-button v-if="state['is_read']" @click="unread(id)">
-        取消已读
-      </a-button>
-      <a-button v-else @click="read(id)">
-        已读
-      </a-button>
+      <div style="justify-content: space-between; display: flex">
+        <div>
+          <a-switch
+            v-model:checked="raw_mode"
+            checked-children="原文模式"
+            un-checked-children="文章模式">
+          </a-switch>
+        </div>
+        <div>
+          <a-button v-if="state['is_hide']" @click="unhide(id)">
+            取消隐藏
+          </a-button>
+          <a-button v-else @click="hide(id)">
+            隐藏
+          </a-button>
+          <a-button v-if="state['is_star']" @click="unstar(id)">
+            取消星标
+          </a-button>
+          <a-button v-else @click="star(id)">
+            星标
+          </a-button>
+          <a-button v-if="state['is_read']" @click="unread(id)">
+            取消已读
+          </a-button>
+          <a-button v-else @click="read(id)">
+            已读
+          </a-button>
+        </div>
+      </div>
     </template>
   </a-modal>
 </template>
 
 <script lang="ts">
-import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons-vue';
+import {EditOutlined, EllipsisOutlined, SettingOutlined, StarFilled, StarOutlined} from '@ant-design/icons-vue';
 import {compile, defineComponent, h, ref} from 'vue';
 import {mapGetters} from "vuex";
 import api from "@/utils/api";
 import DOMPurify from "dompurify"
 import lodash from "lodash";
 
+const html2plaintext = require('html2plaintext')
+
 export default defineComponent({
   components: {
     SettingOutlined,
     EditOutlined,
     EllipsisOutlined,
+    StarOutlined,
+    StarFilled,
     DynamicContent: {
       props: {
         content: {type: String, default: ''}
@@ -66,11 +103,15 @@ export default defineComponent({
     id: {type: Number, default: null},
     title: {type: String, default: '无标题'},
     summary: {type: String, default: '无摘要'},
+    link: {type: String, default: ''},
     thumb_id: {type: Number, default: null},
     state: {type: Object, default: null},
   },
   computed: {
     ...mapGetters(['backendURL']),
+    isLongTitle() {
+      return this.title.length > 32
+    },
     truthSummary() {
       let summary = DOMPurify.sanitize(this.summary)
       summary = summary.replaceAll('$file@', api.url('api/basic/file/download/'))
@@ -85,11 +126,21 @@ export default defineComponent({
       })
 
       return doc.body.innerHTML
-    }
+    },
+    textSummary() {
+      let summary = DOMPurify.sanitize(this.summary)
+      return html2plaintext(summary)
+    },
+    viewTitle() {
+      if (this.state['is_star'])
+        return `🌟 ${this.title}`
+      return this.title
+    },
   },
   setup(props, {emit}) {
     const no_thumb = ref(false)
     const visible = ref(false)
+    const raw_mode = ref(false)
 
     function patch_decorator(func) {
       return function (...args) {
@@ -123,6 +174,12 @@ export default defineComponent({
       return api.article.unread(id)
     })
 
+    function open() {
+      visible.value = true
+      if (!this.state['is_read'])
+        read(this.id)
+    }
+
     return {
       api,
       no_thumb,
@@ -130,6 +187,8 @@ export default defineComponent({
       hide, unhide,
       star, unstar,
       read, unread,
+      raw_mode,
+      open,
     }
   }
 });
@@ -150,9 +209,24 @@ export default defineComponent({
   background: rgba(255, 255, 255, 0.5);
 }
 
+.read-title {
+  color: #8C8C8C;
+}
+
+.hide-title {
+  color: #BFBFBF;
+}
+
 .thumb-img {
   max-height: 192px;
   object-fit: cover;
+}
+
+.raw-content {
+  height: calc(100vh - 224px);
+  width: 100%;
+  margin: 0;
+  border: none;
 }
 
 .content {
