@@ -1,41 +1,49 @@
-import {BrowserWindow, ipcMain, dialog} from 'electron'
+import {BrowserWindow, dialog, ipcMain} from 'electron'
 
-ipcMain.on('minimize', () => {
-  let window = BrowserWindow.getFocusedWindow()
-  window.minimize()
-})
+const window_decorator = (func) => {
+  return (event, args) => {
+    let window = BrowserWindow.getFocusedWindow()
+    if (window)
+      return func({window, event}, args)
+  }
+}
 
-ipcMain.on('is_maximized', (event) => {
-  let window = BrowserWindow.getFocusedWindow()
-  event.returnValue = window.isMaximized()
-})
+ipcMain.on('minimize', window_decorator(
+  ({window}) => {
+    window.minimize()
+  }))
 
-ipcMain.on('maximize', () => {
-  let window = BrowserWindow.getFocusedWindow()
-  window.maximize()
-})
+ipcMain.on('is_maximized', window_decorator(
+  ({window, event}) => {
+    event.returnValue = window.isMaximized()
+  }))
 
-ipcMain.on('unmaximize', () => {
-  let window = BrowserWindow.getFocusedWindow()
-  window.unmaximize()
-})
+ipcMain.on('maximize', window_decorator(
+  ({window}) => {
+    window.maximize()
+  }))
 
-ipcMain.on('close', () => {
-  let window = BrowserWindow.getFocusedWindow()
-  window.close()
-})
+ipcMain.on('unmaximize', window_decorator(
+  ({window}) => {
+    window.unmaximize()
+  }))
 
-ipcMain.on('set_title', (event, title) => {
-  let window = BrowserWindow.getFocusedWindow()
-  window.setTitle(title)
-})
+ipcMain.on('close', window_decorator(
+  ({window}) => {
+    window.close()
+  }))
 
-ipcMain.on('open_dialog', (event, options) => {
-  let window = BrowserWindow.getFocusedWindow()
-  event.returnValue = dialog.showOpenDialogSync(window, options)
-})
+ipcMain.on('set_title', window_decorator(
+  ({window, event}, title) => {
+    window.setTitle(title)
+  }))
 
-ipcMain.on('save_dialog', (event, options) => {
-  let window = BrowserWindow.getFocusedWindow()
-  event.returnValue = dialog.showSaveDialogSync(window, options)
-})
+ipcMain.on('open_dialog', window_decorator(
+  ({window, event}, options) => {
+    event.returnValue = dialog.showOpenDialogSync(window, options)
+  }))
+
+ipcMain.on('save_dialog', window_decorator(
+  ({window, event}, options) => {
+    event.returnValue = dialog.showSaveDialogSync(window, options)
+  }))
