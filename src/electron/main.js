@@ -1,4 +1,5 @@
-const {app, BrowserWindow} = require('electron');
+const {app, BrowserWindow, session} = require('electron');
+const lodash = require('lodash');
 const path = require('path');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -7,6 +8,24 @@ if (require('electron-squirrel-startup')) {
 }
 
 const createWindow = () => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    let resp_headers = lodash.cloneDeep(details.responseHeaders);
+    let keywords = ['frame', 'policy'];
+    for (let k in resp_headers) {
+      let k_lower = k.toLowerCase();
+      for (let kw of keywords) {
+        if (k_lower.indexOf(kw) !== -1) {
+          delete resp_headers[k];
+          break;
+        }
+      }
+    }
+
+    callback({
+      responseHeaders: resp_headers
+    })
+  })
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1440,
