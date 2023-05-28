@@ -19,8 +19,13 @@ export function close(store) {
 export function useBrowser() {
   const click_link = (event) => {
     let tag = event.target
-    while (tag.tagName !== 'A' && tag !== document.body)
+    while (tag.tagName !== 'A' && tag !== document.body) {
       tag = tag.parentNode
+      if (tag.getAttribute('class') === 'ant-image') {
+        event.preventDefault()
+        break
+      }
+    }
 
     if (tag.tagName === 'A') {
       let link_origin = new URL(tag.href).origin
