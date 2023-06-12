@@ -46,7 +46,7 @@ export default {
   computed: {
     ...mapGetters(['state']),
     subscriptionsTree() {
-      let category_default = {id: null, title: '（未分类）'}
+      let category_default = {id: null, title: '（未分类）', subscriptions: []}
       let _categories = lodash.cloneDeep(this.state.categories)
       _categories.push(category_default)
       let _categories_mapping = {}
@@ -59,7 +59,7 @@ export default {
 
       _subscriptions.map(subscription => {
         subscription.site = this.sitesMapping[subscription.site_id]
-        let category = _categories_mapping[subscription.category_id]
+        let category = _categories_mapping[subscription.category_id] || category_default
         category.subscriptions.push(subscription)
       })
 
