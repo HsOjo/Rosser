@@ -25,6 +25,7 @@ export function useBrowser() {
         event.preventDefault()
         break
       }
+      if (!tag) return
     }
 
     if (tag.tagName === 'A') {
