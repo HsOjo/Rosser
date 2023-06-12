@@ -24,6 +24,12 @@ const api = {
     },
   },
   subscription: {
+    add(url, title, description, category_id) {
+      return api.axios.post(
+        '/api/subscription/add',
+        {url, title, description, category_id}
+      )
+    },
     all(filters = null, orders = null) {
       return api.axios.post(
         `/api/subscription/all`,
@@ -48,6 +54,12 @@ const api = {
     },
   },
   category: {
+    add(title, description) {
+      return api.axios.post(
+        '/api/category/add',
+        {title, description}
+      )
+    },
     all(filters = null, orders = null) {
       return api.axios.post(
         `/api/category/all`,

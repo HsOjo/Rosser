@@ -6,10 +6,12 @@ import Subscriptions from "@/components/content/settings/Subscriptions.vue";
 import {mapGetters, useStore} from "vuex";
 import Categories from "@/components/content/settings/Categories.vue";
 import Sites from "@/components/content/settings/Sites.vue";
+import SubscribeModal from "@/components/modal/SubscribeModal.vue";
 
 
 export default {
   components: {
+    SubscribeModal,
     Subscriptions,
     Categories,
     Sites,
@@ -82,6 +84,7 @@ export default {
       </a-tab-pane>
     </a-tabs>
   </a-drawer>
+  <SubscribeModal></SubscribeModal>
 </template>
 
 <style scoped>

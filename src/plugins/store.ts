@@ -1,6 +1,7 @@
 import {createStore} from 'vuex'
 import lodash from "lodash";
 import isElectron from "is-electron";
+import api from "@/utils/api";
 
 // Create a new store instance.
 const store = createStore({
@@ -12,6 +13,7 @@ const store = createStore({
       STATE: {
         sider_collapsed: false,
         settings_visible: false,
+        subscribe_modal_visible: false,
         categories: [],
         subscriptions: [],
         sites: [],
@@ -26,6 +28,15 @@ const store = createStore({
     }
   },
   mutations: {
+    refreshState(state) {
+      let _this = this
+      api.category.all().then(
+        resp => _this.commit('updateState', {categories: resp.data}))
+      api.subscription.all().then(
+        resp => _this.commit('updateState', {subscriptions: resp.data}))
+      api.site.all().then(
+        resp => _this.commit('updateState', {sites: resp.data}))
+    },
     updateState(state, payload) {
       Object.assign(state.STATE, payload)
     },

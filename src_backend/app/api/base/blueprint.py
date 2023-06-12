@@ -25,9 +25,12 @@ class BaseBlueprint(Blueprint):
         self.add_url_rule('/get/<int:id>', methods=['GET'], view_func=self.get_)
 
         body_form_class = getattr(self, 'body_form_class', None)
-        if getattr(self, 'add_form_class', body_form_class):
+        self.add_form_class = getattr(self, 'add_form_class', body_form_class)
+        self.edit_form_class = getattr(self, 'edit_form_class', body_form_class)
+
+        if self.add_form_class:
             self.add_url_rule('/add', methods=['POST'], view_func=self.add)
-        if getattr(self, 'edit_form_class', body_form_class):
+        if self.edit_form_class:
             self.add_url_rule('/edit/<int:id>', methods=['POST'], view_func=self.edit)
 
         self.add_url_rule('/delete', methods=['POST'], view_func=self.delete_)
@@ -71,7 +74,7 @@ class BaseBlueprint(Blueprint):
             abort(401)
 
         item = self.service.add(**form.data)
-        return jsonify(dict(id=item.id))
+        return jsonify(dict(id=getattr(item, 'id', None)))
 
     def edit(self, id: int):
         form = self.edit_form_class()

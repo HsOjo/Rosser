@@ -29,14 +29,8 @@ waitBackend(() => {
 })
 
 watch(backend_loaded, (nv) => {
-  if (nv) {
-    api.category.all().then(
-        resp => store.commit('updateState', {categories: resp.data}))
-    api.subscription.all().then(
-        resp => store.commit('updateState', {subscriptions: resp.data}))
-    api.site.all().then(
-        resp => store.commit('updateState', {sites: resp.data}))
-  }
+  if (nv)
+    store.commit('refreshState')
 })
 
 </script>
