@@ -3,7 +3,8 @@
            :row-selection="{}">
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'action'">
-        <a-button type="primary" danger size="small">
+        <a-button type="primary" danger size="small"
+                  @click.stop="handleDelete(record.id)">
           <template #icon>
             <delete-outlined/>
           </template>
@@ -26,6 +27,7 @@
 import {DeleteOutlined, DownOutlined, SmileOutlined} from "@ant-design/icons-vue";
 import {useCompositions} from "@/utils/data";
 import {useStore} from "vuex";
+import api from "@/utils/api";
 
 export default {
   components: {SmileOutlined, DownOutlined, DeleteOutlined},
@@ -49,11 +51,18 @@ export default {
       },
     ];
 
+    function handleDelete(...ids) {
+      api.category.delete(ids).then(
+        () => store.commit('refreshState')
+      )
+    }
+
     return {
       store,
       ...useCompositions(store),
       colors,
       columns,
+      handleDelete,
     }
   },
 }

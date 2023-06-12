@@ -36,6 +36,12 @@ const api = {
         {filters, orders}
       )
     },
+    delete(ids) {
+      return api.axios.post(
+        '/api/subscription/delete',
+        {ids}
+      )
+    },
     fetch(ids) {
       return api.axios.post(
         '/api/subscription/fetch',
@@ -65,7 +71,13 @@ const api = {
         `/api/category/all`,
         {filters, orders}
       )
-    }
+    },
+    delete(ids) {
+      return api.axios.post(
+        '/api/category/delete',
+        {ids}
+      )
+    },
   },
   site: {
     fetch(id) {

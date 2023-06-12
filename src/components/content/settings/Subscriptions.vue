@@ -20,7 +20,8 @@
         </template>
       </template>
       <template v-else-if="column.key === 'action'">
-        <a-button type="primary" danger size="small">
+        <a-button type="primary" danger size="small"
+                  @click.stop="handleDelete(record.id)">
           <template #icon>
             <delete-outlined/>
           </template>
@@ -94,6 +95,12 @@ export default {
       api.basic.exportOPML(path)
     }
 
+    function handleDelete(...ids) {
+      api.subscription.delete(ids).then(
+        () => store.commit('refreshState')
+      )
+    }
+
     return {
       store,
       ...useCompositions(store),
@@ -101,6 +108,7 @@ export default {
       columns,
       importOPML,
       exportOPML,
+      handleDelete,
     }
   },
 }
