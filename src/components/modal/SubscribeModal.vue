@@ -3,7 +3,6 @@ import {computed, ref} from "vue";
 import {useStore} from "vuex";
 import api from "@/utils/api";
 
-const visible = ref(false)
 const store = useStore()
 const form_state = ref({
   url: '',
@@ -35,14 +34,16 @@ function handleOk() {
       category_id
     ).then(
       () => {
+        store.commit('updateState', {subscribe_modal_visible: false})
         store.commit('refreshState')
       }
     )
   }
 
-  let category_id = categoryTitleIDMapping.value[form_state.value.category_title]
-  if (!category_id) {
-    api.category.add(form_state.value.category_title, null).then(
+  let category_title = form_state.value.category_title
+  let category_id = categoryTitleIDMapping.value[category_title]
+  if (category_title && category_title.length && !category_id) {
+    api.category.add(category_title, null).then(
       resp => {
         subscriptionAdd(resp.data.id)
       }
@@ -50,8 +51,6 @@ function handleOk() {
   } else {
     subscriptionAdd(category_id)
   }
-
-  visible.value = false
 }
 
 </script>
