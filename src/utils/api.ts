@@ -10,6 +10,25 @@ const api = {
     return `${api.axios.defaults.baseURL}/${path}`
   },
   basic: {
+    task: {
+      count(filters = null) {
+        return api.axios.post(
+          `/api/basic/task/count`,
+          {filters}
+        )
+      },
+      all(filters = null, orders = null) {
+        return api.axios.post(
+          `/api/basic/task/all`,
+          {filters, orders}
+        )
+      },
+      get(id) {
+        return api.axios.get(
+          `/api/basic/task/get/${id}`,
+        )
+      },
+    },
     importOPML(path) {
       return api.axios.post(
         '/api/basic/import-opml',
