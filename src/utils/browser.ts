@@ -21,7 +21,7 @@ export function useBrowser() {
     let tag = event.target
     while (tag.tagName !== 'A' && tag !== document.body) {
       tag = tag.parentNode
-      if (tag.getAttribute('class') === 'ant-image') {
+      if (tag && tag.getAttribute('class') === 'ant-image') {
         event.preventDefault()
         break
       }
