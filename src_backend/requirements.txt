@@ -12,3 +12,4 @@ feedparser
 beautifulsoup4
 requests
 simple-websocket
+sqlalchemy==1.4.49
