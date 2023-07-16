@@ -24,7 +24,7 @@ def fetch_attachments(id):
         images = bs.find_all('img')
         for image in images:
             image_url = urljoin(article.link, image.get('src'))
-            file = FileService().cache_file(image_url)  # type: File
+            file = FileService().localize(image_url, download=False)  # type: File
             image['src'] = f'$file@{file.id}'
             ArticleAttachmentService().add(
                 article_id=article.id,

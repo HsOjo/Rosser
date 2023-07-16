@@ -31,5 +31,5 @@ def fetch_site(id):
         icon_href = icon_link.get('href')
         if icon_href:
             icon_url = urljoin(site.url, icon_href)
-            file = FileService().cache_file(icon_url)
+            file = FileService().localize(icon_url)
             ss.edit(site.id, favicon_id=file.id)
