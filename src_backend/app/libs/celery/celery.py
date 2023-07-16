@@ -40,15 +40,8 @@ class Celery(_Celery):
 
         broker_dir = os.path.join(os.path.abspath('data'), 'broker')
         os.makedirs(broker_dir, exist_ok=True)
-        self.conf.broker_url = f'filesystem:///{data_dir}'
-        self.conf.update(
-            broker_transport_options=dict(
-                data_folder_in=broker_dir,
-                data_folder_out=broker_dir,
-                data_folder_processed=broker_dir,
-            )
-        )
-        # self.conf.broker_url = 'memory://'
 
-        path_db = os.path.join(data_dir, 'celerybeat-result.db')
-        self.conf.result_backend = f'db+sqlite:///{path_db}'
+        path_beat_db = os.path.join(data_dir, 'celery.db')
+        self.conf.broker_url = f'sqla+sqlite:///{path_beat_db}'
+        path_beat_db = os.path.join(data_dir, 'celerybeat-result.db')
+        self.conf.result_backend = f'db+sqlite:///{path_beat_db}'
