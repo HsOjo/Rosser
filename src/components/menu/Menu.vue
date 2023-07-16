@@ -22,7 +22,7 @@
           <NotificationOutlined/>
         </template>
         <template #title>{{ category.title }}</template>
-        <Subscription :subscription="subscription" v-for="subscription in category.subscriptions"></Subscription>
+        <Subscription v-bind="subscription" v-for="subscription in category.subscriptions"></Subscription>
       </a-sub-menu>
     </template>
   </a-menu>

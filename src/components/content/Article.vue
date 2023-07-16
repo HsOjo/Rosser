@@ -13,8 +13,9 @@
         />
         <template v-else-if="!isLongTitle">
           <div style="padding: 12px" @click="open">
-            <a-typography-paragraph :ellipsis="{ rows: 3 }">
-              {{ textSummary }}
+            <a-typography-paragraph
+              :ellipsis="{ rows: 3 }"
+              :content="textSummary">
             </a-typography-paragraph>
           </div>
         </template>
@@ -83,6 +84,7 @@ import lodash from "lodash";
 const html2plaintext = require('html2plaintext')
 
 export default defineComponent({
+  inheritAttrs: false,
   components: {
     SettingOutlined,
     EditOutlined,
