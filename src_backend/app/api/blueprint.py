@@ -1,8 +1,7 @@
-from flask import Blueprint
-
 from . import basic, category, subscription, site
+from .base.blueprint import BaseBlueprint
 
-blueprint = Blueprint('api', __name__, url_prefix='/api')
+blueprint = BaseBlueprint('api', __name__)
 blueprint.register_blueprint(basic.blueprint)
 blueprint.register_blueprint(category.blueprint)
 blueprint.register_blueprint(subscription.blueprint)

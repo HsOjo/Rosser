@@ -1,17 +1,19 @@
 from typing import Union
 
-from flask import Blueprint, jsonify, abort
+from flask import jsonify, abort
 from opyml import OPML, Outline, Body
 
-from . import file
+from . import file, task
 from .forms import FileForm
+from ..base.blueprint import BaseBlueprint
 from ..category.models import Category
 from ..category.service import CategoryService
 from ..subscription.models import Subscription
 from ..subscription.service import SubscriptionService
 
-blueprint = Blueprint('basic', __name__, url_prefix='/basic')
+blueprint = BaseBlueprint('basic', __name__)
 blueprint.register_blueprint(file.blueprint)
+blueprint.register_blueprint(task.blueprint)
 
 
 @blueprint.route('/import-opml', methods=['POST'])

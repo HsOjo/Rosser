@@ -5,11 +5,11 @@ from flask import abort, jsonify
 from .forms import SubscriptionDaysForm
 from .models import ArticleState, Article
 from .service import ArticleService, ArticleStateService
-from ...base.blueprint import BaseBlueprint
+from ...base.curd_blueprint import CurdBlueprint
 from ...base.forms import MutipleItemsForm
 
 
-class Blueprint(BaseBlueprint):
+class Blueprint(CurdBlueprint):
     service_class = ArticleService
 
     def register_rules(self):
@@ -78,4 +78,4 @@ class Blueprint(BaseBlueprint):
         return self.update_state_before_days(is_read=True)
 
 
-blueprint = Blueprint('article', __name__, url_prefix='/article')
+blueprint = Blueprint('article', __name__)

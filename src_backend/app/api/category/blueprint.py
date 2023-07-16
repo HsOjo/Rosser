@@ -1,11 +1,11 @@
 from .forms import BodyForm
 from .service import CategoryService
-from ..base.blueprint import BaseBlueprint
+from ..base.curd_blueprint import CurdBlueprint
 
 
-class Blueprint(BaseBlueprint):
+class Blueprint(CurdBlueprint):
     service_class = CategoryService
     body_form_class = BodyForm
 
 
-blueprint = Blueprint('category', __name__, url_prefix='/category')
+blueprint = Blueprint('category', __name__)

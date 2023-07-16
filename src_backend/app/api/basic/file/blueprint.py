@@ -5,10 +5,10 @@ from app import db
 from . import tasks
 from .models import File
 from .service import FileService
-from ...base.blueprint import BaseBlueprint
+from ...base.curd_blueprint import CurdBlueprint
 
 
-class Blueprint(BaseBlueprint):
+class Blueprint(CurdBlueprint):
     service_class = FileService
 
     def register_rules(self):
@@ -33,4 +33,4 @@ class Blueprint(BaseBlueprint):
         return Response(file.data)
 
 
-blueprint = Blueprint('file', __name__, url_prefix='/file')
+blueprint = Blueprint('file', __name__)

@@ -7,10 +7,10 @@ from . import article, tasks
 from .forms import BodyForm
 from .models import Subscription
 from .service import SubscriptionService
-from ..base.blueprint import BaseBlueprint
+from ..base.curd_blueprint import CurdBlueprint
 
 
-class Blueprint(BaseBlueprint):
+class Blueprint(CurdBlueprint):
     service_class = SubscriptionService
     body_form_class = BodyForm
 
@@ -38,5 +38,5 @@ class Blueprint(BaseBlueprint):
         return jsonify(dict(res_id=res.id))
 
 
-blueprint = Blueprint('subscription', __name__, url_prefix='/subscription')
+blueprint = Blueprint('subscription', __name__)
 blueprint.register_blueprint(article.blueprint)
