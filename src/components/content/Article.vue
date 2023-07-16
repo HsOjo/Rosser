@@ -107,6 +107,14 @@ export default defineComponent({
     thumb_id: {type: Number, default: null},
     state: {type: Object, default: null},
   },
+  data() {
+    return {
+      replace_tags: {
+        img: {tag: 'a-image', attrs: ['src']},
+        dir: {tag: 'div'},
+      }
+    }
+  },
   computed: {
     ...mapGetters(['backendURL']),
     isLongTitle() {
@@ -117,13 +125,17 @@ export default defineComponent({
       summary = summary.replaceAll('$file@', api.url('api/basic/file/download/'))
 
       let doc = new DOMParser().parseFromString(summary, 'text/html')
-      lodash.forEachRight(doc.getElementsByTagName('img'), el => {
-        if (el) {
-          let img = doc.createElement('a-image')
-          img.setAttribute('src', el.getAttribute('src'))
-          el.replaceWith(img)
-        }
-      })
+      for (let tag in this.replace_tags) {
+        let item = this.replace_tags[tag]
+        lodash.forEachRight(doc.getElementsByTagName(tag), el => {
+          if (el) {
+            let new_tag = doc.createElement(item.tag)
+            if (item.attrs)
+              item.attrs.map(attr => new_tag.setAttribute(attr, el.getAttribute(attr)))
+            el.replaceWith(new_tag)
+          }
+        })
+      }
 
       return doc.body.innerHTML
     },
