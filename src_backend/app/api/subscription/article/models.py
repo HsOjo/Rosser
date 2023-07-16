@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class Article(BaseModel):
-    subscription_id = db.Column(db.Integer, db.ForeignKey('subscription.id'), index=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey('subscription.id', ondelete='CASCADE'), index=True)
 
     hash = db.Column(db.String, index=True)
     title = db.Column(db.String, index=True)
@@ -17,11 +17,11 @@ class Article(BaseModel):
     link = db.Column(db.String)
     publish_time = db.Column(db.DateTime)
     meta = db.Column(db.JSON)
-
-    @property
-    def subscription(self):
-        from app.api.subscription.models import Subscription
-        return Subscription.query_by_id(self.subscription_id)
+    state = db.relationship(
+        'ArticleState', uselist=False
+    )  # type: ArticleState
+    subscription = db.relationship('Subscription', back_populates='articles', uselist=False)  # type: Subscription
+    attachments = db.relationship('ArticleAttachment')  # type: List[ArticleAttachment]
 
     @property
     def thumb_id(self):
@@ -30,16 +30,6 @@ class Article(BaseModel):
             ArticleAttachment.file_type == ArticleAttachment.FILE_TYPE_IMAGE,
             ArticleAttachment.article_id == self.id,
         ).limit(1).scalar()
-
-    @property
-    def attachments(self) -> 'List[ArticleAttachment]':
-        return ArticleAttachment.query.filter(
-            ArticleAttachment.article_id == self.id,
-        ).all()
-
-    @property
-    def state(self) -> 'ArticleState':
-        return ArticleState.query_by_field(ArticleState.article_id, self.id)
 
     @property
     def dict(self):
@@ -52,7 +42,7 @@ class Article(BaseModel):
 
 
 class ArticleState(BaseModel):
-    article_id = db.Column(db.Integer, db.ForeignKey('article.id'), index=True)
+    article_id = db.Column(db.Integer, db.ForeignKey('article.id', ondelete='CASCADE'), index=True)
     is_read = db.Column(db.Boolean, index=True, default=False)
     is_hide = db.Column(db.Boolean, index=True, default=False)
     is_star = db.Column(db.Boolean, index=True, default=False)
@@ -61,6 +51,6 @@ class ArticleState(BaseModel):
 class ArticleAttachment(BaseModel):
     FILE_TYPE_IMAGE = 1
 
-    article_id = db.Column(db.Integer, db.ForeignKey('article.id'), index=True)
+    article_id = db.Column(db.Integer, db.ForeignKey('article.id', ondelete='CASCADE'), index=True)
     file_type = db.Column(db.Integer, index=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), index=True)
+    file_id = db.Column(db.Integer, db.ForeignKey('file.id', ondelete='CASCADE'), index=True)

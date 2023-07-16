@@ -61,4 +61,4 @@ class BaseService:
 
     @with_commit
     def delete(self, *ids) -> 'int':
-        return self.query(self.model_cls.id.in_(ids)).delete(synchronize_session=False)
+        return self.query(self.model_cls.id.in_(ids)).delete()
