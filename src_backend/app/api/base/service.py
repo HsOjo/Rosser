@@ -13,14 +13,20 @@ QueryFunc = TypeVar('QueryFunc', bound=Callable[[...], Query])
 
 class BaseService:
     model_cls: 'Type[Model]'
+    default_filters = []
+    default_orders = []
 
     def query(self, *filters, orders: 'Iterable' = None, func: 'QueryFunc' = None):
         query = self.model_cls.query
         if func:
             query = func(query=query, model_cls=self.model_cls)
         if filters:
+            if self.default_filters:
+                query = query.filter(*self.default_filters)
             query = query.filter(*filters)
         if orders:
+            if self.default_orders:
+                query = query.filter(*self.default_orders)
             query = query.order_by(*orders)
 
         return query
