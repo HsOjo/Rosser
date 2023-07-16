@@ -11,6 +11,7 @@ const store = createStore({
       is_electron: isElectron(),
       electron: null,
       STATE: {
+        progress: 0,
         sider_collapsed: false,
         settings_visible: false,
         subscribe_modal_visible: false,

@@ -5,6 +5,7 @@ import ControlArea from "@/components/header/ControlArea.vue";
 import LeftSide from "@/components/header/LeftSide.vue";
 import Title from "@/components/header/Title.vue";
 import RightSide from "@/components/header/RightSide.vue";
+import ProgressBar from "@/components/header/ProgressBar.vue";
 
 const store = useStore()
 const isMac = computed(() => store.getters.isMac)
@@ -21,6 +22,7 @@ const isMac = computed(() => store.getters.isMac)
       <RightSide></RightSide>
     </div>
   </div>
+  <ProgressBar></ProgressBar>
 </template>
 
 <style scoped>
