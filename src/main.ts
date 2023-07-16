@@ -6,6 +6,7 @@ import 'ant-design-vue/dist/antd.css';
 
 import 'animate.css'
 import '@/style.css'
+import 'highlight.js/styles/default.css'
 
 import store from "@/plugins/store";
 import axios from "@/plugins/axios";

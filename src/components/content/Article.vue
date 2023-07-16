@@ -81,6 +81,8 @@ import api from "@/utils/api";
 import DOMPurify from "dompurify"
 import lodash from "lodash";
 
+import hljs from 'highlight.js'
+
 const html2plaintext = require('html2plaintext')
 
 export default defineComponent({
@@ -138,6 +140,10 @@ export default defineComponent({
           }
         })
       }
+
+      lodash.forEachRight(doc.querySelectorAll('pre code'), el => {
+        hljs.highlightElement(el);
+      })
 
       return doc.body.innerHTML
     },
