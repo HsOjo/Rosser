@@ -3,6 +3,8 @@ from datetime import datetime
 import feedparser
 
 from app import celery, db, common
+from app.api.basic.notification.models import Notification
+from app.api.basic.notification.service import NotificationService
 from app.api.subscription.article.models import Article
 from app.api.subscription.article.service import ArticleService
 from app.api.subscription.article.tasks import fetch_attachments
@@ -43,12 +45,14 @@ def fetch_one(self: 'ContextTask', id):
     except:
         raise self.retry(countdown=10)
 
+    new_articles = []
     for entry in feed.entries:
         entry = entry.copy()  # type: dict
         entry.pop('keymap', None)
 
         hash = common.md5(entry.pop('id', entry.get('link')))
         article = ars.get_by_field(Article.hash, hash)
+        is_new = article is None
         if not article:
             article = ars.add(hash=hash, subscription_id=subscription.id)
 
@@ -63,4 +67,17 @@ def fetch_one(self: 'ContextTask', id):
         article.meta = common.obj_standard(entry, True, True, True)
         db.session.commit()
 
+        if is_new:
+            new_articles.append(article)
+
         fetch_attachments.delay(article.id)
+
+    # 创建新文章通知
+    if new_articles:
+        ns = NotificationService()
+        ns.add(
+            type=Notification.TYPE_NEW_ARTICLES,
+            title=f'{subscription.title} 有 {len(new_articles)} 篇新文章',
+            message=new_articles[0].title,
+            subscription_id=subscription.id
+        )

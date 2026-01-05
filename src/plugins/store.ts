@@ -18,6 +18,11 @@ const store = createStore({
         categories: [],
         subscriptions: [],
         sites: [],
+        notifications: [],
+        unread_notification_count: 0,
+        settings: {
+          auto_refresh_interval: 30,
+        },
       },
       query: {
         mode: null,

@@ -29,6 +29,31 @@ const api = {
         )
       },
     },
+    notification: {
+      all(filters = null, orders = null) {
+        return api.axios.post(
+          `/api/basic/notification/all`,
+          {filters, orders}
+        )
+      },
+      unreadCount() {
+        return api.axios.get(`/api/basic/notification/unread-count`)
+      },
+      markRead(ids) {
+        return api.axios.post(`/api/basic/notification/mark-read`, {ids})
+      },
+      markAllRead() {
+        return api.axios.post(`/api/basic/notification/mark-all-read`)
+      },
+    },
+    settings: {
+      get() {
+        return api.axios.get(`/api/basic/settings/get`)
+      },
+      update(data) {
+        return api.axios.post(`/api/basic/settings/update`, data)
+      },
+    },
     importOPML(path) {
       return api.axios.post(
         '/api/basic/import-opml',

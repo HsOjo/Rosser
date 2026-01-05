@@ -15,14 +15,7 @@
       <CheckMenu :items="read_menu_items" @click="readClick"></CheckMenu>
     </template>
   </a-dropdown>
-  <a-dropdown :trigger="['click']">
-    <IconButton class="hover-rotate-y">
-      <bell-filled/>
-    </IconButton>
-    <template #overlay>
-      <a-empty style="text-align: center; padding: 16px"/>
-    </template>
-  </a-dropdown>
+  <Notification ref="notificationRef"/>
   <a-dropdown :trigger="['click']">
     <IconButton class="hover-rotate-x">
       <eye-filled/>
@@ -40,7 +33,6 @@
 
 <script>
 import {
-  BellFilled,
   CarryOutOutlined,
   CheckOutlined,
   ContainerOutlined,
@@ -63,6 +55,7 @@ import {
 import {useStore} from "vuex";
 import IconButton from "@/components/header/IconButton.vue";
 import CheckMenu from "@/components/common/CheckMenu.vue";
+import Notification from "@/components/header/right/Notification.vue";
 import api from "@/utils/api";
 
 
@@ -71,7 +64,7 @@ export default {
   components: {
     CheckMenu,
     IconButton,
-    BellFilled,
+    Notification,
     EyeFilled,
     RedoOutlined,
     ScheduleFilled,
