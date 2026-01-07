@@ -14,7 +14,7 @@ const isMac = computed(() => store.getters.isMac)
 <template>
   <div class="header">
     <ControlArea v-if="isMac"></ControlArea>
-    <div class="plugin-area" style="min-width: 80px">
+    <div class="plugin-area" style="min-width: 120px">
       <LeftSide></LeftSide>
     </div>
     <Title></Title>
@@ -30,7 +30,7 @@ const isMac = computed(() => store.getters.isMac)
   width: 100%;
   height: 40px;
   display: flex;
-  background: #27282D;
+  background: var(--bg-secondary);
   align-items: center;
   justify-content: space-between;
 }

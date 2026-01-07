@@ -80,7 +80,7 @@ export default {
 
 <style scoped>
 .menu {
-  background: #F7F8FA;
+  background: var(--bg-menu);
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;

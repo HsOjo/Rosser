@@ -27,7 +27,12 @@
           }"
           @click="open"
         >
-          {{ viewTitle }}
+          <div class="title-tags" v-if="articleTags.length > 0">
+            <a-tag v-for="tag in articleTags" :key="tag.id" :color="tag.color" size="small">
+              {{ tag.name }}
+            </a-tag>
+          </div>
+          {{ title }}
         </div>
       </template>
     </a-card>
@@ -75,11 +80,12 @@
 
 <script lang="ts">
 import {EditOutlined, EllipsisOutlined, SettingOutlined, StarFilled, StarOutlined} from '@ant-design/icons-vue';
-import {compile, defineComponent, h, ref} from 'vue';
+import {compile, computed, defineComponent, h, ref} from 'vue';
 import {mapGetters} from "vuex";
 import api from "@/utils/api";
 import DOMPurify from "dompurify"
 import lodash from "lodash";
+import {getArticleTags} from "@/utils/tags";
 
 import hljs from 'highlight.js'
 
@@ -156,6 +162,9 @@ export default defineComponent({
         return `🌟 ${this.title}`
       return this.title
     },
+    articleTags() {
+      return getArticleTags(this.state || {})
+    },
   },
   setup(props, {emit}) {
     const no_thumb = ref(false)
@@ -226,15 +235,28 @@ export default defineComponent({
   padding: 16px;
   bottom: 0;
   z-index: 1;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--card-title-bg);
+  color: var(--text-primary);
+}
+
+.title-tags {
+  margin-bottom: 4px;
+}
+
+.title-tags :deep(.ant-tag) {
+  margin-right: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 4px;
 }
 
 .read-title {
-  color: #8C8C8C;
+  color: var(--text-tertiary);
 }
 
 .hide-title {
-  color: #BFBFBF;
+  color: var(--text-tertiary);
+  opacity: 0.7;
 }
 
 .thumb-img {
@@ -252,6 +274,7 @@ export default defineComponent({
 .content {
   padding: 32px;
   height: fit-content;
+  font-size: var(--article-font-size);
 }
 
 .content >>> img {

@@ -126,11 +126,11 @@ defineExpose({loadNotifications, loadUnreadCount})
 .notification-panel {
   width: 320px;
   max-height: 400px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 8px;
   box-shadow: 0 3px 6px -4px rgba(0, 0, 0, .12), 0 6px 16px 0 rgba(0, 0, 0, .08);
   overflow: hidden;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
 }
 
 .notification-header {
@@ -138,9 +138,9 @@ defineExpose({loadNotifications, loadUnreadCount})
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--border-color);
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
 }
 
 .notification-list {
@@ -151,16 +151,16 @@ defineExpose({loadNotifications, loadUnreadCount})
 .notification-item {
   padding: 12px 16px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s;
 }
 
 .notification-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(24, 144, 255, 0.15);
 }
 
 .notification-item.unread {
-  background-color: rgba(24, 144, 255, 0.1);
+  background-color: rgba(24, 144, 255, 0.15);
 }
 
 .notification-title {
@@ -169,12 +169,12 @@ defineExpose({loadNotifications, loadUnreadCount})
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
 }
 
 .notification-message {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -182,7 +182,7 @@ defineExpose({loadNotifications, loadUnreadCount})
 
 .notification-time {
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-tertiary);
   margin-top: 4px;
 }
 

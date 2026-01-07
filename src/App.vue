@@ -12,6 +12,7 @@ api.axios = inject(AxiosInstanceKey)
 const store = useStore()
 const backend_loaded = ref(false)
 const isMac = computed(() => store.getters.isMac);
+const isElectron = computed(() => store.getters.isElectron);
 useBrowser()
 
 let notificationPollTimer: number | null = null
@@ -64,6 +65,9 @@ async function initTimers() {
   try {
     const resp = await api.basic.settings.get()
     store.commit('updateState', {settings: resp.data})
+    // 应用主题和字体大小
+    document.body.setAttribute('data-theme', resp.data.theme || 'dark')
+    document.documentElement.style.setProperty('--article-font-size', `${resp.data.font_size || 14}px`)
   } catch (e) {
     // 使用默认设置
   }
@@ -87,6 +91,34 @@ onUnmounted(() => {
   if (notificationPollTimer) clearInterval(notificationPollTimer)
   if (autoRefreshTimer) clearInterval(autoRefreshTimer)
 })
+
+// 监听 Electron 菜单 IPC 消息
+if (isElectron.value) {
+  const {ipcRenderer} = window.require('electron')
+
+  ipcRenderer.on('open-settings', () => {
+    store.commit('updateState', {settings_visible: true})
+  })
+
+  ipcRenderer.on('new-subscription', () => {
+    store.commit('updateState', {subscribe_modal_visible: true})
+  })
+
+  ipcRenderer.on('refresh-articles', () => {
+    store.commit('updateQuery', {refresh: true})
+  })
+
+  ipcRenderer.on('fetch-current', () => {
+    const subscription = store.getters.query.subscription
+    if (subscription && subscription.id) {
+      api.subscription.fetch([subscription.id])
+    }
+  })
+
+  ipcRenderer.on('fetch-all', () => {
+    api.subscription.fetchAll()
+  })
+}
 
 </script>
 <template>
@@ -122,7 +154,7 @@ onUnmounted(() => {
 }
 
 .body-border {
-  border: #DEDEDE solid 1px;
+  border: var(--border-color) solid 1px;
   box-sizing: border-box;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;

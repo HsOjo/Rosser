@@ -1,7 +1,7 @@
 from flask import jsonify, abort
 from flask_wtf import FlaskForm
-from wtforms import IntegerField
-from wtforms.validators import NumberRange, Optional
+from wtforms import IntegerField, StringField
+from wtforms.validators import NumberRange, Optional, AnyOf
 
 from app.api.base.blueprint import BaseBlueprint
 from .models import Settings
@@ -9,6 +9,8 @@ from .models import Settings
 
 class SettingsForm(FlaskForm):
     auto_refresh_interval = IntegerField(validators=[Optional(), NumberRange(min=0, max=1440)])
+    theme = StringField(validators=[Optional(), AnyOf(['light', 'dark'])])
+    font_size = IntegerField(validators=[Optional(), NumberRange(min=12, max=20)])
 
 
 class Blueprint(BaseBlueprint):

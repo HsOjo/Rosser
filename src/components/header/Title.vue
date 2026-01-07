@@ -42,7 +42,7 @@ export default {
 
 <style scoped>
 .title {
-  color: #EBECF0;
+  color: var(--header-text);
   font-size: 0.9rem;
   font-weight: bold;
   width: 100%;
