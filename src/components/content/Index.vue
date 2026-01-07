@@ -39,6 +39,8 @@ const filters = computed(() => {
     result.push({field: 'article_state.is_star', operate: 'eq', value: true})
   if (!_query.show_hide)
     result.push({field: 'article_state.is_hide', operate: 'ne', value: true})
+  if (_query.search_keyword)
+    result.push({field: 'title', operate: 'ilike', value: _query.search_keyword})
   return result
 })
 

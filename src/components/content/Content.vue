@@ -36,5 +36,6 @@ export default {
   height: 100%;
   --animate-duration: 1s;
   position: relative;
+  background: var(--bg-content);
 }
 </style>

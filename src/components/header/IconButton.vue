@@ -21,11 +21,11 @@ export default {
   margin: 0;
   border-radius: 0;
   background: transparent;
-  color: #CED0D5;
+  color: var(--header-icon);
 }
 
 .icon-button:hover {
-  background: #383A41;
+  background: var(--header-hover);
 }
 
 .icon-button:active {

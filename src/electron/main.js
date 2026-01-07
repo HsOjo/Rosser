@@ -1,10 +1,122 @@
-const {app, BrowserWindow, session} = require('electron');
+const {app, BrowserWindow, session, Menu, shell} = require('electron');
 const lodash = require('lodash');
 const path = require('path');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
+}
+
+let mainWindow = null;
+
+// 创建应用菜单
+function createMenu(win) {
+  const isMac = process.platform === 'darwin';
+
+  const template = [
+    // macOS 应用菜单
+    ...(isMac ? [{
+      label: 'Rosser',
+      submenu: [
+        {label: '关于 Rosser', role: 'about'},
+        {type: 'separator'},
+        {
+          label: '设置...',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => win.webContents.send('open-settings')
+        },
+        {type: 'separator'},
+        {label: '隐藏 Rosser', role: 'hide'},
+        {label: '隐藏其他', role: 'hideOthers'},
+        {label: '显示全部', role: 'unhide'},
+        {type: 'separator'},
+        {label: '退出 Rosser', role: 'quit'}
+      ]
+    }] : []),
+
+    // 编辑菜单
+    {
+      label: '编辑',
+      submenu: [
+        {label: '撤销', accelerator: 'CmdOrCtrl+Z', role: 'undo'},
+        {label: '重做', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo'},
+        {type: 'separator'},
+        {label: '剪切', accelerator: 'CmdOrCtrl+X', role: 'cut'},
+        {label: '复制', accelerator: 'CmdOrCtrl+C', role: 'copy'},
+        {label: '粘贴', accelerator: 'CmdOrCtrl+V', role: 'paste'},
+        {label: '全选', accelerator: 'CmdOrCtrl+A', role: 'selectAll'}
+      ]
+    },
+
+    // 视图菜单
+    {
+      label: '视图',
+      submenu: [
+        {
+          label: '刷新',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => win.webContents.send('refresh-articles')
+        },
+        {type: 'separator'},
+        {label: '实际大小', accelerator: 'CmdOrCtrl+0', role: 'resetZoom'},
+        {label: '放大', accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn'},
+        {label: '缩小', accelerator: 'CmdOrCtrl+-', role: 'zoomOut'},
+        {type: 'separator'},
+        {label: '切换全屏', accelerator: 'F11', role: 'togglefullscreen'},
+        {type: 'separator'},
+        {label: '开发者工具', accelerator: 'Alt+CmdOrCtrl+I', role: 'toggleDevTools'}
+      ]
+    },
+
+    // 订阅菜单
+    {
+      label: '订阅',
+      submenu: [
+        {
+          label: '新建订阅',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => win.webContents.send('new-subscription')
+        },
+        {type: 'separator'},
+        {
+          label: '抓取当前订阅',
+          accelerator: 'CmdOrCtrl+Shift+R',
+          click: () => win.webContents.send('fetch-current')
+        },
+        {
+          label: '抓取所有订阅',
+          accelerator: 'CmdOrCtrl+Shift+A',
+          click: () => win.webContents.send('fetch-all')
+        }
+      ]
+    },
+
+    // 窗口菜单
+    {
+      label: '窗口',
+      submenu: [
+        {label: '最小化', accelerator: 'CmdOrCtrl+M', role: 'minimize'},
+        {label: '关闭', accelerator: 'CmdOrCtrl+W', role: 'close'},
+        ...(isMac ? [
+          {type: 'separator'},
+          {label: '前置全部窗口', role: 'front'}
+        ] : [])
+      ]
+    },
+
+    // 帮助菜单
+    {
+      label: '帮助',
+      submenu: [
+        {
+          label: '访问 GitHub',
+          click: () => shell.openExternal('https://github.com')
+        }
+      ]
+    }
+  ];
+
+  return Menu.buildFromTemplate(template);
 }
 
 const createWindow = () => {
@@ -27,7 +139,7 @@ const createWindow = () => {
   })
 
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
     frame: false,
@@ -39,6 +151,10 @@ const createWindow = () => {
       nodeIntegration: true,
     },
   });
+
+  // 设置应用菜单
+  const menu = createMenu(mainWindow);
+  Menu.setApplicationMenu(menu);
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

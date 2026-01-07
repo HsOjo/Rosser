@@ -22,6 +22,8 @@ const store = createStore({
         unread_notification_count: 0,
         settings: {
           auto_refresh_interval: 30,
+          theme: 'dark',
+          font_size: 14,
         },
       },
       query: {
@@ -30,6 +32,7 @@ const store = createStore({
         subscription: null,
         time_order: 'desc',
         star_first: false,
+        search_keyword: '',
       },
     }
   },
