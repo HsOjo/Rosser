@@ -26,8 +26,14 @@
             <span>{{ category.title }}</span>
             <template #overlay>
               <a-menu @click="categoryItemClick($event, category)">
-                <a-menu-item key="edit">{{ $t('common.edit') }}</a-menu-item>
-                <a-menu-item key="delete">{{ $t('common.delete') }}</a-menu-item>
+                <a-menu-item-group>
+                  <template #title>
+                    <NotificationOutlined/>
+                    <span style="margin-left: 8px">{{ category.title }}</span>
+                  </template>
+                  <a-menu-item key="edit">{{ $t('common.edit') }}</a-menu-item>
+                  <a-menu-item key="delete">{{ $t('common.delete') }}</a-menu-item>
+                </a-menu-item-group>
               </a-menu>
             </template>
           </a-dropdown>
