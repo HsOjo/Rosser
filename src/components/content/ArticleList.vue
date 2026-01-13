@@ -1,46 +1,39 @@
 <template>
   <transition
-    enter-active-class="animate__animated animate__zoomIn" appear
-    leave-active-class="animate__animated animate__zoomOut"
+    enter-active-class="animate__animated animate__fadeIn" appear
+    leave-active-class="animate__animated animate__fadeOut"
   >
-    <a-card hoverable class="card" :class="{'card-unread': isUnread}">
-      <template #cover>
-        <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
-             v-if="thumb_id && !no_thumb"
-             @error="no_thumb = true"
-             :alt="$t('article.previewImage')" class="thumb-img"
-             @click="open"
+    <div class="list-item" :class="{'list-item-unread': isUnread}" @click="open">
+      <div class="list-thumb" v-if="thumb_id && !no_thumb">
+        <img
+          :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
+          @error="no_thumb = true"
+          :alt="$t('article.previewImage')"
         />
-        <template v-else-if="!isLongTitle">
-          <div style="padding: 12px" @click="open">
-            <a-typography-paragraph
-              :ellipsis="{ rows: 3 }"
-              :content="textSummary">
-            </a-typography-paragraph>
-          </div>
-        </template>
-        <div
-          class="card-title"
-          :class="{
-            'read-title': state['is_read'],
-            'hide-title': state['is_hide'],
-          }"
-          @click="open"
-        >
-          <div class="title-tags" v-if="articleTags.length > 0">
-            <a-tag v-for="tag in articleTags" :key="tag.id" :color="tag.color" size="small">
-              {{ tag.name }}
-            </a-tag>
-          </div>
+      </div>
+      <div class="list-thumb list-thumb-placeholder" v-else>
+        <file-text-outlined />
+      </div>
+      <div class="list-content">
+        <div class="list-title" :class="{'read-title': state['is_read'], 'hide-title': state['is_hide']}">
+          <a-tag v-for="tag in articleTags" :key="tag.id" :color="tag.color" size="small" class="list-tag">
+            {{ tag.name }}
+          </a-tag>
           {{ title }}
         </div>
-        <div class="card-meta" v-if="subscription_title || relativeTime">
+        <div class="list-meta">
           <span class="meta-subscription" v-if="subscription_title">{{ subscription_title }}</span>
-          <span class="meta-separator" v-if="subscription_title && relativeTime">·</span>
-          <span class="meta-time" v-if="relativeTime">{{ relativeTime }}</span>
+          <span class="meta-separator" v-if="subscription_title && textSummary">·</span>
+          <span class="meta-summary">{{ textSummary }}</span>
         </div>
-      </template>
-    </a-card>
+      </div>
+      <div class="list-info">
+        <div class="list-time">{{ relativeTime }}</div>
+        <div class="list-icons">
+          <star-filled v-if="state['is_star']" class="icon-star" />
+        </div>
+      </div>
+    </div>
   </transition>
   <a-modal v-model:visible="visible" width="80%" :title="viewTitle" style="top: 50px"
            :body-style="{'padding': '0', 'overflow-y': 'scroll', 'max-height': 'calc(100vh - 200px)'}">
@@ -84,15 +77,14 @@
 </template>
 
 <script lang="ts">
-import {EditOutlined, EllipsisOutlined, SettingOutlined, StarFilled, StarOutlined} from '@ant-design/icons-vue';
-import {compile, computed, defineComponent, h, ref} from 'vue';
+import {FileTextOutlined, StarFilled} from '@ant-design/icons-vue';
+import {compile, defineComponent, h, ref} from 'vue';
 import {mapGetters} from "vuex";
 import api from "@/utils/api";
 import DOMPurify from "dompurify"
 import lodash from "lodash";
 import {getArticleTags} from "@/utils/tags";
 import {formatRelativeTime} from "@/utils/time";
-
 import hljs from 'highlight.js'
 
 const html2plaintext = require('html2plaintext')
@@ -100,10 +92,7 @@ const html2plaintext = require('html2plaintext')
 export default defineComponent({
   inheritAttrs: false,
   components: {
-    SettingOutlined,
-    EditOutlined,
-    EllipsisOutlined,
-    StarOutlined,
+    FileTextOutlined,
     StarFilled,
     DynamicContent: {
       props: {
@@ -148,9 +137,6 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters(['backendURL']),
-    isLongTitle() {
-      return this.title.length > 32
-    },
     truthSummary() {
       let summary = DOMPurify.sanitize(this.summary)
       summary = summary.replaceAll('$file@', api.url('api/basic/file/download/'))
@@ -176,7 +162,8 @@ export default defineComponent({
     },
     textSummary() {
       let summary = DOMPurify.sanitize(this.summary)
-      return html2plaintext(summary)
+      let text = html2plaintext(summary)
+      return text.length > 100 ? text.substring(0, 100) + '...' : text
     },
     viewTitle() {
       if (this.state['is_star'])
@@ -252,37 +239,93 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.card {
-  width: 240px;
-  height: fit-content;
-  padding: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+.list-item:hover {
+  background: var(--bg-card-hover);
 }
 
-.card-unread {
+.list-item-unread {
   border-left: 3px solid #1890ff;
 }
 
-.card-title {
-  font-weight: bold;
-  padding: 16px;
-  padding-bottom: 8px;
-  bottom: 0;
-  z-index: 1;
-  background: var(--card-title-bg);
-  color: var(--text-primary);
+.list-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 12px;
 }
 
-.card-meta {
-  padding: 0 16px 12px 16px;
+.list-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.list-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  font-size: 20px;
+}
+
+.list-content {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+  text-align: left;
+}
+
+.list-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.list-tag {
+  margin-right: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 4px;
+}
+
+.read-title {
+  color: var(--text-tertiary);
+  font-weight: normal;
+}
+
+.hide-title {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+.list-meta {
   font-size: 12px;
   color: var(--text-tertiary);
-  background: var(--card-title-bg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .meta-subscription {
@@ -293,33 +336,31 @@ export default defineComponent({
   margin: 0 6px;
 }
 
-.meta-time {
+.meta-summary {
   color: var(--text-tertiary);
 }
 
-.title-tags {
+.list-info {
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 80px;
+}
+
+.list-time {
+  font-size: 12px;
+  color: var(--text-tertiary);
   margin-bottom: 4px;
 }
 
-.title-tags :deep(.ant-tag) {
-  margin-right: 4px;
-  font-size: 10px;
-  line-height: 16px;
-  padding: 0 4px;
+.list-icons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.read-title {
-  color: var(--text-tertiary);
-}
-
-.hide-title {
-  color: var(--text-tertiary);
-  opacity: 0.7;
-}
-
-.thumb-img {
-  max-height: 192px;
-  object-fit: cover;
+.icon-star {
+  color: #faad14;
+  font-size: 14px;
 }
 
 .raw-content {
@@ -344,5 +385,4 @@ export default defineComponent({
 .content >>> span {
   display: inline-block;
 }
-
 </style>

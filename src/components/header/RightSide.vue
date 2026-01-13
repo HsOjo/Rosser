@@ -24,6 +24,12 @@
       <CheckMenu :items="view_menu_items" @click="viewClick"></CheckMenu>
     </template>
   </a-dropdown>
+  <a-tooltip :title="viewMode === 'card' ? $t('article.viewList') : $t('article.viewCard')">
+    <IconButton @click="toggleViewMode">
+      <appstore-outlined v-if="viewMode === 'card'"/>
+      <unordered-list-outlined v-else/>
+    </IconButton>
+  </a-tooltip>
   <IconButton class="hover-rotate"
               @click="toggleSettingsVisible"
               :class="{'mac-top-right-radius': isMac}">
@@ -33,6 +39,7 @@
 
 <script>
 import {
+  AppstoreOutlined,
   CarryOutOutlined,
   CheckOutlined,
   ContainerOutlined,
@@ -51,6 +58,7 @@ import {
   StarFilled,
   StarOutlined,
   SyncOutlined,
+  UnorderedListOutlined,
 } from "@ant-design/icons-vue";
 import {useStore} from "vuex";
 import {computed} from "vue";
@@ -67,12 +75,14 @@ export default {
     CheckMenu,
     IconButton,
     Notification,
+    AppstoreOutlined,
     EyeFilled,
     RedoOutlined,
     ScheduleFilled,
     SettingFilled,
     CheckOutlined,
     SyncOutlined,
+    UnorderedListOutlined,
   },
   setup() {
     const store = useStore()
@@ -167,6 +177,14 @@ export default {
       store.commit('updateQuery', {refresh: true})
     }
 
+    const viewMode = computed(() => store.getters.state.article_view_mode || 'card')
+
+    function toggleViewMode() {
+      const newMode = viewMode.value === 'card' ? 'list' : 'card'
+      localStorage.setItem('article_view_mode', newMode)
+      store.commit('updateState', {article_view_mode: newMode})
+    }
+
     return {
       isMac,
       view_menu_items,
@@ -176,6 +194,8 @@ export default {
       viewClick,
       fetchClick,
       readClick,
+      viewMode,
+      toggleViewMode,
     }
   }
 }

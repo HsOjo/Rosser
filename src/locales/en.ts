@@ -108,6 +108,15 @@ export default {
     star: 'Star',
     unread: 'Mark Unread',
     read: 'Mark Read',
+    viewCard: 'Card View',
+    viewList: 'List View',
+  },
+  time: {
+    justNow: 'Just now',
+    minutesAgo: '{n}m ago',
+    hoursAgo: '{n}h ago',
+    yesterday: 'Yesterday',
+    daysAgo: '{n}d ago',
   },
   subscribe: {
     modalTitle: 'Subscribe',

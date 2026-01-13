@@ -18,6 +18,7 @@ const store = createStore({
         subscribe_edit_data: null,
         category_modal_visible: false,
         category_edit_data: null,
+        article_view_mode: localStorage.getItem('article_view_mode') || 'card',
         categories: [],
         subscriptions: [],
         sites: [],

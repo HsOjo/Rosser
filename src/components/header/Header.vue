@@ -18,7 +18,7 @@ const isMac = computed(() => store.getters.isMac)
       <LeftSide></LeftSide>
     </div>
     <Title></Title>
-    <div class="plugin-area" style="min-width: 200px">
+    <div class="plugin-area" style="min-width: 240px">
       <RightSide></RightSide>
     </div>
   </div>

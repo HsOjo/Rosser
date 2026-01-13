@@ -2,6 +2,7 @@
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import {LoadingOutlined} from "@ant-design/icons-vue";
 import ArticleComp from "@/components/content/Article.vue";
+import ArticleListComp from "@/components/content/ArticleList.vue";
 import {Article} from "@/utils/types";
 import api from "@/utils/api";
 import {useStore} from "vuex";
@@ -17,9 +18,20 @@ const articles = ref<Article[]>([])
 const patch_articles = ref<Map<Number, Article>>(new Map())
 
 const query = computed(() => store.getters.query)
+const state = computed(() => store.getters.state)
 const subscription = computed(() => store.getters.query.subscription)
 const subscriptionId = computed(() => subscription.value && subscription.value.id)
 const noMore = computed(() => articles.value && articles.value.length >= total.value)
+const viewMode = computed(() => state.value.article_view_mode || 'card')
+
+const subscriptionsMapping = computed(() => {
+  const mapping = {}
+  for (const sub of state.value.subscriptions || []) {
+    mapping[sub.id] = sub
+  }
+  return mapping
+})
+
 const patchArticles = computed(() => {
   let result = []
   for (let article of articles.value)
@@ -27,6 +39,11 @@ const patchArticles = computed(() => {
 
   return result
 })
+
+function getSubscriptionTitle(subscriptionId: number): string {
+  const sub = subscriptionsMapping.value[subscriptionId]
+  return sub ? sub.title : ''
+}
 
 const filters = computed(() => {
   let _query = query.value
@@ -123,9 +140,20 @@ onMounted(autoLoad)
 
 <template>
   <div class="scroll-container" ref="scroll_container" @scroll="autoLoad">
-    <div class="index">
-      <template v-for="(article, index) in patchArticles">
-        <ArticleComp v-bind="article" @patch="patchArticle(article.id)"></ArticleComp>
+    <div class="index" :class="{'index-list': viewMode === 'list'}">
+      <template v-for="(article, index) in patchArticles" :key="`${viewMode}-${article.id}`">
+        <ArticleComp
+          v-if="viewMode === 'card'"
+          v-bind="article"
+          :subscription_title="getSubscriptionTitle(article.subscription_id)"
+          @patch="patchArticle(article.id)"
+        ></ArticleComp>
+        <ArticleListComp
+          v-else
+          v-bind="article"
+          :subscription_title="getSubscriptionTitle(article.subscription_id)"
+          @patch="patchArticle(article.id)"
+        ></ArticleListComp>
       </template>
     </div>
     <transition enter-active-class="animate__animated animate__bounceIn" appear>
@@ -158,6 +186,15 @@ onMounted(autoLoad)
   grid-gap: 10px;
   align-items: center;
   justify-content: center;
+}
+
+.index-list {
+  display: flex;
+  flex-direction: column;
+  grid-gap: 0;
+  margin: 0;
+  align-items: stretch;
+  width: 100%;
 }
 
 >>> .no-more > span {
