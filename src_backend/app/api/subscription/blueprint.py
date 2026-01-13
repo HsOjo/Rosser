@@ -22,6 +22,16 @@ class Blueprint(CurdBlueprint):
         self.add_url_rule('/fetch-expires', methods=['POST'], view_func=self.fetch_expires)
         self.add_url_rule('/fetch-all', methods=['POST'], view_func=self.fetch_all)
 
+    def add(self):
+        form = self.add_form_class()
+        if not form.validate():
+            abort(401)
+
+        item = self.service.add(**form.data)
+        if item:
+            tasks.fetch_one.delay(item.id)
+        return jsonify(dict(id=getattr(item, 'id', None)))
+
     def preview(self):
         form = PreviewForm()
         if not form.validate():
