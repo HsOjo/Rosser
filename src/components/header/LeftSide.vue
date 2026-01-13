@@ -13,7 +13,7 @@
     <template #content>
       <a-input-search
         v-model:value="searchKeyword"
-        placeholder="搜索文章标题"
+        :placeholder="$t('header.searchPlaceholder')"
         style="width: 200px"
         allow-clear
         @search="onSearch"
@@ -51,7 +51,6 @@ export default {
       store.commit('updateState', {subscribe_modal_visible: true})
     }
 
-    // 搜索相关
     const searchVisible = ref(false)
     const searchKeyword = ref('')
 

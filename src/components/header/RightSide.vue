@@ -53,10 +53,12 @@ import {
   SyncOutlined,
 } from "@ant-design/icons-vue";
 import {useStore} from "vuex";
+import {computed} from "vue";
 import IconButton from "@/components/header/IconButton.vue";
 import CheckMenu from "@/components/common/CheckMenu.vue";
 import Notification from "@/components/header/right/Notification.vue";
 import api from "@/utils/api";
+import {useI18n} from "vue-i18n";
 
 
 export default {
@@ -74,21 +76,23 @@ export default {
   },
   setup() {
     const store = useStore()
+    const {t} = useI18n()
     const isMac = store.getters.isMac
-    const view_menu_items = [
-      {key: 'filters', title: '筛选', items: [], select: true, icon: FilterOutlined},
-      {group: 'filters', key: 'all', title: '查看所有', icon: ContainerOutlined, checked: true},
-      {group: 'filters', key: 'read-only', title: '仅已读', icon: CarryOutOutlined},
-      {group: 'filters', key: 'star-only', title: '仅收藏', icon: StarOutlined},
+
+    const view_menu_items = computed(() => [
+      {key: 'filters', title: t('header.filter'), items: [], select: true, icon: FilterOutlined},
+      {group: 'filters', key: 'all', title: t('header.viewAll'), icon: ContainerOutlined, checked: true},
+      {group: 'filters', key: 'read-only', title: t('header.readOnly'), icon: CarryOutOutlined},
+      {group: 'filters', key: 'star-only', title: t('header.starOnly'), icon: StarOutlined},
       {group: 'filters'},
-      {group: 'filters', key: 'show-hide', title: '显示隐藏', select: null, icon: EyeOutlined},
-      {key: 'orders', title: '排序', items: [], icon: OrderedListOutlined},
+      {group: 'filters', key: 'show-hide', title: t('header.showHidden'), select: null, icon: EyeOutlined},
+      {key: 'orders', title: t('header.sort'), items: [], icon: OrderedListOutlined},
       {
         group: 'orders',
         select: 'time-order',
         key: 'time-desc',
         value: 'desc',
-        title: '时间降序',
+        title: t('header.timeDesc'),
         icon: SortDescendingOutlined,
         checked: true,
       },
@@ -97,27 +101,29 @@ export default {
         select: 'time-order',
         key: 'time-asc',
         value: 'asc',
-        title: '时间升序',
+        title: t('header.timeAsc'),
         icon: SortAscendingOutlined,
       },
       {group: 'orders'},
-      {group: 'orders', key: 'star-first', title: '收藏优先', icon: StarFilled},
-    ]
-    const read_menu_items = [
-      {key: 'read', title: '标记已读', items: [], trigger: true, icon: CarryOutOutlined},
-      {group: 'read', key: '1-days-before', title: '1⃣️ 天前发布', days: 1},
-      {group: 'read', key: '3-days-before', title: '3⃣️ 天前发布', days: 3},
-      {group: 'read', key: '7-days-before', title: '7⃣️ 天前发布', days: 7},
-      {group: 'read', key: 'all', title: '💾 全部文章', days: 0},
-    ]
-    const fetch_menu_items = [
-      {key: 'refresh', title: '重新加载', checkable: false, icon: RedoOutlined},
+      {group: 'orders', key: 'star-first', title: t('header.starFirst'), icon: StarFilled},
+    ])
+
+    const read_menu_items = computed(() => [
+      {key: 'read', title: t('header.markRead'), items: [], trigger: true, icon: CarryOutOutlined},
+      {group: 'read', key: '1-days-before', title: t('header.daysAgo', {days: 1}), days: 1},
+      {group: 'read', key: '3-days-before', title: t('header.daysAgo', {days: 3}), days: 3},
+      {group: 'read', key: '7-days-before', title: t('header.daysAgo', {days: 7}), days: 7},
+      {group: 'read', key: 'all', title: t('header.allArticles'), days: 0},
+    ])
+
+    const fetch_menu_items = computed(() => [
+      {key: 'refresh', title: t('header.reload'), checkable: false, icon: RedoOutlined},
       {},
-      {key: 'fetch', title: '抓取订阅', items: [], trigger: true, icon: CarryOutOutlined},
-      {group: 'fetch', key: 'current', title: '当前订阅', icon: FileSearchOutlined},
-      {group: 'fetch', key: 'expires', title: '过期订阅', icon: ExceptionOutlined},
-      {group: 'fetch', key: 'all', title: '所有订阅', icon: FileDoneOutlined},
-    ]
+      {key: 'fetch', title: t('header.fetchSubscription'), items: [], trigger: true, icon: CarryOutOutlined},
+      {group: 'fetch', key: 'current', title: t('header.currentSubscription'), icon: FileSearchOutlined},
+      {group: 'fetch', key: 'expires', title: t('header.expiredSubscription'), icon: ExceptionOutlined},
+      {group: 'fetch', key: 'all', title: t('header.allSubscription'), icon: FileDoneOutlined},
+    ])
 
     function fetchClick({key}) {
       if (key === 'current') {

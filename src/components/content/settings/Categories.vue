@@ -16,8 +16,8 @@
     </template>
     <template #expandedRowRender="{ record }">
       <a-descriptions :title="record.title" size="small">
-        <a-descriptions-item label="描述内容" :span="3">{{ record.description }}</a-descriptions-item>
-        <a-descriptions-item label="创建时间" :span="3">{{ record.create_time }}</a-descriptions-item>
+        <a-descriptions-item :label="$t('common.description')" :span="3">{{ record.description }}</a-descriptions-item>
+        <a-descriptions-item :label="$t('common.createTime')" :span="3">{{ record.create_time }}</a-descriptions-item>
       </a-descriptions>
     </template>
   </a-table>
@@ -28,24 +28,26 @@ import {DeleteOutlined, DownOutlined, SmileOutlined} from "@ant-design/icons-vue
 import {useCompositions} from "@/utils/data";
 import {useStore} from "vuex";
 import api from "@/utils/api";
+import {useI18n} from "vue-i18n";
 
 export default {
   components: {SmileOutlined, DownOutlined, DeleteOutlined},
   setup() {
     const store = useStore()
+    const {t} = useI18n()
     const colors = ['magenta', 'red', 'volcano', 'orange', 'gold', 'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple']
     const columns = [
       {
-        title: '标题',
+        title: t('common.title'),
         dataIndex: 'title',
       },
       {
-        title: '订阅数',
+        title: t('settings.categories.subscriptionCount'),
         key: 'subscriptions_num',
         width: '4rem',
       },
       {
-        title: '操作',
+        title: t('common.action'),
         key: 'action',
         width: '3rem',
       },

@@ -1,6 +1,87 @@
-const {app, BrowserWindow, session, Menu, shell} = require('electron');
+const {app, BrowserWindow, session, Menu, shell, ipcMain} = require('electron');
 const lodash = require('lodash');
 const path = require('path');
+
+// ========== Locale Module ==========
+const locales = {
+  zh: {
+    about: '关于 Rosser',
+    settings: '设置...',
+    hideApp: '隐藏 Rosser',
+    hideOthers: '隐藏其他',
+    showAll: '显示全部',
+    quit: '退出 Rosser',
+    edit: '编辑',
+    undo: '撤销',
+    redo: '重做',
+    cut: '剪切',
+    copy: '复制',
+    paste: '粘贴',
+    selectAll: '全选',
+    view: '视图',
+    refresh: '刷新',
+    actualSize: '实际大小',
+    zoomIn: '放大',
+    zoomOut: '缩小',
+    toggleFullscreen: '切换全屏',
+    devTools: '开发者工具',
+    subscription: '订阅',
+    newSubscription: '新建订阅',
+    fetchCurrent: '抓取当前订阅',
+    fetchAll: '抓取所有订阅',
+    window: '窗口',
+    minimize: '最小化',
+    close: '关闭',
+    bringToFront: '前置全部窗口',
+    help: '帮助',
+    visitGitHub: '访问 GitHub',
+  },
+  en: {
+    about: 'About Rosser',
+    settings: 'Settings...',
+    hideApp: 'Hide Rosser',
+    hideOthers: 'Hide Others',
+    showAll: 'Show All',
+    quit: 'Quit Rosser',
+    edit: 'Edit',
+    undo: 'Undo',
+    redo: 'Redo',
+    cut: 'Cut',
+    copy: 'Copy',
+    paste: 'Paste',
+    selectAll: 'Select All',
+    view: 'View',
+    refresh: 'Refresh',
+    actualSize: 'Actual Size',
+    zoomIn: 'Zoom In',
+    zoomOut: 'Zoom Out',
+    toggleFullscreen: 'Toggle Fullscreen',
+    devTools: 'Developer Tools',
+    subscription: 'Subscription',
+    newSubscription: 'New Subscription',
+    fetchCurrent: 'Fetch Current',
+    fetchAll: 'Fetch All',
+    window: 'Window',
+    minimize: 'Minimize',
+    close: 'Close',
+    bringToFront: 'Bring All to Front',
+    help: 'Help',
+    visitGitHub: 'Visit GitHub',
+  }
+};
+
+let currentLocale = 'zh';
+
+function setLocale(locale) {
+  if (locales[locale]) {
+    currentLocale = locale;
+  }
+}
+
+function t(key) {
+  return locales[currentLocale][key] || locales['en'][key] || key;
+}
+// ========== End Locale Module ==========
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -9,108 +90,108 @@ if (require('electron-squirrel-startup')) {
 
 let mainWindow = null;
 
-// 创建应用菜单
+// Create application menu
 function createMenu(win) {
   const isMac = process.platform === 'darwin';
 
   const template = [
-    // macOS 应用菜单
+    // macOS application menu
     ...(isMac ? [{
       label: 'Rosser',
       submenu: [
-        {label: '关于 Rosser', role: 'about'},
+        {label: t('about'), role: 'about'},
         {type: 'separator'},
         {
-          label: '设置...',
+          label: t('settings'),
           accelerator: 'CmdOrCtrl+,',
           click: () => win.webContents.send('open-settings')
         },
         {type: 'separator'},
-        {label: '隐藏 Rosser', role: 'hide'},
-        {label: '隐藏其他', role: 'hideOthers'},
-        {label: '显示全部', role: 'unhide'},
+        {label: t('hideApp'), role: 'hide'},
+        {label: t('hideOthers'), role: 'hideOthers'},
+        {label: t('showAll'), role: 'unhide'},
         {type: 'separator'},
-        {label: '退出 Rosser', role: 'quit'}
+        {label: t('quit'), role: 'quit'}
       ]
     }] : []),
 
-    // 编辑菜单
+    // Edit menu
     {
-      label: '编辑',
+      label: t('edit'),
       submenu: [
-        {label: '撤销', accelerator: 'CmdOrCtrl+Z', role: 'undo'},
-        {label: '重做', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo'},
+        {label: t('undo'), accelerator: 'CmdOrCtrl+Z', role: 'undo'},
+        {label: t('redo'), accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo'},
         {type: 'separator'},
-        {label: '剪切', accelerator: 'CmdOrCtrl+X', role: 'cut'},
-        {label: '复制', accelerator: 'CmdOrCtrl+C', role: 'copy'},
-        {label: '粘贴', accelerator: 'CmdOrCtrl+V', role: 'paste'},
-        {label: '全选', accelerator: 'CmdOrCtrl+A', role: 'selectAll'}
+        {label: t('cut'), accelerator: 'CmdOrCtrl+X', role: 'cut'},
+        {label: t('copy'), accelerator: 'CmdOrCtrl+C', role: 'copy'},
+        {label: t('paste'), accelerator: 'CmdOrCtrl+V', role: 'paste'},
+        {label: t('selectAll'), accelerator: 'CmdOrCtrl+A', role: 'selectAll'}
       ]
     },
 
-    // 视图菜单
+    // View menu
     {
-      label: '视图',
+      label: t('view'),
       submenu: [
         {
-          label: '刷新',
+          label: t('refresh'),
           accelerator: 'CmdOrCtrl+R',
           click: () => win.webContents.send('refresh-articles')
         },
         {type: 'separator'},
-        {label: '实际大小', accelerator: 'CmdOrCtrl+0', role: 'resetZoom'},
-        {label: '放大', accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn'},
-        {label: '缩小', accelerator: 'CmdOrCtrl+-', role: 'zoomOut'},
+        {label: t('actualSize'), accelerator: 'CmdOrCtrl+0', role: 'resetZoom'},
+        {label: t('zoomIn'), accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn'},
+        {label: t('zoomOut'), accelerator: 'CmdOrCtrl+-', role: 'zoomOut'},
         {type: 'separator'},
-        {label: '切换全屏', accelerator: 'F11', role: 'togglefullscreen'},
+        {label: t('toggleFullscreen'), accelerator: 'F11', role: 'togglefullscreen'},
         {type: 'separator'},
-        {label: '开发者工具', accelerator: 'Alt+CmdOrCtrl+I', role: 'toggleDevTools'}
+        {label: t('devTools'), accelerator: 'Alt+CmdOrCtrl+I', role: 'toggleDevTools'}
       ]
     },
 
-    // 订阅菜单
+    // Subscription menu
     {
-      label: '订阅',
+      label: t('subscription'),
       submenu: [
         {
-          label: '新建订阅',
+          label: t('newSubscription'),
           accelerator: 'CmdOrCtrl+N',
           click: () => win.webContents.send('new-subscription')
         },
         {type: 'separator'},
         {
-          label: '抓取当前订阅',
+          label: t('fetchCurrent'),
           accelerator: 'CmdOrCtrl+Shift+R',
           click: () => win.webContents.send('fetch-current')
         },
         {
-          label: '抓取所有订阅',
+          label: t('fetchAll'),
           accelerator: 'CmdOrCtrl+Shift+A',
           click: () => win.webContents.send('fetch-all')
         }
       ]
     },
 
-    // 窗口菜单
+    // Window menu
     {
-      label: '窗口',
+      label: t('window'),
       submenu: [
-        {label: '最小化', accelerator: 'CmdOrCtrl+M', role: 'minimize'},
-        {label: '关闭', accelerator: 'CmdOrCtrl+W', role: 'close'},
+        {label: t('minimize'), accelerator: 'CmdOrCtrl+M', role: 'minimize'},
+        {label: t('close'), accelerator: 'CmdOrCtrl+W', role: 'close'},
         ...(isMac ? [
           {type: 'separator'},
-          {label: '前置全部窗口', role: 'front'}
+          {label: t('bringToFront'), role: 'front'}
         ] : [])
       ]
     },
 
-    // 帮助菜单
+    // Help menu
     {
-      label: '帮助',
+      label: t('help'),
       submenu: [
         {
-          label: '访问 GitHub',
-          click: () => shell.openExternal('https://github.com')
+          label: t('visitGitHub'),
+          click: () => shell.openExternal('https://github.com/HsOjo/Rosser')
         }
       ]
     }
@@ -118,6 +199,19 @@ function createMenu(win) {
 
   return Menu.buildFromTemplate(template);
 }
+
+// IPC handler for locale change
+ipcMain.on('set-locale', (event, locale) => {
+  setLocale(locale);
+  if (mainWindow) {
+    const menu = createMenu(mainWindow);
+    Menu.setApplicationMenu(menu);
+  }
+});
+
+ipcMain.on('get-locale', (event) => {
+  event.returnValue = currentLocale;
+});
 
 const createWindow = () => {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -152,7 +246,7 @@ const createWindow = () => {
     },
   });
 
-  // 设置应用菜单
+  // Set application menu
   const menu = createMenu(mainWindow);
   Menu.setApplicationMenu(menu);
 

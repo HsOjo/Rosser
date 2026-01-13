@@ -46,7 +46,7 @@ export default {
 
 <template>
   <a-drawer
-    title="设定"
+    :title="$t('settings.title')"
     placement="right"
     :closable="true"
     :visible="state.settings_visible"
@@ -60,35 +60,35 @@ export default {
       <a-tab-pane key="general">
         <template #tab>
           <setting-filled/>
-          通用
+          {{ $t('settings.tabs.general') }}
         </template>
         <General></General>
       </a-tab-pane>
       <a-tab-pane key="subscriptions">
         <template #tab>
           <database-filled/>
-          订阅源
+          {{ $t('settings.tabs.subscriptions') }}
         </template>
         <Subscriptions></Subscriptions>
       </a-tab-pane>
       <a-tab-pane key="categories">
         <template #tab>
           <appstore-filled/>
-          分类
+          {{ $t('settings.tabs.categories') }}
         </template>
         <Categories></Categories>
       </a-tab-pane>
       <a-tab-pane key="sites">
         <template #tab>
           <environment-filled/>
-          站点
+          {{ $t('settings.tabs.sites') }}
         </template>
         <Sites></Sites>
       </a-tab-pane>
       <a-tab-pane key="about">
         <template #tab>
           <gift-filled/>
-          关于
+          {{ $t('settings.tabs.about') }}
         </template>
         <About></About>
       </a-tab-pane>

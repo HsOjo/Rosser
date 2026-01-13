@@ -2,8 +2,10 @@
 import {computed, ref} from "vue";
 import {useStore} from "vuex";
 import api from "@/utils/api";
+import {useI18n} from "vue-i18n";
 
 const store = useStore()
+const {t} = useI18n()
 const form_state = ref({
   url: '',
   title: '',
@@ -57,7 +59,7 @@ function handleOk() {
 
 <template>
   <a-modal v-model:visible="store.getters.state.subscribe_modal_visible"
-           title="订阅内容" @ok="handleOk">
+           :title="$t('subscribe.modalTitle')" @ok="handleOk">
     <a-form
       :model="form_state"
       name="basic"
@@ -65,36 +67,36 @@ function handleOk() {
     >
 
       <a-form-item
-        label="订阅标题"
+        :label="$t('subscribe.subscriptionTitle')"
         name="title"
-        :rules="[{ required: true, message: '请输入订阅标题！' }]"
+        :rules="[{ required: true, message: $t('subscribe.subscriptionTitleRequired') }]"
       >
         <a-input v-model:value="form_state.title"/>
       </a-form-item>
 
       <a-form-item
-        label="订阅URL"
+        :label="$t('subscribe.subscriptionUrl')"
         name="url"
-        :rules="[{ required: true, message: '请输入订阅URL！' }]"
+        :rules="[{ required: true, message: $t('subscribe.subscriptionUrlRequired') }]"
       >
         <a-input v-model:value="form_state.url"/>
       </a-form-item>
 
       <a-form-item
-        label="订阅分类"
+        :label="$t('subscribe.subscriptionCategory')"
         name="category_title"
       >
         <a-auto-complete
           v-model:value="form_state.category_title"
           :options="categoryOptions"
           style="width: 200px"
-          placeholder="？选择 or 输入"
+          :placeholder="$t('subscribe.categoryPlaceholder')"
           :filter-option="filterOption"
         />
       </a-form-item>
 
       <a-form-item
-        label="描述内容"
+        :label="$t('common.description')"
         name="description"
       >
         <a-textarea v-model:value="form_state.description"/>
@@ -103,7 +105,7 @@ function handleOk() {
     </a-form>
     <template #footer>
       <a-button key="submit" type="primary" @click="handleOk">
-        这就订阅！
+        {{ $t('subscribe.subscribeNow') }}
       </a-button>
     </template>
   </a-modal>

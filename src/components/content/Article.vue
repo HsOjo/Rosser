@@ -8,7 +8,7 @@
         <img :src="`${backendURL}/api/basic/file/download/${thumb_id}`"
              v-if="thumb_id && !no_thumb"
              @error="no_thumb = true"
-             alt="预览图" class="thumb-img"
+             :alt="$t('article.previewImage')" class="thumb-img"
              @click="open"
         />
         <template v-else-if="!isLongTitle">
@@ -49,28 +49,28 @@
         <div>
           <a-switch
             v-model:checked="raw_mode"
-            checked-children="原文模式"
-            un-checked-children="文章模式">
+            :checked-children="$t('article.rawMode')"
+            :un-checked-children="$t('article.articleMode')">
           </a-switch>
         </div>
         <div>
           <a-button v-if="state['is_hide']" @click="unhide(id)">
-            取消隐藏
+            {{ $t('article.unhide') }}
           </a-button>
           <a-button v-else @click="hide(id)">
-            隐藏
+            {{ $t('article.hide') }}
           </a-button>
           <a-button v-if="state['is_star']" @click="unstar(id)">
-            取消星标
+            {{ $t('article.unstar') }}
           </a-button>
           <a-button v-else @click="star(id)">
-            星标
+            {{ $t('article.star') }}
           </a-button>
           <a-button v-if="state['is_read']" @click="unread(id)">
-            取消已读
+            {{ $t('article.unread') }}
           </a-button>
           <a-button v-else @click="read(id)">
-            已读
+            {{ $t('article.read') }}
           </a-button>
         </div>
       </div>
@@ -111,8 +111,8 @@ export default defineComponent({
   emits: ['patch'],
   props: {
     id: {type: Number, default: null},
-    title: {type: String, default: '无标题'},
-    summary: {type: String, default: '无摘要'},
+    title: {type: String, default: ''},
+    summary: {type: String, default: ''},
     link: {type: String, default: ''},
     thumb_id: {type: Number, default: null},
     state: {type: Object, default: null},

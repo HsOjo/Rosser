@@ -4,8 +4,10 @@ import {useStore} from 'vuex'
 import {BellFilled, CheckOutlined} from '@ant-design/icons-vue'
 import api from '@/utils/api'
 import IconButton from "@/components/header/IconButton.vue";
+import {useI18n} from 'vue-i18n'
 
 const store = useStore()
+const {t} = useI18n()
 const loading = ref(false)
 
 const notifications = computed(() => store.getters.state.notifications)
@@ -75,10 +77,10 @@ function formatTime(timeStr: string) {
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
 
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes} 分钟前`
-  if (hours < 24) return `${hours} 小时前`
-  if (days < 7) return `${days} 天前`
+  if (minutes < 1) return t('notification.justNow')
+  if (minutes < 60) return t('notification.minutesAgo', {n: minutes})
+  if (hours < 24) return t('notification.hoursAgo', {n: hours})
+  if (days < 7) return t('notification.daysAgo', {n: days})
   return date.toLocaleDateString()
 }
 
@@ -95,10 +97,10 @@ defineExpose({loadNotifications, loadUnreadCount})
     <template #overlay>
       <div class="notification-panel">
         <div class="notification-header">
-          <span>通知</span>
+          <span>{{ $t('notification.title') }}</span>
           <a-button type="link" size="small" @click="markAllRead" v-if="unreadCount > 0">
             <check-outlined/>
-            全部已读
+            {{ $t('notification.markAllRead') }}
           </a-button>
         </div>
         <a-spin :spinning="loading">
@@ -115,7 +117,7 @@ defineExpose({loadNotifications, loadUnreadCount})
               <div class="notification-time">{{ formatTime(item.create_time) }}</div>
             </div>
           </div>
-          <a-empty v-else description="暂无通知" style="padding: 24px"/>
+          <a-empty v-else :description="$t('notification.empty')" style="padding: 24px"/>
         </a-spin>
       </div>
     </template>

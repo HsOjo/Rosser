@@ -10,9 +10,11 @@ import 'highlight.js/styles/default.css'
 
 import store from "@/plugins/store";
 import axios from "@/plugins/axios";
+import i18n from "@/locales";
 
 let app = createApp(App)
 app.use(axios)
 app.use(store)
 app.use(Antd)
+app.use(i18n)
 app.mount('#app')

@@ -12,7 +12,7 @@
       <template #icon>
         <home-outlined/>
       </template>
-      <span class="menu-title">所有订阅</span>
+      <span class="menu-title">{{ $t('menu.allSubscriptions') }}</span>
     </a-menu-item>
     <template v-for="category in subscriptionsTree">
       <a-sub-menu
@@ -34,6 +34,7 @@ import {BarsOutlined, HomeOutlined, NotificationOutlined} from "@ant-design/icon
 import lodash from "lodash";
 import {mapGetters, useStore} from "vuex";
 import {useMappings} from "@/utils/data";
+import {useI18n} from "vue-i18n";
 
 export default {
   name: "Menu",
@@ -46,7 +47,7 @@ export default {
   computed: {
     ...mapGetters(['state']),
     subscriptionsTree() {
-      let category_default = {id: null, title: '（未分类）', subscriptions: []}
+      let category_default = {id: null, title: this.$t('menu.uncategorized'), subscriptions: []}
       let _categories = lodash.cloneDeep(this.state.categories)
       _categories.push(category_default)
       let _categories_mapping = {}
@@ -73,7 +74,8 @@ export default {
   },
   setup() {
     const store = useStore()
-    return {store, ...useMappings(store)}
+    const {t} = useI18n()
+    return {store, t, ...useMappings(store)}
   }
 }
 </script>

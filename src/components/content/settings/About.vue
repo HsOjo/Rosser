@@ -2,7 +2,7 @@
   <a-typography>
     <a-typography-title>R[L]oSSer</a-typography-title>
     <a-typography-paragraph>
-      Just a simple RSS Reader by a loser.
+      {{ $t('settings.about.description') }}
     </a-typography-paragraph>
     <a-typography-paragraph>
       Press
@@ -10,19 +10,32 @@
       to exit...
     </a-typography-paragraph>
     <a-typography-paragraph>
-      如果喜欢，请到
-      <a-typography-link href="https://github.com/HsOjo/Rosser">
-        GitHub
-      </a-typography-link>
-      给个Star，谢谢。
+      {{ starText }}
+      <a-typography-link href="https://github.com/HsOjo/Rosser">GitHub</a-typography-link>
+      {{ starTextEnd }}
     </a-typography-paragraph>
   </a-typography>
 </template>
 
-<script>
-export default {
-  name: "About"
-}
+<script setup>
+import {computed} from 'vue'
+import {useI18n} from 'vue-i18n'
+
+const {t, locale} = useI18n()
+
+const starText = computed(() => {
+  if (locale.value === 'zh') {
+    return '如果喜欢，请到'
+  }
+  return 'If you like it, please give a star on'
+})
+
+const starTextEnd = computed(() => {
+  if (locale.value === 'zh') {
+    return '给个Star，谢谢。'
+  }
+  return '. Thanks!'
+})
 </script>
 
 <style scoped>
