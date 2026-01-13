@@ -3,6 +3,7 @@ export default {
     title: 'Title',
     description: 'Description',
     action: 'Action',
+    edit: 'Edit',
     delete: 'Delete',
     save: 'Save',
     cancel: 'Cancel',
@@ -110,6 +111,7 @@ export default {
   },
   subscribe: {
     modalTitle: 'Subscribe',
+    editTitle: 'Edit Subscription',
     subscriptionTitle: 'Title',
     subscriptionTitleRequired: 'Please enter a title!',
     subscriptionUrl: 'URL',
@@ -117,6 +119,7 @@ export default {
     subscriptionCategory: 'Category',
     categoryPlaceholder: 'Select or enter',
     subscribeNow: 'Subscribe Now!',
+    updateNow: 'Update',
   },
   electron: {
     menu: {

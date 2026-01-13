@@ -20,6 +20,12 @@
         </template>
       </template>
       <template v-else-if="column.key === 'action'">
+        <a-button type="primary" size="small"
+                  @click.stop="handleEdit(record)">
+          <template #icon>
+            <edit-outlined/>
+          </template>
+        </a-button>
         <a-button type="primary" danger size="small"
                   @click.stop="handleDelete(record.id)">
           <template #icon>
@@ -44,7 +50,7 @@
 </template>
 
 <script>
-import {DeleteOutlined, DownOutlined, QuestionCircleOutlined, SmileOutlined} from "@ant-design/icons-vue";
+import {DeleteOutlined, DownOutlined, EditOutlined, QuestionCircleOutlined, SmileOutlined} from "@ant-design/icons-vue";
 import {useCompositions} from "@/utils/data";
 import {mapGetters, useStore} from "vuex";
 import api from "@/utils/api";
@@ -52,7 +58,7 @@ import {useI18n} from "vue-i18n";
 
 export default {
   name: "Subscriptions",
-  components: {SmileOutlined, DownOutlined, DeleteOutlined, QuestionCircleOutlined},
+  components: {SmileOutlined, DownOutlined, DeleteOutlined, EditOutlined, QuestionCircleOutlined},
   computed: {
     ...mapGetters(['backendURL'])
   },
@@ -73,7 +79,7 @@ export default {
       {
         title: t('common.action'),
         key: 'action',
-        width: '3rem',
+        width: '6rem',
       },
     ];
 
@@ -103,6 +109,19 @@ export default {
       )
     }
 
+    function handleEdit(record) {
+      store.commit('updateState', {
+        subscribe_edit_data: {
+          id: record.id,
+          url: record.url,
+          title: record.title,
+          description: record.description,
+          category_id: record.category_id,
+        },
+        subscribe_modal_visible: true
+      })
+    }
+
     return {
       store,
       ...useCompositions(store),
@@ -111,6 +130,7 @@ export default {
       importOPML,
       exportOPML,
       handleDelete,
+      handleEdit,
     }
   },
 }

@@ -74,6 +74,17 @@ const api = {
         {url, title, description, category_id}
       )
     },
+    get(id) {
+      return api.axios.get(
+        `/api/subscription/get/${id}`,
+      )
+    },
+    edit(id, url, title, description, category_id) {
+      return api.axios.post(
+        `/api/subscription/edit/${id}`,
+        {url, title, description, category_id}
+      )
+    },
     all(filters = null, orders = null) {
       return api.axios.post(
         `/api/subscription/all`,

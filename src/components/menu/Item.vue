@@ -22,7 +22,8 @@
                 {{ title }}
               </span>
             </template>
-            <a-menu-item key="delete">删除</a-menu-item>
+            <a-menu-item key="edit">{{ $t('common.edit') }}</a-menu-item>
+            <a-menu-item key="delete">{{ $t('common.delete') }}</a-menu-item>
           </a-menu-item-group>
         </a-menu>
       </template>
@@ -42,6 +43,9 @@ export default {
   props: {
     id: {type: Number},
     title: {type: String},
+    url: {type: String},
+    description: {type: String},
+    category_id: {type: Number},
     site: {type: Object}
   },
   computed: {
@@ -52,6 +56,18 @@ export default {
 
     function itemClick({key}) {
       let funcs = {
+        edit() {
+          store.commit('updateState', {
+            subscribe_edit_data: {
+              id: props.id,
+              url: props.url,
+              title: props.title,
+              description: props.description,
+              category_id: props.category_id,
+            },
+            subscribe_modal_visible: true
+          })
+        },
         delete() {
           api.subscription.delete([props.id]).then(
             () => store.commit('refreshState')

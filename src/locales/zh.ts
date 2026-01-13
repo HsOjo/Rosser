@@ -3,6 +3,7 @@ export default {
     title: '标题',
     description: '描述内容',
     action: '操作',
+    edit: '编辑',
     delete: '删除',
     save: '保存',
     cancel: '取消',
@@ -110,6 +111,7 @@ export default {
   },
   subscribe: {
     modalTitle: '订阅内容',
+    editTitle: '编辑订阅',
     subscriptionTitle: '订阅标题',
     subscriptionTitleRequired: '请输入订阅标题！',
     subscriptionUrl: '订阅URL',
@@ -117,6 +119,7 @@ export default {
     subscriptionCategory: '订阅分类',
     categoryPlaceholder: '？选择 or 输入',
     subscribeNow: '这就订阅！',
+    updateNow: '更新订阅',
   },
   electron: {
     menu: {
