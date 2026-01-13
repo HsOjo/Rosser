@@ -7,12 +7,14 @@ import {mapGetters, useStore} from "vuex";
 import Categories from "@/components/content/settings/Categories.vue";
 import Sites from "@/components/content/settings/Sites.vue";
 import SubscribeModal from "@/components/modal/SubscribeModal.vue";
+import CategoryModal from "@/components/modal/CategoryModal.vue";
 import General from "@/components/content/settings/General.vue";
 
 
 export default {
   components: {
     SubscribeModal,
+    CategoryModal,
     Subscriptions,
     Categories,
     Sites,
@@ -95,6 +97,7 @@ export default {
     </a-tabs>
   </a-drawer>
   <SubscribeModal></SubscribeModal>
+  <CategoryModal></CategoryModal>
 </template>
 
 <style scoped>

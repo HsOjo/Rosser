@@ -21,7 +21,18 @@
         <template #icon>
           <NotificationOutlined/>
         </template>
-        <template #title>{{ category.title }}</template>
+        <template #title>
+          <a-dropdown :trigger="['contextmenu']" v-if="category.id !== null">
+            <span>{{ category.title }}</span>
+            <template #overlay>
+              <a-menu @click="categoryItemClick($event, category)">
+                <a-menu-item key="edit">{{ $t('common.edit') }}</a-menu-item>
+                <a-menu-item key="delete">{{ $t('common.delete') }}</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+          <span v-else>{{ category.title }}</span>
+        </template>
         <Subscription v-bind="subscription" v-for="subscription in category.subscriptions"></Subscription>
       </a-sub-menu>
     </template>
@@ -35,6 +46,7 @@ import lodash from "lodash";
 import {mapGetters, useStore} from "vuex";
 import {useMappings} from "@/utils/data";
 import {useI18n} from "vue-i18n";
+import api from "@/utils/api";
 
 export default {
   name: "Menu",
@@ -70,6 +82,22 @@ export default {
   methods: {
     handleClick({key}) {
       this.store.commit('updateQuery', {subscription: this.subscriptionsMapping[key]})
+    },
+    categoryItemClick({key}, category) {
+      if (key === 'edit') {
+        this.store.commit('updateState', {
+          category_edit_data: {
+            id: category.id,
+            title: category.title,
+            description: category.description,
+          },
+          category_modal_visible: true
+        })
+      } else if (key === 'delete') {
+        api.category.delete([category.id]).then(
+          () => this.store.commit('refreshState')
+        )
+      }
     }
   },
   setup() {

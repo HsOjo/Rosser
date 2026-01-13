@@ -121,6 +121,15 @@ export default {
     subscribeNow: '这就订阅！',
     updateNow: '更新订阅',
   },
+  category: {
+    modalTitle: '新建分类',
+    editTitle: '编辑分类',
+    categoryTitle: '分类名称',
+    categoryTitleRequired: '请输入分类名称！',
+    createNow: '创建分类',
+    updateNow: '更新分类',
+    addCategory: '新建分类',
+  },
   electron: {
     menu: {
       about: '关于 Rosser',

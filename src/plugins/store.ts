@@ -16,6 +16,8 @@ const store = createStore({
         settings_visible: false,
         subscribe_modal_visible: false,
         subscribe_edit_data: null,
+        category_modal_visible: false,
+        category_edit_data: null,
         categories: [],
         subscriptions: [],
         sites: [],

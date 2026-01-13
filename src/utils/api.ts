@@ -121,6 +121,17 @@ const api = {
         {title, description}
       )
     },
+    get(id) {
+      return api.axios.get(
+        `/api/category/get/${id}`,
+      )
+    },
+    edit(id, title, description) {
+      return api.axios.post(
+        `/api/category/edit/${id}`,
+        {title, description}
+      )
+    },
     all(filters = null, orders = null) {
       return api.axios.post(
         `/api/category/all`,

@@ -3,6 +3,12 @@
            :row-selection="{}">
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'action'">
+        <a-button type="primary" size="small"
+                  @click.stop="handleEdit(record)">
+          <template #icon>
+            <edit-outlined/>
+          </template>
+        </a-button>
         <a-button type="primary" danger size="small"
                   @click.stop="handleDelete(record.id)">
           <template #icon>
@@ -21,17 +27,18 @@
       </a-descriptions>
     </template>
   </a-table>
+  <a-button type="primary" @click="handleAdd">{{ $t('category.addCategory') }}</a-button>
 </template>
 
 <script>
-import {DeleteOutlined, DownOutlined, SmileOutlined} from "@ant-design/icons-vue";
+import {DeleteOutlined, DownOutlined, EditOutlined, SmileOutlined} from "@ant-design/icons-vue";
 import {useCompositions} from "@/utils/data";
 import {useStore} from "vuex";
 import api from "@/utils/api";
 import {useI18n} from "vue-i18n";
 
 export default {
-  components: {SmileOutlined, DownOutlined, DeleteOutlined},
+  components: {SmileOutlined, DownOutlined, DeleteOutlined, EditOutlined},
   setup() {
     const store = useStore()
     const {t} = useI18n()
@@ -49,7 +56,7 @@ export default {
       {
         title: t('common.action'),
         key: 'action',
-        width: '3rem',
+        width: '6rem',
       },
     ];
 
@@ -59,17 +66,40 @@ export default {
       )
     }
 
+    function handleEdit(record) {
+      store.commit('updateState', {
+        category_edit_data: {
+          id: record.id,
+          title: record.title,
+          description: record.description,
+        },
+        category_modal_visible: true
+      })
+    }
+
+    function handleAdd() {
+      store.commit('updateState', {
+        category_edit_data: null,
+        category_modal_visible: true
+      })
+    }
+
     return {
       store,
       ...useCompositions(store),
       colors,
       columns,
       handleDelete,
+      handleEdit,
+      handleAdd,
     }
   },
 }
 </script>
 
 <style scoped>
-
+button {
+  margin-left: 4px;
+  margin-right: 4px;
+}
 </style>

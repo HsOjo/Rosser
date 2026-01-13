@@ -121,6 +121,15 @@ export default {
     subscribeNow: 'Subscribe Now!',
     updateNow: 'Update',
   },
+  category: {
+    modalTitle: 'New Category',
+    editTitle: 'Edit Category',
+    categoryTitle: 'Category Name',
+    categoryTitleRequired: 'Please enter category name!',
+    createNow: 'Create',
+    updateNow: 'Update',
+    addCategory: 'New Category',
+  },
   electron: {
     menu: {
       about: 'About Rosser',
