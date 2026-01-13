@@ -3,6 +3,7 @@ import {computed, ref, watch} from "vue";
 import {useStore} from "vuex";
 import api from "@/utils/api";
 import {useI18n} from "vue-i18n";
+import {LoadingOutlined} from "@ant-design/icons-vue";
 
 const store = useStore()
 const {t} = useI18n()
@@ -12,6 +13,7 @@ const form_state = ref({
   description: '',
   category_title: '',
 })
+const fetching = ref(false)
 
 const editData = computed(() => store.getters.state.subscribe_edit_data)
 const isEditMode = computed(() => !!editData.value)
@@ -107,6 +109,23 @@ function handleClose() {
   })
 }
 
+function fetchTitle() {
+  if (!form_state.value.url) return
+  fetching.value = true
+  api.subscription.preview(form_state.value.url).then(
+    resp => {
+      if (resp.data.title) {
+        form_state.value.title = resp.data.title
+      }
+      if (resp.data.description && !form_state.value.description) {
+        form_state.value.description = resp.data.description
+      }
+    }
+  ).finally(() => {
+    fetching.value = false
+  })
+}
+
 </script>
 
 <template>
@@ -121,19 +140,23 @@ function handleClose() {
     >
 
       <a-form-item
-        :label="$t('subscribe.subscriptionTitle')"
-        name="title"
-        :rules="[{ required: true, message: $t('subscribe.subscriptionTitleRequired') }]"
-      >
-        <a-input v-model:value="form_state.title"/>
-      </a-form-item>
-
-      <a-form-item
         :label="$t('subscribe.subscriptionUrl')"
         name="url"
         :rules="[{ required: true, message: $t('subscribe.subscriptionUrlRequired') }]"
       >
-        <a-input v-model:value="form_state.url"/>
+        <a-input-group compact>
+          <a-input v-model:value="form_state.url" style="width: calc(100% - 100px)"/>
+          <a-button @click="fetchTitle" :loading="fetching" :disabled="!form_state.url">
+            {{ $t('subscribe.fetchTitle') }}
+          </a-button>
+        </a-input-group>
+      </a-form-item>
+
+      <a-form-item
+        :label="$t('subscribe.subscriptionTitle')"
+        name="title"
+      >
+        <a-input v-model:value="form_state.title" :placeholder="$t('subscribe.titlePlaceholder')"/>
       </a-form-item>
 
       <a-form-item

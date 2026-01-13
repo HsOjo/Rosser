@@ -1,10 +1,11 @@
 import datetime
 
+import feedparser
 from flask import abort, jsonify
 
 from app.api.base.forms import MutipleItemsForm
 from . import article, tasks
-from .forms import BodyForm
+from .forms import BodyForm, PreviewForm
 from .models import Subscription
 from .service import SubscriptionService
 from ..base.curd_blueprint import CurdBlueprint
@@ -16,9 +17,24 @@ class Blueprint(CurdBlueprint):
 
     def register_rules(self):
         super().register_rules()
+        self.add_url_rule('/preview', methods=['POST'], view_func=self.preview)
         self.add_url_rule('/fetch', methods=['POST'], view_func=self.fetch)
         self.add_url_rule('/fetch-expires', methods=['POST'], view_func=self.fetch_expires)
         self.add_url_rule('/fetch-all', methods=['POST'], view_func=self.fetch_all)
+
+    def preview(self):
+        form = PreviewForm()
+        if not form.validate():
+            abort(400)
+
+        try:
+            feed = feedparser.parse(form.url.data)
+            return jsonify(dict(
+                title=feed.feed.get('title', ''),
+                description=feed.feed.get('description', '') or feed.feed.get('subtitle', '')
+            ))
+        except Exception:
+            return jsonify(dict(title='', description=''))
 
     def fetch(self):
         form = MutipleItemsForm()

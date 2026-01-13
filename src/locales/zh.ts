@@ -129,6 +129,8 @@ export default {
     categoryPlaceholder: '？选择 or 输入',
     subscribeNow: '这就订阅！',
     updateNow: '更新订阅',
+    fetchTitle: '获取标题',
+    titlePlaceholder: '留空则自动获取',
   },
   category: {
     modalTitle: '新建分类',

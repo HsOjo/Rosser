@@ -129,6 +129,8 @@ export default {
     categoryPlaceholder: 'Select or enter',
     subscribeNow: 'Subscribe Now!',
     updateNow: 'Update',
+    fetchTitle: 'Fetch',
+    titlePlaceholder: 'Auto-fetch if empty',
   },
   category: {
     modalTitle: 'New Category',

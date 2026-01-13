@@ -74,6 +74,12 @@ const api = {
         {url, title, description, category_id}
       )
     },
+    preview(url) {
+      return api.axios.post(
+        '/api/subscription/preview',
+        {url}
+      )
+    },
     get(id) {
       return api.axios.get(
         `/api/subscription/get/${id}`,
