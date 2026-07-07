@@ -1,0 +1,4 @@
+packages:
+  - "src/frontend"
+  - "src/mobile"
+  - "src/shared"

@@ -1,0 +1,654 @@
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
+
+from app.core.config import settings
+from app.core.database import async_session
+from app.core.security import get_current_token
+from app.models import Article, ArticleState, Category, Notification, SettingsSingleton, Site, Subscription, Tag, Task
+from app.schemas import (
+    ArticleIds,
+    ArticleOut,
+    CategoryCreate,
+    CategoryOut,
+    CategoryUpdate,
+    FetchRequest,
+    HealthOut,
+    NotificationOut,
+    PaginatedArticles,
+    PreviewRequest,
+    PreviewResponse,
+    SettingsOut,
+    SettingsUpdate,
+    SiteOut,
+    SubscriptionCreate,
+    SubscriptionOut,
+    SubscriptionUpdate,
+    TagCreate,
+    TagOut,
+    TagUpdate,
+    TaskOut,
+)
+from app.services.fetch import FetchService
+from app.services.opml import OPMLService
+from app.services.site import SiteService
+
+router = APIRouter()
+
+
+# --- Categories ---
+
+@router.get("/categories", response_model=list[CategoryOut])
+async def list_categories(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(Category))
+        return result.scalars().all()
+
+
+@router.post("/categories", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
+async def create_category(data: CategoryCreate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        cat = Category(title=data.title, description=data.description)
+        session.add(cat)
+        await session.commit()
+        await session.refresh(cat)
+        return cat
+
+
+@router.get("/categories/{category_id}", response_model=CategoryOut)
+async def get_category(category_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        cat = await session.get(Category, category_id)
+        if not cat:
+            raise HTTPException(status_code=404, detail="Category not found")
+        return cat
+
+
+@router.put("/categories/{category_id}", response_model=CategoryOut)
+async def update_category(category_id: str, data: CategoryUpdate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        cat = await session.get(Category, category_id)
+        if not cat:
+            raise HTTPException(status_code=404, detail="Category not found")
+        if data.title is not None:
+            cat.title = data.title
+        if data.description is not None:
+            cat.description = data.description
+        await session.commit()
+        await session.refresh(cat)
+        return cat
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(category_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        cat = await session.get(Category, category_id)
+        if not cat:
+            raise HTTPException(status_code=404, detail="Category not found")
+        await session.delete(cat)
+        await session.commit()
+        return None
+
+
+# --- Subscriptions ---
+
+@router.get("/subscriptions", response_model=list[SubscriptionOut])
+async def list_subscriptions(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(Subscription))
+        return result.scalars().all()
+
+
+@router.post("/subscriptions", response_model=SubscriptionOut, status_code=status.HTTP_201_CREATED)
+async def create_subscription(data: SubscriptionCreate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        site = await SiteService.ensure_site(session, data.url)
+        sub = Subscription(
+            category_id=data.category_id,
+            site_id=site.id,
+            title=data.title,
+            description=data.description,
+            url=data.url,
+        )
+        session.add(sub)
+        await session.commit()
+        await session.refresh(sub)
+        await FetchService.fetch_subscription(sub.id)
+        return sub
+
+
+@router.get("/subscriptions/{subscription_id}", response_model=SubscriptionOut)
+async def get_subscription(subscription_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        sub = await session.get(Subscription, subscription_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        return sub
+
+
+@router.put("/subscriptions/{subscription_id}", response_model=SubscriptionOut)
+async def update_subscription(subscription_id: str, data: SubscriptionUpdate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        sub = await session.get(Subscription, subscription_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        for field in ("category_id", "title", "description", "url"):
+            val = getattr(data, field, None)
+            if val is not None:
+                setattr(sub, field, val)
+        await session.commit()
+        await session.refresh(sub)
+        return sub
+
+
+@router.delete("/subscriptions/{subscription_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_subscription(subscription_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        sub = await session.get(Subscription, subscription_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        await session.delete(sub)
+        await session.commit()
+        return None
+
+
+@router.post("/subscriptions/preview", response_model=PreviewResponse)
+async def preview_subscription(data: PreviewRequest, token: str = Depends(get_current_token)):
+    return await FetchService.preview(data.url)
+
+
+@router.post("/subscriptions/fetch")
+async def fetch_subscriptions(data: FetchRequest, token: str = Depends(get_current_token)):
+    results = []
+    for sid in data.ids:
+        res = await FetchService.fetch_subscription(sid)
+        results.append({"subscription_id": sid, **res})
+    return results
+
+
+@router.post("/subscriptions/fetch-all")
+async def fetch_all_subscriptions(token: str = Depends(get_current_token)):
+    return await FetchService.fetch_all()
+
+
+@router.post("/subscriptions/fetch-expires")
+async def fetch_expires_subscriptions(token: str = Depends(get_current_token)):
+    return await FetchService.fetch_expires()
+
+
+# --- Articles ---
+
+@router.get("/articles", response_model=PaginatedArticles)
+async def list_articles(
+    subscription_id: str | None = None,
+    category_id: str | None = None,
+    tag: str | None = None,
+    is_read: bool | None = None,
+    is_star: bool | None = None,
+    is_hide: bool | None = None,
+    search: str | None = None,
+    order: str = "publish_time desc",
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    token: str = Depends(get_current_token),
+):
+    async with async_session() as session:
+        stmt = select(Article).options(selectinload(Article.state))
+        count_stmt = select(func.count(Article.id))
+
+        if subscription_id:
+            stmt = stmt.where(Article.subscription_id == subscription_id)
+            count_stmt = count_stmt.where(Article.subscription_id == subscription_id)
+        if category_id:
+            sub_ids_result = await session.execute(
+                select(Subscription.id).where(Subscription.category_id == category_id)
+            )
+            sub_ids = list(sub_ids_result.scalars().all())
+            stmt = stmt.where(Article.subscription_id.in_(sub_ids))
+            count_stmt = count_stmt.where(Article.subscription_id.in_(sub_ids))
+        if search:
+            stmt = stmt.where(
+                (Article.title.ilike(f"%{search}%")) | (Article.summary.ilike(f"%{search}%"))
+            )
+            count_stmt = count_stmt.where(
+                (Article.title.ilike(f"%{search}%")) | (Article.summary.ilike(f"%{search}%"))
+            )
+        if tag:
+            tag_obj = await session.execute(select(Tag).where(Tag.title == tag))
+            tag_obj = tag_obj.scalar_one_or_none()
+            if tag_obj:
+                stmt = stmt.where(Article.tags.any(Tag.id == tag_obj.id))
+                count_stmt = count_stmt.where(Article.tags.any(Tag.id == tag_obj.id))
+
+        if is_read is not None or is_star is not None or is_hide is not None:
+            stmt = stmt.join(ArticleState)
+            count_stmt = count_stmt.join(ArticleState)
+            if is_read is not None:
+                stmt = stmt.where(ArticleState.is_read == is_read)
+                count_stmt = count_stmt.where(ArticleState.is_read == is_read)
+            if is_star is not None:
+                stmt = stmt.where(ArticleState.is_star == is_star)
+                count_stmt = count_stmt.where(ArticleState.is_star == is_star)
+            if is_hide is not None:
+                stmt = stmt.where(ArticleState.is_hide == is_hide)
+                count_stmt = count_stmt.where(ArticleState.is_hide == is_hide)
+
+        parts = order.split()
+        if len(parts) == 2:
+            col_name, direction = parts
+            col = getattr(Article, col_name, Article.publish_time)
+            stmt = stmt.order_by(col.desc() if direction == "desc" else col.asc())
+        else:
+            stmt = stmt.order_by(Article.publish_time.desc())
+
+        total_result = await session.execute(count_stmt)
+        total = total_result.scalar() or 0
+
+        stmt = stmt.offset((page - 1) * size).limit(size)
+        result = await session.execute(stmt)
+        articles = result.scalars().all()
+
+        items = []
+        for art in articles:
+            state = art.state
+            items.append(
+                ArticleOut(
+                    id=art.id,
+                    subscription_id=art.subscription_id,
+                    hash=art.hash,
+                    title=art.title,
+                    summary=art.summary,
+                    link=art.link,
+                    publish_time=art.publish_time,
+                    meta=art.meta,
+                    is_read=state.is_read if state else False,
+                    is_hide=state.is_hide if state else False,
+                    is_star=state.is_star if state else False,
+                )
+            )
+
+        return PaginatedArticles(items=items, total=total, page=page, size=size)
+
+
+@router.post("/articles/read", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_read(data: ArticleIds, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for aid in data.ids:
+            result = await session.execute(select(ArticleState).where(ArticleState.article_id == aid))
+            state = result.scalar_one_or_none()
+            if state:
+                state.is_read = True
+        await session.commit()
+    return None
+
+
+@router.post("/articles/unread", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_unread(data: ArticleIds, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for aid in data.ids:
+            result = await session.execute(select(ArticleState).where(ArticleState.article_id == aid))
+            state = result.scalar_one_or_none()
+            if state:
+                state.is_read = False
+        await session.commit()
+    return None
+
+
+@router.post("/articles/star", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_star(data: ArticleIds, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for aid in data.ids:
+            result = await session.execute(select(ArticleState).where(ArticleState.article_id == aid))
+            state = result.scalar_one_or_none()
+            if state:
+                state.is_star = True
+        await session.commit()
+    return None
+
+
+@router.post("/articles/unstar", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_unstar(data: ArticleIds, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for aid in data.ids:
+            result = await session.execute(select(ArticleState).where(ArticleState.article_id == aid))
+            state = result.scalar_one_or_none()
+            if state:
+                state.is_star = False
+        await session.commit()
+    return None
+
+
+@router.post("/articles/hide", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_hide(data: ArticleIds, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for aid in data.ids:
+            result = await session.execute(select(ArticleState).where(ArticleState.article_id == aid))
+            state = result.scalar_one_or_none()
+            if state:
+                state.is_hide = True
+        await session.commit()
+    return None
+
+
+@router.post("/articles/unhide", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_unhide(data: ArticleIds, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for aid in data.ids:
+            result = await session.execute(select(ArticleState).where(ArticleState.article_id == aid))
+            state = result.scalar_one_or_none()
+            if state:
+                state.is_hide = False
+        await session.commit()
+    return None
+
+
+@router.post("/articles/read-before-days", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_read_before_days(days: int, token: str = Depends(get_current_token)):
+    from datetime import datetime, timedelta, timezone
+    async with async_session() as session:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        result = await session.execute(
+            select(ArticleState).join(Article).where(
+                Article.publish_time < cutoff,
+                ArticleState.is_read == False,
+            )
+        )
+        for state in result.scalars().all():
+            state.is_read = True
+        await session.commit()
+    return None
+
+
+# --- Tags ---
+
+@router.get("/tags", response_model=list[TagOut])
+async def list_tags(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(Tag))
+        return result.scalars().all()
+
+
+@router.post("/tags", response_model=TagOut, status_code=status.HTTP_201_CREATED)
+async def create_tag(data: TagCreate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        tag = Tag(title=data.title, color=data.color)
+        session.add(tag)
+        await session.commit()
+        await session.refresh(tag)
+        return tag
+
+
+@router.put("/tags/{tag_id}", response_model=TagOut)
+async def update_tag(tag_id: str, data: TagUpdate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        tag = await session.get(Tag, tag_id)
+        if not tag:
+            raise HTTPException(status_code=404, detail="Tag not found")
+        if data.title is not None:
+            tag.title = data.title
+        if data.color is not None:
+            tag.color = data.color
+        await session.commit()
+        await session.refresh(tag)
+        return tag
+
+
+@router.delete("/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_tag(tag_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        tag = await session.get(Tag, tag_id)
+        if not tag:
+            raise HTTPException(status_code=404, detail="Tag not found")
+        await session.delete(tag)
+        await session.commit()
+        return None
+
+
+@router.post("/subscriptions/{subscription_id}/tags")
+async def tag_subscription(subscription_id: str, tag_ids: list[str], token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        sub = await session.get(Subscription, subscription_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        for tid in tag_ids:
+            tag = await session.get(Tag, tid)
+            if tag and tag not in sub.tags:
+                sub.tags.append(tag)
+        await session.commit()
+        return {"ok": True}
+
+
+@router.delete("/subscriptions/{subscription_id}/tags/{tag_id}")
+async def untag_subscription(subscription_id: str, tag_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        sub = await session.get(Subscription, subscription_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        sub.tags = [t for t in sub.tags if t.id != tag_id]
+        await session.commit()
+        return {"ok": True}
+
+
+@router.post("/articles/{article_id}/tags")
+async def tag_article(article_id: str, tag_ids: list[str], token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        art = await session.get(Article, article_id)
+        if not art:
+            raise HTTPException(status_code=404, detail="Article not found")
+        for tid in tag_ids:
+            tag = await session.get(Tag, tid)
+            if tag and tag not in art.tags:
+                art.tags.append(tag)
+        await session.commit()
+        return {"ok": True}
+
+
+@router.delete("/articles/{article_id}/tags/{tag_id}")
+async def untag_article(article_id: str, tag_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        art = await session.get(Article, article_id)
+        if not art:
+            raise HTTPException(status_code=404, detail="Article not found")
+        art.tags = [t for t in art.tags if t.id != tag_id]
+        await session.commit()
+        return {"ok": True}
+
+
+# --- Sites ---
+
+@router.get("/sites", response_model=list[SiteOut])
+async def list_sites(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(Site))
+        return result.scalars().all()
+
+
+@router.get("/sites/{site_id}", response_model=SiteOut)
+async def get_site(site_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        site = await session.get(Site, site_id)
+        if not site:
+            raise HTTPException(status_code=404, detail="Site not found")
+        return site
+
+
+@router.post("/sites/{site_id}/fetch", response_model=SiteOut)
+async def fetch_site(site_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        site = await SiteService.fetch_site(session, site_id)
+        if not site:
+            raise HTTPException(status_code=404, detail="Site not found")
+        return site
+
+
+# --- Files ---
+
+@router.get("/files/{file_id}/download")
+async def download_file(file_id: str, exp: int = 0, sig: str = "", token: str = Depends(get_current_token)):
+    from app.core.security import verify_file_url
+    from app.services.file import FileService
+    from fastapi.responses import FileResponse
+
+    if not verify_file_url(file_id, exp, sig, settings.rosser_token):
+        raise HTTPException(status_code=403, detail="Invalid or expired signature")
+
+    async with async_session() as session:
+        path = await FileService.download(session, file_id)
+        if not path:
+            raise HTTPException(status_code=404, detail="File not found")
+        return FileResponse(path)
+
+
+# --- Notifications ---
+
+@router.get("/notifications", response_model=list[NotificationOut])
+async def list_notifications(
+    is_read: bool | None = None,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    token: str = Depends(get_current_token),
+):
+    async with async_session() as session:
+        stmt = select(Notification).order_by(Notification.create_time.desc())
+        if is_read is not None:
+            stmt = stmt.where(Notification.is_read == is_read)
+        stmt = stmt.offset((page - 1) * size).limit(size)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+
+@router.get("/notifications/unread-count")
+async def unread_count(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(
+            select(func.count(Notification.id)).where(Notification.is_read == False)
+        )
+        return {"count": result.scalar() or 0}
+
+
+@router.post("/notifications/mark-read", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_notifications_read(ids: list[str], token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        for nid in ids:
+            notif = await session.get(Notification, nid)
+            if notif:
+                notif.is_read = True
+        await session.commit()
+    return None
+
+
+@router.post("/notifications/mark-all-read", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_all_notifications_read(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(Notification).where(Notification.is_read == False))
+        for notif in result.scalars().all():
+            notif.is_read = True
+        await session.commit()
+    return None
+
+
+# --- Settings ---
+
+@router.get("/settings", response_model=SettingsOut)
+async def get_settings(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(SettingsSingleton))
+        row = result.scalar_one_or_none()
+        if not row:
+            row = SettingsSingleton()
+            session.add(row)
+            await session.commit()
+            await session.refresh(row)
+        return row
+
+
+@router.put("/settings", response_model=SettingsOut)
+async def update_settings(data: SettingsUpdate, token: str = Depends(get_current_token)):
+    from app.main import scheduler
+    async with async_session() as session:
+        result = await session.execute(select(SettingsSingleton))
+        row = result.scalar_one_or_none()
+        if not row:
+            row = SettingsSingleton()
+            session.add(row)
+        if data.auto_refresh_interval is not None:
+            row.auto_refresh_interval = data.auto_refresh_interval
+        if data.theme is not None:
+            row.theme = data.theme
+        if data.font_size is not None:
+            row.font_size = data.font_size
+        await session.commit()
+        await session.refresh(row)
+
+        if data.auto_refresh_interval is not None:
+            try:
+                scheduler.reschedule_job("auto_refresh", trigger="interval", minutes=data.auto_refresh_interval)
+            except Exception:
+                pass
+
+        return row
+
+
+# --- Tasks ---
+
+@router.get("/tasks", response_model=list[TaskOut])
+async def list_tasks(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(select(Task).order_by(Task.create_time.desc()))
+        return result.scalars().all()
+
+
+# --- OPML ---
+
+@router.post("/opml/import")
+async def import_opml(file: bytes, token: str = Depends(get_current_token)):
+    entries = OPMLService.parse(file)
+    async with async_session() as session:
+        for entry in entries:
+            existing = await session.execute(
+                select(Subscription).where(Subscription.url == entry["url"])
+            )
+            if existing.scalar_one_or_none():
+                continue
+            cat_id = None
+            if entry.get("category"):
+                cat = await session.execute(
+                    select(Category).where(Category.title == entry["category"])
+                )
+                cat = cat.scalar_one_or_none()
+                if not cat:
+                    cat = Category(title=entry["category"])
+                    session.add(cat)
+                    await session.flush()
+                cat_id = cat.id
+            site = await SiteService.ensure_site(session, entry["url"])
+            sub = Subscription(
+                category_id=cat_id,
+                site_id=site.id,
+                title=entry.get("title") or "Untitled",
+                url=entry["url"],
+            )
+            session.add(sub)
+            await session.flush()
+            await FetchService.fetch_subscription(sub.id)
+        await session.commit()
+    return {"imported": len(entries)}
+
+
+@router.get("/opml/export")
+async def export_opml(token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        subs = (await session.execute(select(Subscription))).scalars().all()
+        cats = (await session.execute(select(Category))).scalars().all()
+        data = OPMLService.export(subs, cats)
+    from fastapi.responses import Response
+    return Response(content=data, media_type="application/xml", headers={"Content-Disposition": "attachment; filename=rosser.opml"})
+
+
+# --- Health ---
+
+@router.get("/health", response_model=HealthOut)
+async def health():
+    return HealthOut(status="ok", version="0.1.0")
