@@ -88,3 +88,29 @@ class TestArticles:
         assert len(data["items"]) == 2
         assert data["page"] == 1
         assert data["size"] == 2
+
+    async def test_hide_article(self, client, auth_headers):
+        sub_id = await self._create_subscription(client, auth_headers)
+        art_id = await self._create_article(client, auth_headers, sub_id)
+
+        resp = await client.post("/api/articles/hide", headers=auth_headers, json={"ids": [art_id]})
+        assert resp.status_code == 204
+
+        # Hidden articles should not appear in default list
+        resp = await client.get("/api/articles", headers=auth_headers)
+        data = resp.json()
+        assert data["total"] == 0
+
+        # Hidden articles should appear when filtering by is_hide=true
+        resp = await client.get("/api/articles", headers=auth_headers, params={"is_hide": True})
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["is_hide"] is True
+
+        resp = await client.post("/api/articles/unhide", headers=auth_headers, json={"ids": [art_id]})
+        assert resp.status_code == 204
+
+        resp = await client.get("/api/articles", headers=auth_headers)
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["items"][0]["is_hide"] is False

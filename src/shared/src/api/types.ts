@@ -163,6 +163,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/articles/{article_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Article */
+        get: operations["get_article_api_articles__article_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/articles/read": {
         parameters: {
             query?: never;
@@ -612,6 +629,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ArticleContentItem */
+        ArticleContentItem: {
+            /** Type */
+            type: string;
+            /** Value */
+            value: string;
+        };
         /** ArticleIds */
         ArticleIds: {
             /** Ids */
@@ -629,6 +653,10 @@ export interface components {
             title: string;
             /** Summary */
             summary?: string | null;
+            /** Content */
+            content?: components["schemas"]["ArticleContentItem"][] | null;
+            /** Author */
+            author?: string | null;
             /** Link */
             link?: string | null;
             /** Publish Time */
@@ -652,6 +680,11 @@ export interface components {
              * @default false
              */
             is_star: boolean;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: components["schemas"]["TagOut"][];
         };
         /** CategoryCreate */
         CategoryCreate: {
@@ -794,6 +827,11 @@ export interface components {
             url: string;
             /** Fetch Time */
             fetch_time?: string | null;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: components["schemas"]["TagOut"][];
         };
         /** SubscriptionUpdate */
         SubscriptionUpdate: {
@@ -1297,6 +1335,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedArticles"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_article_api_articles__article_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                article_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleOut"];
                 };
             };
             /** @description Validation Error */

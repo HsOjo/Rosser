@@ -62,6 +62,7 @@ class SubscriptionOut(BaseSchema):
     description: str | None = None
     url: str
     fetch_time: str | None = None
+    tags: list["TagOut"] = []
 
 
 class ArticleContentItem(BaseSchema):
@@ -82,6 +83,7 @@ class ArticleOut(BaseSchema):
     is_read: bool = False
     is_hide: bool = False
     is_star: bool = False
+    tags: list["TagOut"] = []
 
 
 class ArticleListParams(BaseSchema):

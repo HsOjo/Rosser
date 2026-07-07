@@ -16,6 +16,16 @@ const routes = [
     component: () => import("@/views/Settings.vue"),
     meta: { requiresAuth: true },
   },
+  {
+    path: "/tags",
+    component: () => import("@/views/Tags.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/article/:id",
+    component: () => import("@/views/ArticleDetail.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

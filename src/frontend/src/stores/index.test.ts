@@ -23,6 +23,7 @@ vi.mock("@rosser/shared", () => ({
   wsClient: {
     connect: vi.fn(),
     disconnect: vi.fn(),
+    on: vi.fn(),
   },
 }));
 

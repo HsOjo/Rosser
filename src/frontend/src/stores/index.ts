@@ -3,6 +3,24 @@ import { ref, computed } from "vue";
 import { api, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
 import { getPlatformConfig, savePlatformConfig, isTauri } from "@/platform";
 
+let wsHandlersRegistered = false;
+
+function registerWebSocketHandlers() {
+  if (wsHandlersRegistered) return;
+  wsHandlersRegistered = true;
+  wsClient.on("articles.new", () => {
+    const artStore = useArticleStore();
+    artStore.refresh();
+  });
+  wsClient.on("notification.new", () => {
+    const notifStore = useNotificationStore();
+    notifStore.fetchUnreadCount();
+  });
+  wsClient.on("task.progress", (data) => {
+    console.log("task.progress", data);
+  });
+}
+
 export const useConnectionStore = defineStore("connection", () => {
   const baseURL = ref("");
   const token = ref("");
@@ -18,6 +36,7 @@ export const useConnectionStore = defineStore("connection", () => {
       setAuthToken(cfg.token);
       isReady.value = true;
       wsClient.connect(`${cfg.baseURL.replace(/^http/, "ws")}/ws`, cfg.token);
+      registerWebSocketHandlers();
     }
   }
 
@@ -29,6 +48,7 @@ export const useConnectionStore = defineStore("connection", () => {
     savePlatformConfig({ baseURL: url, token: t });
     isReady.value = true;
     wsClient.connect(`${url.replace(/^http/, "ws")}/ws`, t);
+    registerWebSocketHandlers();
   }
 
   async function disconnect() {
@@ -84,9 +104,11 @@ export const useArticleStore = defineStore("article", () => {
   const loading = ref(false);
   const page = ref(1);
   const size = ref(20);
+  const lastParams = ref<Record<string, any>>({});
 
   async function fetchList(params: Record<string, any> = {}) {
     loading.value = true;
+    lastParams.value = params;
     try {
       const { data } = await api.GET("/api/articles", { params: { query: { page: page.value, size: size.value, ...params } } });
       if (data) {
@@ -98,10 +120,35 @@ export const useArticleStore = defineStore("article", () => {
     }
   }
 
+  async function refresh() {
+    await fetchList(lastParams.value);
+  }
+
   async function markRead(ids: string[]) {
     await api.POST("/api/articles/read", { body: { ids } });
     for (const art of articles.value) {
       if (ids.includes(art.id)) art.is_read = true;
+    }
+  }
+
+  async function markUnread(ids: string[]) {
+    await api.POST("/api/articles/unread", { body: { ids } });
+    for (const art of articles.value) {
+      if (ids.includes(art.id)) art.is_read = false;
+    }
+  }
+
+  async function markHide(ids: string[]) {
+    await api.POST("/api/articles/hide", { body: { ids } });
+    for (const art of articles.value) {
+      if (ids.includes(art.id)) art.is_hide = true;
+    }
+  }
+
+  async function markUnhide(ids: string[]) {
+    await api.POST("/api/articles/unhide", { body: { ids } });
+    for (const art of articles.value) {
+      if (ids.includes(art.id)) art.is_hide = false;
     }
   }
 
@@ -122,7 +169,7 @@ export const useArticleStore = defineStore("article", () => {
     }
   }
 
-  return { articles, total, loading, page, size, fetchList, markRead, markStar };
+  return { articles, total, loading, page, size, lastParams, fetchList, refresh, markRead, markUnread, markHide, markUnhide, markStar };
 });
 
 export const useCategoryStore = defineStore("category", () => {
@@ -170,4 +217,96 @@ export const useSettingsStore = defineStore("settings", () => {
   }
 
   return { settings, fetch, update };
+});
+
+export const useNotificationStore = defineStore("notification", () => {
+  const notifications = ref<any[]>([]);
+  const unreadCount = ref(0);
+  const loading = ref(false);
+
+  async function fetchAll(params: Record<string, any> = {}) {
+    loading.value = true;
+    try {
+      const { data } = await api.GET("/api/notifications", { params: { query: params } });
+      notifications.value = data || [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchUnreadCount() {
+    const { data } = await api.GET("/api/notifications/unread-count");
+    unreadCount.value = typeof data === "number" ? data : 0;
+  }
+
+  async function markRead(ids: string[]) {
+    await api.POST("/api/notifications/mark-read", { body: ids });
+    for (const n of notifications.value) {
+      if (ids.includes(n.id)) n.is_read = true;
+    }
+    await fetchUnreadCount();
+  }
+
+  async function markAllRead() {
+    await api.POST("/api/notifications/mark-all-read");
+    for (const n of notifications.value) {
+      n.is_read = true;
+    }
+    unreadCount.value = 0;
+  }
+
+  return { notifications, unreadCount, loading, fetchAll, fetchUnreadCount, markRead, markAllRead };
+});
+
+export const useTagStore = defineStore("tag", () => {
+  const tags = ref<any[]>([]);
+  const loading = ref(false);
+
+  async function fetchAll() {
+    loading.value = true;
+    try {
+      const { data } = await api.GET("/api/tags");
+      tags.value = data || [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function create(tag: any) {
+    const { data } = await api.POST("/api/tags", { body: tag });
+    if (data) tags.value.push(data);
+    return data;
+  }
+
+  async function update(id: string, tag: any) {
+    const { data } = await api.PUT("/api/tags/{tag_id}", { params: { path: { tag_id: id } }, body: tag });
+    if (data) {
+      const idx = tags.value.findIndex((t) => t.id === id);
+      if (idx >= 0) tags.value[idx] = data;
+    }
+    return data;
+  }
+
+  async function remove(id: string) {
+    await api.DELETE("/api/tags/{tag_id}", { params: { path: { tag_id: id } } });
+    tags.value = tags.value.filter((t) => t.id !== id);
+  }
+
+  async function tagArticle(articleId: string, tagIds: string[]) {
+    await api.POST("/api/articles/{article_id}/tags", { params: { path: { article_id: articleId } }, body: tagIds });
+  }
+
+  async function untagArticle(articleId: string, tagId: string) {
+    await api.DELETE("/api/articles/{article_id}/tags/{tag_id}", { params: { path: { article_id: articleId, tag_id: tagId } } });
+  }
+
+  async function tagSubscription(subscriptionId: string, tagIds: string[]) {
+    await api.POST("/api/subscriptions/{subscription_id}/tags", { params: { path: { subscription_id: subscriptionId } }, body: tagIds });
+  }
+
+  async function untagSubscription(subscriptionId: string, tagId: string) {
+    await api.DELETE("/api/subscriptions/{subscription_id}/tags/{tag_id}", { params: { path: { subscription_id: subscriptionId, tag_id: tagId } } });
+  }
+
+  return { tags, loading, fetchAll, create, update, remove, tagArticle, untagArticle, tagSubscription, untagSubscription };
 });

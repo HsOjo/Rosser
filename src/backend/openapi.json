@@ -709,6 +709,50 @@
         }
       }
     },
+    "/api/articles/{article_id}": {
+      "get": {
+        "summary": "Get Article",
+        "operationId": "get_article_api_articles__article_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "article_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Article Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/articles/read": {
       "post": {
         "summary": "Mark Read",
@@ -1452,11 +1496,6 @@
       "get": {
         "summary": "Download File",
         "operationId": "download_file_api_files__file_id__download_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "file_id",
@@ -1841,6 +1880,24 @@
   },
   "components": {
     "schemas": {
+      "ArticleContentItem": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "ArticleContentItem"
+      },
       "ArticleIds": {
         "properties": {
           "ids": {
@@ -1885,6 +1942,31 @@
               }
             ],
             "title": "Summary"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ArticleContentItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
           },
           "link": {
             "anyOf": [
@@ -1934,6 +2016,14 @@
             "type": "boolean",
             "title": "Is Star",
             "default": false
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagOut"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
           }
         },
         "type": "object",
@@ -2418,6 +2508,14 @@
               }
             ],
             "title": "Fetch Time"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagOut"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
           }
         },
         "type": "object",

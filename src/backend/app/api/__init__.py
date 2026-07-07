@@ -97,7 +97,7 @@ async def delete_category(category_id: str, token: str = Depends(get_current_tok
 @router.get("/subscriptions", response_model=list[SubscriptionOut])
 async def list_subscriptions(token: str = Depends(get_current_token)):
     async with async_session() as session:
-        result = await session.execute(select(Subscription))
+        result = await session.execute(select(Subscription).options(selectinload(Subscription.tags)))
         return result.scalars().all()
 
 
@@ -114,7 +114,7 @@ async def create_subscription(data: SubscriptionCreate, token: str = Depends(get
         )
         session.add(sub)
         await session.commit()
-        await session.refresh(sub)
+        await session.refresh(sub, attribute_names=["tags"])
         await FetchService.fetch_subscription(sub.id)
         return sub
 
@@ -122,7 +122,10 @@ async def create_subscription(data: SubscriptionCreate, token: str = Depends(get
 @router.get("/subscriptions/{subscription_id}", response_model=SubscriptionOut)
 async def get_subscription(subscription_id: str, token: str = Depends(get_current_token)):
     async with async_session() as session:
-        sub = await session.get(Subscription, subscription_id)
+        result = await session.execute(
+            select(Subscription).where(Subscription.id == subscription_id).options(selectinload(Subscription.tags))
+        )
+        sub = result.scalar_one_or_none()
         if not sub:
             raise HTTPException(status_code=404, detail="Subscription not found")
         return sub
@@ -131,7 +134,10 @@ async def get_subscription(subscription_id: str, token: str = Depends(get_curren
 @router.put("/subscriptions/{subscription_id}", response_model=SubscriptionOut)
 async def update_subscription(subscription_id: str, data: SubscriptionUpdate, token: str = Depends(get_current_token)):
     async with async_session() as session:
-        sub = await session.get(Subscription, subscription_id)
+        result = await session.execute(
+            select(Subscription).where(Subscription.id == subscription_id).options(selectinload(Subscription.tags))
+        )
+        sub = result.scalar_one_or_none()
         if not sub:
             raise HTTPException(status_code=404, detail="Subscription not found")
         for field in ("category_id", "title", "description", "url"):
@@ -139,7 +145,7 @@ async def update_subscription(subscription_id: str, data: SubscriptionUpdate, to
             if val is not None:
                 setattr(sub, field, val)
         await session.commit()
-        await session.refresh(sub)
+        await session.refresh(sub, attribute_names=["tags"])
         return sub
 
 
@@ -195,7 +201,7 @@ async def list_articles(
     token: str = Depends(get_current_token),
 ):
     async with async_session() as session:
-        stmt = select(Article).options(selectinload(Article.state))
+        stmt = select(Article).options(selectinload(Article.state), selectinload(Article.tags))
         count_stmt = select(func.count(Article.id))
 
         if subscription_id:
@@ -222,7 +228,12 @@ async def list_articles(
                 stmt = stmt.where(Article.tags.any(Tag.id == tag_obj.id))
                 count_stmt = count_stmt.where(Article.tags.any(Tag.id == tag_obj.id))
 
-        if is_read is not None or is_star is not None or is_hide is not None:
+        need_state_join = is_read is not None or is_star is not None or is_hide is not None
+        # Default: exclude hidden articles unless explicitly viewing hidden
+        if is_hide is None:
+            need_state_join = True
+
+        if need_state_join:
             stmt = stmt.join(ArticleState)
             count_stmt = count_stmt.join(ArticleState)
             if is_read is not None:
@@ -234,6 +245,9 @@ async def list_articles(
             if is_hide is not None:
                 stmt = stmt.where(ArticleState.is_hide == is_hide)
                 count_stmt = count_stmt.where(ArticleState.is_hide == is_hide)
+            else:
+                stmt = stmt.where(ArticleState.is_hide == False)
+                count_stmt = count_stmt.where(ArticleState.is_hide == False)
 
         parts = order.split()
         if len(parts) == 2:
@@ -268,10 +282,41 @@ async def list_articles(
                     is_read=state.is_read if state else False,
                     is_hide=state.is_hide if state else False,
                     is_star=state.is_star if state else False,
+                    tags=art.tags,
                 )
             )
 
         return PaginatedArticles(items=items, total=total, page=page, size=size)
+
+
+@router.get("/articles/{article_id}", response_model=ArticleOut)
+async def get_article(article_id: str, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        result = await session.execute(
+            select(Article)
+            .where(Article.id == article_id)
+            .options(selectinload(Article.state), selectinload(Article.tags))
+        )
+        art = result.scalar_one_or_none()
+        if not art:
+            raise HTTPException(status_code=404, detail="Article not found")
+        state = art.state
+        return ArticleOut(
+            id=art.id,
+            subscription_id=art.subscription_id,
+            hash=art.hash,
+            title=art.title,
+            summary=art.summary,
+            content=art.content,
+            author=art.author,
+            link=art.link,
+            publish_time=art.publish_time,
+            meta=art.meta,
+            is_read=state.is_read if state else False,
+            is_hide=state.is_hide if state else False,
+            is_star=state.is_star if state else False,
+            tags=art.tags,
+        )
 
 
 @router.post("/articles/read", status_code=status.HTTP_204_NO_CONTENT)

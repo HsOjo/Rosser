@@ -20,7 +20,7 @@
 
     <n-layout>
       <n-layout-header bordered style="padding: 12px; display: flex; align-items: center; gap: 12px">
-        <n-input v-model:value="searchQuery" :placeholder="$t('search')" clearable style="max-width: 300px">
+        <n-input v-model:value="searchInput" :placeholder="$t('search')" clearable style="max-width: 300px">
           <template #prefix>
             <n-icon><SearchOutline /></n-icon>
           </template>
@@ -29,6 +29,13 @@
         <n-space>
           <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
           <n-button size="small" @click="showAddSub = true">{{ $t('addSubscription') }}</n-button>
+          <n-button text size="small" @click="showNotifications = true">
+            <template #icon>
+              <n-badge :value="notificationStore.unreadCount" :max="99" :show="notificationStore.unreadCount > 0">
+                <n-icon><NotificationsOutline /></n-icon>
+              </n-badge>
+            </template>
+          </n-button>
           <n-button text size="small" @click="$router.push('/settings')">
             <template #icon>
               <n-icon><SettingsOutline /></n-icon>
@@ -38,7 +45,16 @@
       </n-layout-header>
 
       <n-layout-content style="padding: 16px">
-        <article-list :subscription-id="selectedSubscription" :category-id="selectedCategory" :search="searchQuery" :is-read="selectedIsRead" :is-star="selectedIsStar" />
+        <article-list
+          :subscription-id="selectedSubscription"
+          :category-id="selectedCategory"
+          :tag="selectedTagTitle"
+          :search="debouncedSearch"
+          :is-read="selectedIsRead"
+          :is-star="selectedIsStar"
+          :is-hide="selectedIsHide"
+          @refresh="onArticleRefresh"
+        />
       </n-layout-content>
     </n-layout>
   </n-layout>
@@ -67,12 +83,12 @@
   <!-- Add Subscription Modal -->
   <n-modal v-model:show="showAddSub" :title="$t('addSubscription')" preset="card" style="width: 500px">
     <n-space vertical>
-      <n-input v-model:value="newSubUrl" placeholder="RSS URL" />
+      <n-input v-model:value="newSubUrl" :placeholder="t('rssURL')" />
       <n-button :loading="previewLoading" @click="preview">{{ $t('preview') }}</n-button>
       <template v-if="previewResult">
-        <n-input v-model:value="newSubTitle" :placeholder="previewResult.title || 'Title'" />
-        <n-input v-model:value="newSubDesc" placeholder="Description" type="textarea" />
-        <n-select v-model:value="newSubCategory" :options="categoryOptions" placeholder="Category" clearable />
+        <n-input v-model:value="newSubTitle" :placeholder="previewResult.title || t('title')" />
+        <n-input v-model:value="newSubDesc" :placeholder="t('description')" type="textarea" />
+        <n-select v-model:value="newSubCategory" :options="categoryOptions" :placeholder="t('category')" clearable />
         <n-button type="primary" :loading="adding" @click="addSubscription">{{ $t('addSubscription') }}</n-button>
       </template>
     </n-space>
@@ -83,36 +99,60 @@
     <n-space vertical>
       <n-input v-model:value="editSubTitle" :placeholder="t('title')" />
       <n-input v-model:value="editSubDesc" :placeholder="t('description')" type="textarea" />
-      <n-select v-model:value="editSubCategory" :options="categoryOptions" placeholder="Category" clearable />
+      <n-select v-model:value="editSubCategory" :options="categoryOptions" :placeholder="t('category')" clearable />
+      <n-select v-model:value="editSubTags" :options="tagOptions" :placeholder="t('tags')" multiple clearable />
       <n-space>
         <n-button type="primary" @click="saveEditSubscription">{{ t('save') }}</n-button>
+        <n-button :loading="fetchingSub" @click="fetchSubscription">{{ t('fetch') }}</n-button>
         <n-button type="error" @click="deleteSubscription">{{ t('delete') }}</n-button>
       </n-space>
     </n-space>
   </n-modal>
+
+  <!-- Notifications Modal -->
+  <notifications-modal v-model:show="showNotifications" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, h } from "vue";
+import { ref, computed, onMounted, h, watch } from "vue";
 import { useRouter } from "vue-router";
-import { RefreshOutline, SearchOutline, SettingsOutline, AddOutline } from "@vicons/ionicons5";
+import {
+  RefreshOutline,
+  SearchOutline,
+  SettingsOutline,
+  AddOutline,
+  NotificationsOutline,
+} from "@vicons/ionicons5";
 import { useI18n } from "vue-i18n";
-import { useSubscriptionStore, useCategoryStore, useArticleStore } from "@/stores";
+import {
+  useSubscriptionStore,
+  useCategoryStore,
+  useArticleStore,
+  useNotificationStore,
+  useTagStore,
+} from "@/stores";
 import { api } from "@rosser/shared";
 import ArticleList from "@/components/ArticleList.vue";
+import NotificationsModal from "@/components/NotificationsModal.vue";
 
 const router = useRouter();
 const { t } = useI18n();
 const subStore = useSubscriptionStore();
 const catStore = useCategoryStore();
 const artStore = useArticleStore();
+const notificationStore = useNotificationStore();
+const tagStore = useTagStore();
 
 const selectedKey = ref("all");
 const selectedSubscription = ref<string | undefined>(undefined);
 const selectedCategory = ref<string | undefined>(undefined);
+const selectedTag = ref<string | undefined>(undefined);
+const selectedTagTitle = ref<string | undefined>(undefined);
 const selectedIsRead = ref<boolean | undefined>(undefined);
 const selectedIsStar = ref<boolean | undefined>(undefined);
-const searchQuery = ref("");
+const selectedIsHide = ref<boolean | undefined>(undefined);
+const searchInput = ref("");
+const debouncedSearch = ref("");
 
 const showAddCat = ref(false);
 const newCatTitle = ref("");
@@ -138,9 +178,19 @@ const editingSub = ref<any>(null);
 const editSubTitle = ref("");
 const editSubDesc = ref("");
 const editSubCategory = ref<string | null>(null);
+const editSubTags = ref<string[]>([]);
+const fetchingSub = ref(false);
+
+const showNotifications = ref(false);
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const categoryOptions = computed(() =>
   catStore.categories.map((c: any) => ({ label: c.title, value: c.id }))
+);
+
+const tagOptions = computed(() =>
+  tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
 );
 
 const menuOptions = computed(() => {
@@ -148,16 +198,36 @@ const menuOptions = computed(() => {
     { key: "all", label: t('all') },
     { key: "unread", label: t('unread') },
     { key: "starred", label: t('starred') },
+    { key: "hidden", label: t('hidden') },
   ];
+
+  if (tagStore.tags.length > 0) {
+    items.push({
+      key: "tags",
+      label: t('tags'),
+      children: tagStore.tags.map((tag: any) => ({
+        key: `tag-${tag.id}`,
+        label: tag.title,
+      })),
+    });
+  }
+
   for (const cat of catStore.categories) {
     const subs = subStore.subscriptions
       .filter((s: any) => s.category_id === cat.id)
-      .map((s: any) => ({ key: `sub-${s.id}`, label: s.title }));
+      .map((s: any) => ({
+        key: `sub-${s.id}`,
+        label: s.title,
+        extra: () => h('span', {
+          style: 'margin-left: auto; cursor: pointer; padding: 0 8px;',
+          onClick: (e: Event) => { e.stopPropagation(); openEditSubscription(s); }
+        }, '...')
+      }));
     items.push({
       key: `cat-${cat.id}`,
       label: cat.title,
       children: subs.length > 0 ? subs : undefined,
-      extra: h('span', {
+      extra: () => h('span', {
         style: 'margin-left: auto; cursor: pointer; padding: 0 8px;',
         onClick: (e: Event) => { e.stopPropagation(); openEditCategory(cat); }
       }, '...')
@@ -165,7 +235,14 @@ const menuOptions = computed(() => {
   }
   const uncategorized = subStore.subscriptions
     .filter((s: any) => !s.category_id)
-    .map((s: any) => ({ key: `sub-${s.id}`, label: s.title }));
+    .map((s: any) => ({
+      key: `sub-${s.id}`,
+      label: s.title,
+      extra: () => h('span', {
+        style: 'margin-left: auto; cursor: pointer; padding: 0 8px;',
+        onClick: (e: Event) => { e.stopPropagation(); openEditSubscription(s); }
+      }, '...')
+    }));
   if (uncategorized.length > 0) {
     items.push({ key: "uncategorized", label: t('uncategorized'), children: uncategorized });
   }
@@ -179,41 +256,63 @@ function openEditCategory(cat: any) {
   showEditCat.value = true;
 }
 
-function openEditSubscription(sub: any) {
+async function openEditSubscription(sub: any) {
   editingSub.value = sub;
   editSubTitle.value = sub.title;
   editSubDesc.value = sub.description || "";
   editSubCategory.value = sub.category_id || null;
+  editSubTags.value = sub.tags?.map((t: any) => t.id) || [];
   showEditSub.value = true;
 }
 
 function onMenuSelect(key: string) {
   selectedSubscription.value = undefined;
   selectedCategory.value = undefined;
+  selectedTag.value = undefined;
+  selectedTagTitle.value = undefined;
   selectedIsRead.value = undefined;
   selectedIsStar.value = undefined;
+  selectedIsHide.value = undefined;
   if (key === "unread") {
     selectedIsRead.value = false;
   } else if (key === "starred") {
     selectedIsStar.value = true;
+  } else if (key === "hidden") {
+    selectedIsHide.value = true;
   } else if (key.startsWith("sub-")) {
-    const subId = key.replace("sub-", "");
-    selectedSubscription.value = subId;
-    const sub = subStore.subscriptions.find((s: any) => s.id === subId);
-    if (sub) openEditSubscription(sub);
+    selectedSubscription.value = key.replace("sub-", "");
   } else if (key.startsWith("cat-")) {
     selectedCategory.value = key.replace("cat-", "");
+  } else if (key.startsWith("tag-")) {
+    const tagId = key.replace("tag-", "");
+    selectedTag.value = tagId;
+    const tag = tagStore.tags.find((t: any) => t.id === tagId);
+    selectedTagTitle.value = tag?.title;
   }
 }
+
+function onArticleRefresh() {
+  artStore.fetchList();
+  notificationStore.fetchUnreadCount();
+}
+
+watch(searchInput, (val) => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    debouncedSearch.value = val;
+  }, 300);
+});
 
 async function refreshAll() {
   await api.POST("/api/subscriptions/fetch-all");
   await artStore.fetchList();
+  await notificationStore.fetchUnreadCount();
 }
 
 async function markAllRead() {
   await api.POST("/api/articles/read-before-days", { params: { query: { days: 0 } } });
   await artStore.fetchList();
+  await notificationStore.fetchUnreadCount();
 }
 
 async function addCategory() {
@@ -260,7 +359,7 @@ async function preview() {
 async function addSubscription() {
   adding.value = true;
   try {
-    await subStore.create({
+    const sub = await subStore.create({
       url: newSubUrl.value,
       title: newSubTitle.value || previewResult.value?.title || newSubUrl.value,
       description: newSubDesc.value,
@@ -272,6 +371,10 @@ async function addSubscription() {
     newSubDesc.value = "";
     newSubCategory.value = null;
     previewResult.value = null;
+    if (sub?.id) {
+      await api.POST("/api/subscriptions/fetch", { body: { ids: [sub.id] } });
+      await artStore.fetchList();
+    }
   } finally {
     adding.value = false;
   }
@@ -284,8 +387,30 @@ async function saveEditSubscription() {
     description: editSubDesc.value,
     category_id: editSubCategory.value,
   });
+  const currentTagIds = editingSub.value.tags?.map((t: any) => t.id) || [];
+  const toAdd = editSubTags.value.filter((id) => !currentTagIds.includes(id));
+  const toRemove = currentTagIds.filter((id: string) => !editSubTags.value.includes(id));
+  for (const tagId of toAdd) {
+    await tagStore.tagSubscription(editingSub.value.id, [tagId]);
+  }
+  for (const tagId of toRemove) {
+    await tagStore.untagSubscription(editingSub.value.id, tagId);
+  }
+  await subStore.fetchAll();
   showEditSub.value = false;
   editingSub.value = null;
+}
+
+async function fetchSubscription() {
+  if (!editingSub.value || fetchingSub.value) return;
+  fetchingSub.value = true;
+  try {
+    await api.POST("/api/subscriptions/fetch", { body: { ids: [editingSub.value.id] } });
+    await artStore.fetchList();
+    await notificationStore.fetchUnreadCount();
+  } finally {
+    fetchingSub.value = false;
+  }
 }
 
 async function deleteSubscription() {
@@ -298,5 +423,7 @@ async function deleteSubscription() {
 onMounted(() => {
   subStore.fetchAll();
   catStore.fetchAll();
+  tagStore.fetchAll();
+  notificationStore.fetchUnreadCount();
 });
 </script>
