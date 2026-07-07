@@ -61,12 +61,21 @@ export const useSubscriptionStore = defineStore("subscription", () => {
     return data;
   }
 
+  async function update(id: string, sub: any) {
+    const { data } = await api.PUT("/api/subscriptions/{subscription_id}", { params: { path: { subscription_id: id } }, body: sub });
+    if (data) {
+      const idx = subscriptions.value.findIndex((s) => s.id === id);
+      if (idx >= 0) subscriptions.value[idx] = data;
+    }
+    return data;
+  }
+
   async function remove(id: string) {
     await api.DELETE("/api/subscriptions/{subscription_id}", { params: { path: { subscription_id: id } } });
     subscriptions.value = subscriptions.value.filter((s) => s.id !== id);
   }
 
-  return { subscriptions, loading, fetchAll, create, remove };
+  return { subscriptions, loading, fetchAll, create, update, remove };
 });
 
 export const useArticleStore = defineStore("article", () => {
@@ -130,12 +139,21 @@ export const useCategoryStore = defineStore("category", () => {
     return data;
   }
 
+  async function update(id: string, cat: any) {
+    const { data } = await api.PUT("/api/categories/{category_id}", { params: { path: { category_id: id } }, body: cat });
+    if (data) {
+      const idx = categories.value.findIndex((c) => c.id === id);
+      if (idx >= 0) categories.value[idx] = data;
+    }
+    return data;
+  }
+
   async function remove(id: string) {
     await api.DELETE("/api/categories/{category_id}", { params: { path: { category_id: id } } });
     categories.value = categories.value.filter((c) => c.id !== id);
   }
 
-  return { categories, fetchAll, create, remove };
+  return { categories, fetchAll, create, update, remove };
 });
 
 export const useSettingsStore = defineStore("settings", () => {
