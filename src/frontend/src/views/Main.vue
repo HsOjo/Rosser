@@ -36,7 +36,7 @@
               </n-badge>
             </template>
           </n-button>
-          <n-button text size="small" @click="$router.push('/settings')">
+          <n-button text size="small" @click="showSettings = true">
             <template #icon>
               <n-icon><SettingsOutline /></n-icon>
             </template>
@@ -111,11 +111,13 @@
 
   <!-- Notifications Modal -->
   <notifications-modal v-model:show="showNotifications" />
+
+  <!-- Settings Modal -->
+  <settings-modal v-model:show="showSettings" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, h, watch } from "vue";
-import { useRouter } from "vue-router";
 import {
   RefreshOutline,
   SearchOutline,
@@ -134,8 +136,8 @@ import {
 import { api } from "@rosser/shared";
 import ArticleList from "@/components/ArticleList.vue";
 import NotificationsModal from "@/components/NotificationsModal.vue";
+import SettingsModal from "@/views/Settings.vue";
 
-const router = useRouter();
 const { t } = useI18n();
 const subStore = useSubscriptionStore();
 const catStore = useCategoryStore();
@@ -182,6 +184,7 @@ const editSubTags = ref<string[]>([]);
 const fetchingSub = ref(false);
 
 const showNotifications = ref(false);
+const showSettings = ref(false);
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
