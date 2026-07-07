@@ -3,39 +3,41 @@ import type { paths } from "./types.js";
 
 export type { paths };
 
-let baseURL = "";
-let authToken = "";
+let _baseURL = "";
+let _authToken = "";
+let _client = createClient<paths>({ baseUrl: undefined, headers: {} });
+
+function createClientInstance() {
+  return createClient<paths>({
+    baseUrl: _baseURL || undefined,
+    headers: _authToken ? { Authorization: `Bearer ${_authToken}` } : {},
+  });
+}
+
+function refreshClient() {
+  _client = createClientInstance();
+}
 
 export function setBaseURL(url: string) {
-  baseURL = url.replace(/\/$/, "");
+  _baseURL = url.replace(/\/$/, "");
+  refreshClient();
 }
 
 export function setAuthToken(token: string) {
-  authToken = token;
+  _authToken = token;
+  refreshClient();
 }
 
 export function getBaseURL() {
-  return baseURL;
+  return _baseURL;
 }
 
 export function getAuthToken() {
-  return authToken;
+  return _authToken;
 }
 
-export const api = createClient<paths>({
-  baseUrl: baseURL || undefined,
-  headers: {},
-});
-
-export function configureClient() {
-  // Re-create client when config changes
-  (api as any).baseUrl = baseURL;
-  (api as any).headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-}
+export { _client as api };
 
 export function createConfiguredClient() {
-  return createClient<paths>({
-    baseUrl: baseURL || undefined,
-    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-  });
+  return createClientInstance();
 }

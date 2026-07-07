@@ -1,16 +1,22 @@
-let _isTauri = false;
+let _isTauriCache: boolean | null = null;
 
-try {
-  const { invoke } = await import("@tauri-apps/api/core");
-  _isTauri = true;
-} catch {
-  _isTauri = false;
+export async function detectTauri(): Promise<boolean> {
+  if (_isTauriCache !== null) return _isTauriCache;
+  try {
+    await import("@tauri-apps/api/core");
+    _isTauriCache = true;
+  } catch {
+    _isTauriCache = false;
+  }
+  return _isTauriCache;
 }
 
-export const isTauri = () => _isTauri;
+export function isTauri(): boolean {
+  return _isTauriCache ?? false;
+}
 
 export async function getPlatformConfig(): Promise<{ baseURL: string; token: string }> {
-  if (_isTauri) {
+  if (await detectTauri()) {
     try {
       const { invoke } = await import("@tauri-apps/api/core");
       return await invoke("get_backend_config");
@@ -34,7 +40,7 @@ export function savePlatformConfig(cfg: { baseURL: string; token: string }) {
 }
 
 export async function openExternal(url: string) {
-  if (_isTauri) {
+  if (await detectTauri()) {
     const { open } = await import("@tauri-apps/plugin-shell");
     await open(url);
   } else {
@@ -43,7 +49,7 @@ export async function openExternal(url: string) {
 }
 
 export async function sendNotification(title: string, body: string) {
-  if (_isTauri) {
+  if (await detectTauri()) {
     try {
       const { sendNotification: notify } = await import("@tauri-apps/plugin-notification");
       notify({ title, body });

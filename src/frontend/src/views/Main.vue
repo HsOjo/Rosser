@@ -125,7 +125,7 @@ async function refreshAll() {
 }
 
 async function markAllRead() {
-  await api.POST("/api/articles/read-before-days", { query: { days: 0 } });
+  await api.POST("/api/articles/read-before-days", { params: { query: { days: 0 } } });
   await artStore.fetchList();
 }
 

@@ -1,66 +1,87 @@
 # Rosser
 
-一个基于 Electron + Vue 3 + Flask 的 RSS 阅读器桌面应用。
+Rosser is an RSS reader rebuilt with modern technologies.
 
-## 技术栈
+## Architecture
 
-**前端**
-- Vue 3 (Composition API) + TypeScript
-- Vite 4
-- Electron 22
-- Ant Design Vue 3
-- Vuex 4
+- **Backend**: FastAPI + SQLAlchemy(async) + SQLite + Alembic + APScheduler
+- **Desktop**: Tauri + Vue3 + Vite + Naive UI
+- **Mobile**: Vue3 + Vite + Varlet (H5, remote only)
+- **Shared**: TypeScript monorepo package with OpenAPI-generated types
 
-**后端**
-- Flask + SQLAlchemy
-- SQLite
-- Celery + Gevent (异步任务)
-- Flask-SocketIO
+## Development
 
-## 已实现功能
+### Prerequisites
 
-- [x] 订阅源管理 (增删改查)
-- [x] 分类管理
-- [x] 站点管理 (自动抓取 favicon、标题)
-- [x] 文章列表展示 (分页加载、无限滚动)
-- [x] 文章详情查看 (原文模式 / 文章模式)
-- [x] 文章状态管理 (已读、星标、隐藏)
-- [x] 高级筛选与多维度排序
-- [x] OPML 导入导出
-- [x] 全局进度条
-- [x] 图片本地化缓存
-- [x] 多平台支持 (macOS、Windows、Linux)
-- [x] 新文章推送通知
-- [x] 定时自动抓取订阅
-- [x] 全文搜索 (文章标题检索)
-- [x] 用户偏好设置 (深浅色主题、字体大小)
-- [x] Electron 增强 (应用菜单、快捷键)
-- [x] 性能优化 (响应缓存)
-- [x] 标签系统 (简化版 - 收藏/隐藏标签显示)
-- [x] 国际化支持 (中文/英文切换)
-- [x] 订阅编辑功能 (支持修改订阅信息)
+- [uv](https://docs.astral.sh/uv/) (Python 3.12+)
+- [pnpm](https://pnpm.io/) 9+
+- [Node.js](https://nodejs.org/) 20+
 
-## 待完善功能
-
-| 优先级 | 功能 | 说明 |
-|--------|------|------|
-| 中 | WebSocket 实时推送 | 利用已集成的 SocketIO 推送任务状态和新文章 |
-
-## 开发
+### Setup
 
 ```bash
-# 前端
-npm install
-npm run dev
+# Install dependencies
+pnpm install
+cd src/backend && uv sync --extra dev
 
-# 后端
-pip install -r src_backend/requirements.txt
-python src_backend/main.py serve
+# Start everything (backend + frontend + mobile)
+pnpm dev
 ```
 
-## 构建
+### Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start backend, frontend, and mobile concurrently |
+| `pnpm dev:backend` | Start FastAPI backend only |
+| `pnpm dev:frontend` | Start desktop frontend (Vite dev server) |
+| `pnpm dev:mobile` | Start mobile frontend (Vite dev server) |
+| `pnpm gen:api` | Regenerate OpenAPI types from backend |
+| `pnpm build` | Build all frontend packages |
+
+### Backend
 
 ```bash
-npm run build
-npm run package
+cd src/backend
+uv run uvicorn app.main:app --reload
 ```
+
+API docs available at `http://127.0.0.1:8000/docs`.
+
+### Desktop (Remote Mode)
+
+```bash
+pnpm --filter @rosser/frontend dev:vite
+```
+
+### Mobile
+
+```bash
+pnpm --filter @rosser/mobile dev
+```
+
+## Deployment
+
+### Docker
+
+```bash
+cd src/backend
+docker compose up -d
+```
+
+Set `ROSSER_TOKEN` and optionally `ROSSER_CORS_ORIGINS` in environment or `.env` file.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ROSSER_TOKEN` | `dev-token-change-me` | Bearer token for authentication |
+| `ROSSER_HOST` | `127.0.0.1` | Bind address |
+| `ROSSER_PORT` | `8000` | Listen port |
+| `ROSSER_DATA_DIR` | `~/.rosser/data` | SQLite database directory |
+| `ROSSER_STORAGE_DIR` | `~/.rosser/storage` | File storage directory |
+| `ROSSER_CORS_ORIGINS` | `http://localhost,...` | Allowed CORS origins |
+
+## License
+
+GPL-3.0
