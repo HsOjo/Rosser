@@ -6,10 +6,15 @@
           @click="openArticle(art)"
           style="padding: 12px 16px"
         >
-          <n-thing
-            :title="art.title"
-            :description="relativeTime(art.publish_time)"
-          >
+          <n-thing :title="art.title">
+            <template #header-extra>
+              <span style="font-size: 12px; color: #999; white-space: nowrap;">{{ relativeTime(art.publish_time) }}</span>
+            </template>
+            <template #description>
+              <n-ellipsis :line-clamp="2" style="font-size: 13px; color: #666;">
+                {{ stripHtml(art.summary || "") }}
+              </n-ellipsis>
+            </template>
             <template #avatar>
               <n-tag v-if="!art.is_read" type="success" size="small">New</n-tag>
               <n-tag v-if="art.is_star" type="warning" size="small">Star</n-tag>
@@ -82,6 +87,12 @@ async function openArticle(art: any) {
   resolvedSummary.value = DOMPurify.sanitize(
     await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
   );
+}
+
+function stripHtml(html: string): string {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
 }
 
 function openOriginal() {
