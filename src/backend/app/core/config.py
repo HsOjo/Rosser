@@ -41,7 +41,15 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         if not self.rosser_cors_origins:
-            return ["http://localhost", "http://127.0.0.1", "tauri://localhost"]
+            return [
+                "http://localhost",
+                "http://localhost:1420",
+                "http://localhost:5173",
+                "http://127.0.0.1",
+                "http://127.0.0.1:1420",
+                "http://127.0.0.1:5173",
+                "tauri://localhost",
+            ]
         return [o.strip() for o in self.rosser_cors_origins.split(",")]
 
     class Config:
