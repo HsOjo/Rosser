@@ -2,12 +2,7 @@ let _isTauriCache: boolean | null = null;
 
 export async function detectTauri(): Promise<boolean> {
   if (_isTauriCache !== null) return _isTauriCache;
-  try {
-    await import("@tauri-apps/api/core");
-    _isTauriCache = true;
-  } catch {
-    _isTauriCache = false;
-  }
+  _isTauriCache = typeof window !== "undefined" && !!(window as any).__TAURI__;
   return _isTauriCache;
 }
 
