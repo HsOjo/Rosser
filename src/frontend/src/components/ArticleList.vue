@@ -11,7 +11,7 @@
               <span style="font-size: 12px; color: #999; white-space: nowrap;">{{ relativeTime(art.publish_time) }}</span>
             </template>
             <template #description>
-              <n-ellipsis :line-clamp="2" style="font-size: 13px; color: #666;">
+              <n-ellipsis :line-clamp="2" :tooltip="false" style="font-size: 13px; color: #666;">
                 {{ stripHtml(art.summary || "") }}
               </n-ellipsis>
             </template>
