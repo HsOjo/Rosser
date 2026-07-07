@@ -1,7 +1,7 @@
 <template>
   <n-space vertical>
     <n-spin :show="artStore.loading">
-      <n-list hoverable clickable>
+      <n-list clickable>
         <n-list-item v-for="art in artStore.articles" :key="art.id"
           @click="openArticle(art)"
           style="padding: 12px 16px"
