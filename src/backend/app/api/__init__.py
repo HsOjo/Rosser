@@ -486,7 +486,7 @@ async def fetch_site(site_id: str, token: str = Depends(get_current_token)):
 # --- Files ---
 
 @router.get("/files/{file_id}/download")
-async def download_file(file_id: str, exp: int = 0, sig: str = "", token: str = Depends(get_current_token)):
+async def download_file(file_id: str, exp: int = 0, sig: str = ""):
     from app.core.security import verify_file_url
     from app.services.file import FileService
     from fastapi.responses import FileResponse

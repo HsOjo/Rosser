@@ -41,7 +41,7 @@
     </n-spin>
 
     <n-modal v-model:show="showArticle" preset="card" style="width: 80vw; max-width: 900px" :title="selectedArticle?.title">
-      <div v-if="selectedArticle" class="article-content" v-html="sanitizedSummary" />
+      <div v-if="selectedArticle" class="article-content" v-html="resolvedSummary" />
       <template #footer>
         <n-space>
           <n-button @click="openOriginal">Open Original</n-button>
@@ -53,8 +53,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import { useArticleStore } from "@/stores";
+import { ref, watch } from "vue";
+import { useArticleStore, useConnectionStore } from "@/stores";
 import { relativeTime, resolveFilePlaceholders } from "@rosser/shared";
 import { openExternal } from "@/platform";
 import DOMPurify from "dompurify";
@@ -66,22 +66,22 @@ const props = defineProps<{
 }>();
 
 const artStore = useArticleStore();
+const connStore = useConnectionStore();
 const showArticle = ref(false);
 const selectedArticle = ref<any>(null);
+const resolvedSummary = ref("");
 
-const sanitizedSummary = computed(() => {
-  if (!selectedArticle.value?.summary) return "";
-  // Resolve $file@ placeholders first, then sanitize
-  return DOMPurify.sanitize(selectedArticle.value.summary);
-});
-
-function openArticle(art: any) {
+async function openArticle(art: any) {
   selectedArticle.value = art;
   showArticle.value = true;
   if (!art.is_read) {
     artStore.markRead([art.id]);
     art.is_read = true;
   }
+  const html = art.summary || "";
+  resolvedSummary.value = DOMPurify.sanitize(
+    await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
+  );
 }
 
 function openOriginal() {
@@ -106,7 +106,17 @@ watch(() => [props.subscriptionId, props.categoryId, props.search], load, { imme
 </script>
 
 <style scoped>
+.article-content {
+  max-width: 100%;
+  overflow-x: auto;
+}
 .article-content img {
   max-width: 100%;
+  height: auto;
+}
+.article-content pre,
+.article-content code {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
