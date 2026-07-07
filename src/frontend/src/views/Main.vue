@@ -37,7 +37,7 @@
       </n-layout-header>
 
       <n-layout-content style="padding: 16px">
-        <article-list :subscription-id="selectedSubscription" :category-id="selectedCategory" :search="searchQuery" />
+        <article-list :subscription-id="selectedSubscription" :category-id="selectedCategory" :search="searchQuery" :is-read="selectedIsRead" :is-star="selectedIsStar" />
       </n-layout-content>
     </n-layout>
   </n-layout>
@@ -73,6 +73,8 @@ const artStore = useArticleStore();
 const selectedKey = ref("all");
 const selectedSubscription = ref<string | undefined>(undefined);
 const selectedCategory = ref<string | undefined>(undefined);
+const selectedIsRead = ref<boolean | undefined>(undefined);
+const selectedIsStar = ref<boolean | undefined>(undefined);
 const searchQuery = ref("");
 
 const showAddSub = ref(false);
@@ -112,7 +114,13 @@ const menuOptions = computed(() => {
 function onMenuSelect(key: string) {
   selectedSubscription.value = undefined;
   selectedCategory.value = undefined;
-  if (key.startsWith("sub-")) {
+  selectedIsRead.value = undefined;
+  selectedIsStar.value = undefined;
+  if (key === "unread") {
+    selectedIsRead.value = false;
+  } else if (key === "starred") {
+    selectedIsStar.value = true;
+  } else if (key.startsWith("sub-")) {
     selectedSubscription.value = key.replace("sub-", "");
   } else if (key.startsWith("cat-")) {
     selectedCategory.value = key.replace("cat-", "");

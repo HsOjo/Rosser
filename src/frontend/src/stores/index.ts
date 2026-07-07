@@ -97,9 +97,19 @@ export const useArticleStore = defineStore("article", () => {
   }
 
   async function markStar(ids: string[]) {
-    await api.POST("/api/articles/star", { body: { ids } });
-    for (const art of articles.value) {
-      if (ids.includes(art.id)) art.is_star = true;
+    const toStar = ids.filter((id) => !articles.value.find((a) => a.id === id)?.is_star);
+    const toUnstar = ids.filter((id) => articles.value.find((a) => a.id === id)?.is_star);
+    if (toStar.length > 0) {
+      await api.POST("/api/articles/star", { body: { ids: toStar } });
+      for (const art of articles.value) {
+        if (toStar.includes(art.id)) art.is_star = true;
+      }
+    }
+    if (toUnstar.length > 0) {
+      await api.POST("/api/articles/unstar", { body: { ids: toUnstar } });
+      for (const art of articles.value) {
+        if (toUnstar.includes(art.id)) art.is_star = false;
+      }
     }
   }
 

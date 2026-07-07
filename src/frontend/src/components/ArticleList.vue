@@ -74,6 +74,8 @@ const props = defineProps<{
   subscriptionId?: string;
   categoryId?: string;
   search?: string;
+  isRead?: boolean;
+  isStar?: boolean;
 }>();
 
 const artStore = useArticleStore();
@@ -137,10 +139,12 @@ function load() {
   if (props.subscriptionId) params.subscription_id = props.subscriptionId;
   if (props.categoryId) params.category_id = props.categoryId;
   if (props.search) params.search = props.search;
+  if (props.isRead !== undefined) params.is_read = props.isRead;
+  if (props.isStar !== undefined) params.is_star = props.isStar;
   artStore.fetchList(params);
 }
 
-watch(() => [props.subscriptionId, props.categoryId, props.search], load, { immediate: true });
+watch(() => [props.subscriptionId, props.categoryId, props.search, props.isRead, props.isStar], load, { immediate: true });
 </script>
 
 <style scoped>
