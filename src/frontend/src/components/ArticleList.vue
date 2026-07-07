@@ -78,7 +78,7 @@ async function openArticle(art: any) {
     artStore.markRead([art.id]);
     art.is_read = true;
   }
-  const html = art.summary || "";
+  const html = art.content || art.summary || "";
   resolvedSummary.value = DOMPurify.sanitize(
     await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
   );

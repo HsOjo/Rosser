@@ -1,8 +1,8 @@
 import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import pool
 
 from alembic import context
 from app.core.config import settings
@@ -36,15 +36,8 @@ def do_run_migrations(connection):
 
 
 async def run_migrations_online() -> None:
-    url = settings.db_url.replace("+aiosqlite", "")
-    connectable = AsyncEngine(
-        engine_from_config(
-            {"sqlalchemy.url": url},
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-            future=True,
-        )
-    )
+    url = settings.db_url
+    connectable = create_async_engine(url, poolclass=pool.NullPool)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()

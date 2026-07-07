@@ -210,10 +210,10 @@ async def list_articles(
             count_stmt = count_stmt.where(Article.subscription_id.in_(sub_ids))
         if search:
             stmt = stmt.where(
-                (Article.title.ilike(f"%{search}%")) | (Article.summary.ilike(f"%{search}%"))
+                (Article.title.ilike(f"%{search}%")) | (Article.summary.ilike(f"%{search}%")) | (Article.content.ilike(f"%{search}%")) | (Article.author.ilike(f"%{search}%"))
             )
             count_stmt = count_stmt.where(
-                (Article.title.ilike(f"%{search}%")) | (Article.summary.ilike(f"%{search}%"))
+                (Article.title.ilike(f"%{search}%")) | (Article.summary.ilike(f"%{search}%")) | (Article.content.ilike(f"%{search}%")) | (Article.author.ilike(f"%{search}%"))
             )
         if tag:
             tag_obj = await session.execute(select(Tag).where(Tag.title == tag))
@@ -260,6 +260,8 @@ async def list_articles(
                     hash=art.hash,
                     title=art.title,
                     summary=art.summary,
+                    content=art.content,
+                    author=art.author,
                     link=art.link,
                     publish_time=art.publish_time,
                     meta=art.meta,

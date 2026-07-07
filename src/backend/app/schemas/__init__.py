@@ -70,6 +70,8 @@ class ArticleOut(BaseSchema):
     hash: str
     title: str
     summary: str | None = None
+    content: str | None = None
+    author: str | None = None
     link: str | None = None
     publish_time: str | None = None
     meta: dict[str, Any] | None = None
