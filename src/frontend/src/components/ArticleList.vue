@@ -108,11 +108,14 @@ watch(() => [props.subscriptionId, props.categoryId, props.search], load, { imme
 <style scoped>
 .article-content {
   max-width: 100%;
-  overflow-x: auto;
 }
 .article-content img {
   max-width: 100%;
   height: auto;
+  display: block;
+}
+.article-content pre {
+  overflow-x: auto;
 }
 .article-content pre,
 .article-content code {
