@@ -97,7 +97,9 @@ venv.bak/
 alembic.ini
 
 # Tauri
-src-tauri/target/
+src/frontend/src-tauri/target/
+src/frontend/src-tauri/gen/
+src/frontend/src-tauri/Cargo.lock
 
 # Mobile / PWA
 src/mobile/dist/

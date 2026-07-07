@@ -456,7 +456,10 @@ async def delete_tag(tag_id: str, token: str = Depends(get_current_token)):
 @router.post("/subscriptions/{subscription_id}/tags")
 async def tag_subscription(subscription_id: str, tag_ids: list[str], token: str = Depends(get_current_token)):
     async with async_session() as session:
-        sub = await session.get(Subscription, subscription_id)
+        result = await session.execute(
+            select(Subscription).options(selectinload(Subscription.tags)).where(Subscription.id == subscription_id)
+        )
+        sub = result.scalar_one_or_none()
         if not sub:
             raise HTTPException(status_code=404, detail="Subscription not found")
         for tid in tag_ids:
@@ -470,7 +473,10 @@ async def tag_subscription(subscription_id: str, tag_ids: list[str], token: str 
 @router.delete("/subscriptions/{subscription_id}/tags/{tag_id}")
 async def untag_subscription(subscription_id: str, tag_id: str, token: str = Depends(get_current_token)):
     async with async_session() as session:
-        sub = await session.get(Subscription, subscription_id)
+        result = await session.execute(
+            select(Subscription).options(selectinload(Subscription.tags)).where(Subscription.id == subscription_id)
+        )
+        sub = result.scalar_one_or_none()
         if not sub:
             raise HTTPException(status_code=404, detail="Subscription not found")
         sub.tags = [t for t in sub.tags if t.id != tag_id]
@@ -481,7 +487,10 @@ async def untag_subscription(subscription_id: str, tag_id: str, token: str = Dep
 @router.post("/articles/{article_id}/tags")
 async def tag_article(article_id: str, tag_ids: list[str], token: str = Depends(get_current_token)):
     async with async_session() as session:
-        art = await session.get(Article, article_id)
+        result = await session.execute(
+            select(Article).options(selectinload(Article.tags)).where(Article.id == article_id)
+        )
+        art = result.scalar_one_or_none()
         if not art:
             raise HTTPException(status_code=404, detail="Article not found")
         for tid in tag_ids:
@@ -495,7 +504,10 @@ async def tag_article(article_id: str, tag_ids: list[str], token: str = Depends(
 @router.delete("/articles/{article_id}/tags/{tag_id}")
 async def untag_article(article_id: str, tag_id: str, token: str = Depends(get_current_token)):
     async with async_session() as session:
-        art = await session.get(Article, article_id)
+        result = await session.execute(
+            select(Article).options(selectinload(Article.tags)).where(Article.id == article_id)
+        )
+        art = result.scalar_one_or_none()
         if not art:
             raise HTTPException(status_code=404, detail="Article not found")
         art.tags = [t for t in art.tags if t.id != tag_id]
