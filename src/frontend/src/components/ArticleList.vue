@@ -148,13 +148,14 @@ watch(() => [props.subscriptionId, props.categoryId, props.search], load, { imme
   width: 100%;
   max-width: 100%;
   overflow-wrap: break-word;
-  overflow-x: hidden;
 }
-.article-content :deep(img),
-.article-content :deep(video),
-.article-content :deep(iframe) {
+.article-content > div {
   max-width: 100%;
-  height: auto;
+}
+.article-content :deep(img) {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
   display: block;
 }
 .article-content :deep(table) {
