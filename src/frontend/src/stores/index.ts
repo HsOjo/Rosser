@@ -79,7 +79,7 @@ export const useArticleStore = defineStore("article", () => {
   async function fetchList(params: Record<string, any> = {}) {
     loading.value = true;
     try {
-      const { data } = await api.GET("/api/articles", { query: { page: page.value, size: size.value, ...params } });
+      const { data } = await api.GET("/api/articles", { params: { query: { page: page.value, size: size.value, ...params } } });
       if (data) {
         articles.value = data.items;
         total.value = data.total;
