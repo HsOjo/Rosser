@@ -154,20 +154,16 @@ class FetchService:
             title = entry.get("title", "Untitled")
             summary = entry.get("summary", entry.get("description", ""))
 
-            # Extract Atom content (full HTML body), prefer text/html type
-            content = ""
+            # Extract Atom content as structured list of {type, value}
+            content_items: list[dict[str, str]] = []
             raw_content = entry.get("content")
-            if raw_content:
-                if isinstance(raw_content, list):
-                    html_parts = [
-                        c.get("value", "") for c in raw_content
-                        if isinstance(c, dict) and c.get("type") == "text/html"
-                    ]
-                    content = html_parts[0] if html_parts else (raw_content[0].get("value", "") if isinstance(raw_content[0], dict) else str(raw_content[0]))
-                elif isinstance(raw_content, str):
-                    content = raw_content
-                else:
-                    content = str(raw_content)
+            if raw_content and isinstance(raw_content, list):
+                for c in raw_content:
+                    if isinstance(c, dict):
+                        item_type = c.get("type", "text/plain")
+                        item_value = c.get("value", "")
+                        if item_value:
+                            content_items.append({"type": item_type, "value": item_value})
 
             author = entry.get("author") or None
 
@@ -179,17 +175,21 @@ class FetchService:
                 except Exception:
                     pass
 
-            # Localize images in summary and content
+            # Localize images in summary and each content item
             summary, summary_file_ids = await FileService.localize_images(session, summary, client=None)
-            content, content_file_ids = await FileService.localize_images(session, content, client=None)
-            file_ids = list(dict.fromkeys(summary_file_ids + content_file_ids))
+            all_file_ids = list(summary_file_ids)
+            for item in content_items:
+                localized, file_ids = await FileService.localize_images(session, item["value"], client=None)
+                item["value"] = localized
+                all_file_ids.extend(file_ids)
+            file_ids = list(dict.fromkeys(all_file_ids))
 
             article = Article(
                 subscription_id=sub.id,
                 hash=hash_val,
                 title=title,
                 summary=summary or None,
-                content=content or None,
+                content=content_items or None,
                 author=author,
                 link=link,
                 publish_time=publish_time,

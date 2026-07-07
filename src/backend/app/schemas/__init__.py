@@ -64,13 +64,17 @@ class SubscriptionOut(BaseSchema):
     fetch_time: str | None = None
 
 
+class ArticleContentItem(BaseSchema):
+    type: str
+    value: str
+
 class ArticleOut(BaseSchema):
     id: str
     subscription_id: str
     hash: str
     title: str
     summary: str | None = None
-    content: str | None = None
+    content: list[ArticleContentItem] | None = None
     author: str | None = None
     link: str | None = None
     publish_time: str | None = None

@@ -46,7 +46,13 @@
     </n-spin>
 
     <n-modal v-model:show="showArticle" preset="card" style="width: 80vw; max-width: 900px" :title="selectedArticle?.title">
-      <div v-if="selectedArticle" class="article-content" v-html="resolvedSummary" />
+      <div v-if="selectedArticle" class="article-content">
+        <template v-for="(item, idx) in resolvedContent" :key="idx">
+          <div v-if="item.type === 'text/html'" v-html="item.value" />
+          <pre v-else-if="item.type === 'text/plain'" class="plain-text">{{ item.value }}</pre>
+          <n-tag v-else type="warning" size="small">未支持: {{ item.type }}</n-tag>
+        </template>
+      </div>
       <template #footer>
         <n-space>
           <n-button @click="openOriginal">Open Original</n-button>
@@ -74,7 +80,7 @@ const artStore = useArticleStore();
 const connStore = useConnectionStore();
 const showArticle = ref(false);
 const selectedArticle = ref<any>(null);
-const resolvedSummary = ref("");
+const resolvedContent = ref<{ type: string; value: string }[]>([]);
 
 async function openArticle(art: any) {
   selectedArticle.value = art;
@@ -83,10 +89,31 @@ async function openArticle(art: any) {
     artStore.markRead([art.id]);
     art.is_read = true;
   }
-  const html = art.content || art.summary || "";
-  resolvedSummary.value = DOMPurify.sanitize(
-    await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
-  );
+
+  const items: { type: string; value: string }[] = [];
+  const rawContent = art.content;
+  if (Array.isArray(rawContent) && rawContent.length > 0) {
+    for (const item of rawContent) {
+      if (item.value) {
+        items.push({
+          type: item.type || "text/plain",
+          value: DOMPurify.sanitize(
+            await resolveFilePlaceholders(item.value, connStore.baseURL, connStore.token)
+          ),
+        });
+      }
+    }
+  }
+  if (items.length === 0) {
+    const html = art.summary || "";
+    items.push({
+      type: "text/html",
+      value: DOMPurify.sanitize(
+        await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
+      ),
+    });
+  }
+  resolvedContent.value = items;
 }
 
 function stripHtml(html: string): string {
@@ -118,19 +145,35 @@ watch(() => [props.subscriptionId, props.categoryId, props.search], load, { imme
 
 <style scoped>
 .article-content {
+  width: 100%;
   max-width: 100%;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
 }
-.article-content img {
+.article-content :deep(img),
+.article-content :deep(video),
+.article-content :deep(iframe) {
   max-width: 100%;
   height: auto;
   display: block;
 }
-.article-content pre {
-  overflow-x: auto;
+.article-content :deep(table) {
+  max-width: 100%;
+  width: 100%;
+  table-layout: fixed;
 }
-.article-content pre,
-.article-content code {
+.article-content :deep(pre) {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.article-content :deep(pre),
+.article-content :deep(code) {
   white-space: pre-wrap;
   word-break: break-word;
+}
+.article-content .plain-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
 }
 </style>

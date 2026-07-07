@@ -65,7 +65,7 @@ class Article(Base):
     hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    content: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     link: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
     publish_time: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
