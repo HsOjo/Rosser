@@ -5,7 +5,7 @@
       <div class="top-bar-left" :class="{ 'mac-layout': isMacClient }" :style="leftStyle" data-tauri-drag-region="no-drag">
         <span class="app-name">{{ $t('appName') }}</span>
         <div class="toolbar-group">
-          <n-button text size="small" @click="showAddCat = true">
+          <n-button text size="small" @click="showAddSub = true">
             <template #icon><n-icon><AddOutline /></n-icon></template>
           </n-button>
           <n-button text size="small" @click="refreshAll">
@@ -33,7 +33,6 @@
 
           <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
           <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
-          <n-button size="small" @click="showAddSub = true">{{ $t('addSubscription') }}</n-button>
           <n-button text size="small" @click="showNotifications = true">
             <template #icon>
               <n-badge :value="notificationStore.unreadCount" :max="99" :show="notificationStore.unreadCount > 0">
@@ -52,7 +51,12 @@
 
     <!-- Body -->
     <n-layout has-sider class="app-body">
-      <n-layout-sider bordered width="260" style="display: flex; flex-direction: column; height: 100%">
+      <n-layout-sider
+        bordered
+        width="260"
+        style="display: flex; flex-direction: column; height: 100%"
+        @contextmenu="(e: MouseEvent) => onContextMenu(e, 'blank', null)"
+      >
         <n-scrollbar style="flex: 1">
           <n-menu
             v-model:value="selectedKey"
@@ -263,7 +267,7 @@ const showSettings = ref(false);
 const showContextMenu = ref(false);
 const contextMenuX = ref(0);
 const contextMenuY = ref(0);
-const contextTarget = ref<{ type: "cat" | "sub" | "tag" | "site"; data: any } | null>(null);
+const contextTarget = ref<{ type: "cat" | "sub" | "tag" | "site" | "blank"; data: any } | null>(null);
 
 const showEditSite = ref(false);
 const editingSite = ref<any>(null);
@@ -510,6 +514,12 @@ async function deleteTag(tag: any) {
 }
 
 const contextMenuOptions = computed(() => {
+  if (contextTarget.value?.type === "blank") {
+    return [
+      { label: t("addCategory"), key: "addCategory" },
+      { label: t("addSubscription"), key: "addSubscription" },
+    ];
+  }
   const options = [{ label: t("edit"), key: "edit" }];
   if (contextTarget.value?.type === "sub") {
     options.push({ label: t("fetch"), key: "fetch" });
@@ -533,7 +543,7 @@ function getMenuNodeProps(option: any) {
   return {};
 }
 
-function onContextMenu(e: MouseEvent, type: "cat" | "sub" | "tag" | "site", data: any) {
+function onContextMenu(e: MouseEvent, type: "cat" | "sub" | "tag" | "site" | "blank", data: any) {
   e.preventDefault();
   e.stopPropagation();
   contextTarget.value = { type, data };
@@ -569,6 +579,14 @@ function onContextMenuSelect(key: string) {
       siteStore.refreshFavicon(target.data.id).then(() => {
         message.success(t("saved"));
       });
+    }
+  } else if (key === "addCategory") {
+    if (target.type === "blank") {
+      showAddCat.value = true;
+    }
+  } else if (key === "addSubscription") {
+    if (target.type === "blank") {
+      showAddSub.value = true;
     }
   } else if (key === "delete") {
     dialog.warning({
