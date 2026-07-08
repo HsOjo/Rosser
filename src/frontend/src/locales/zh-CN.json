@@ -74,6 +74,7 @@
   "import": "导入",
   "export": "导出",
   "fetchNow": "立即抓取",
+  "fetchAll": "抓取全部",
   "saved": "已保存",
   "articleDetail": "文章详情",
   "tagTitle": "标签名称",

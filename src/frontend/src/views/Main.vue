@@ -5,12 +5,14 @@
       <div class="top-bar-left" :class="{ 'mac-layout': isMacClient }" :style="leftStyle" data-tauri-drag-region="no-drag">
         <span class="app-name">{{ $t('appName') }}</span>
         <div class="toolbar-group">
-          <n-button text size="small" @click="showAddSub = true">
-            <template #icon><n-icon><AddOutline /></n-icon></template>
-          </n-button>
-          <n-button text size="small" @click="refreshAll">
-            <template #icon><n-icon><RefreshOutline /></n-icon></template>
-          </n-button>
+          <n-tooltip>
+            <template #trigger>
+              <n-button text size="small" @click="showAddSub = true">
+                <template #icon><n-icon><AddOutline /></n-icon></template>
+              </n-button>
+            </template>
+            {{ $t('addSubscription') }}
+          </n-tooltip>
         </div>
       </div>
 
@@ -20,9 +22,14 @@
         <div class="toolbar-group">
           <n-popover trigger="click" placement="bottom-end" v-model:show="searchVisible">
             <template #trigger>
-              <n-button text size="small">
-                <template #icon><n-icon><SearchOutline /></n-icon></template>
-              </n-button>
+              <n-tooltip>
+                <template #trigger>
+                  <n-button text size="small">
+                    <template #icon><n-icon><SearchOutline /></n-icon></template>
+                  </n-button>
+                </template>
+                {{ $t('search') }}
+              </n-tooltip>
             </template>
             <n-input v-model:value="searchInput" :placeholder="$t('search')" clearable style="width: 220px">
               <template #prefix>
@@ -31,20 +38,38 @@
             </n-input>
           </n-popover>
 
-          <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
-          <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
-          <n-button text size="small" @click="showNotifications = true">
-            <template #icon>
-              <n-badge :value="notificationStore.unreadCount" :max="99" :show="notificationStore.unreadCount > 0">
-                <n-icon><NotificationsOutline /></n-icon>
-              </n-badge>
+          <n-tooltip>
+            <template #trigger>
+              <n-button text size="small" @click="refreshAll">
+                <template #icon><n-icon><RefreshOutline /></n-icon></template>
+              </n-button>
             </template>
-          </n-button>
-          <n-button text size="small" @click="showSettings = true">
-            <template #icon>
-              <n-icon><SettingsOutline /></n-icon>
+            {{ $t('fetchAll') }}
+          </n-tooltip>
+
+          <n-tooltip>
+            <template #trigger>
+              <n-button text size="small" @click="showNotifications = true">
+                <template #icon>
+                  <n-badge :value="notificationStore.unreadCount" :max="99" :show="notificationStore.unreadCount > 0">
+                    <n-icon><NotificationsOutline /></n-icon>
+                  </n-badge>
+                </template>
+              </n-button>
             </template>
-          </n-button>
+            {{ $t('notifications') }}
+          </n-tooltip>
+
+          <n-tooltip>
+            <template #trigger>
+              <n-button text size="small" @click="showSettings = true">
+                <template #icon>
+                  <n-icon><SettingsOutline /></n-icon>
+                </template>
+              </n-button>
+            </template>
+            {{ $t('settings') }}
+          </n-tooltip>
         </div>
       </div>
     </div>
@@ -68,6 +93,10 @@
       </n-layout-sider>
 
       <n-layout-content style="padding: 16px">
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
+          <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
+        </div>
         <article-list
           :subscription-id="selectedSubscription"
           :category-id="selectedCategory"

@@ -74,6 +74,7 @@
   "import": "Import",
   "export": "Export",
   "fetchNow": "Fetch Now",
+  "fetchAll": "Fetch All",
   "saved": "Saved",
   "articleDetail": "Article Detail",
   "tagTitle": "Tag Title",
