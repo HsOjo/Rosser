@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::Serialize;
-use tauri::Manager;
 
 #[derive(Serialize)]
 struct BackendConfig {
