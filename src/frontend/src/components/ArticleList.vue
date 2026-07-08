@@ -83,6 +83,13 @@
               <n-space justify="space-between" style="width: 100%">
                 <n-space>
                   <n-button size="small" @click="openOriginal">{{ t('openOriginal') }}</n-button>
+                  <n-button
+                    size="small"
+                    :type="selectedArticle?.is_star ? 'warning' : 'default'"
+                    @click="toggleSelectedStar"
+                  >
+                    {{ selectedArticle?.is_star ? t('unstar') : t('star') }}
+                  </n-button>
                   <n-popover trigger="click" placement="top-start" :width="260">
                     <template #trigger>
                       <n-button size="small">{{ t('tagManagement') }}</n-button>
@@ -114,17 +121,36 @@
                     </n-space>
                   </n-popover>
                 </n-space>
-                <n-button
-                  size="small"
-                  :type="selectedArticle?.is_star ? 'warning' : 'default'"
-                  @click="toggleSelectedStar"
-                >
-                  {{ selectedArticle?.is_star ? t('unstar') : t('star') }}
-                </n-button>
+                <n-button size="small" @click="showMetaDrawer = true">{{ t('metaInspector') }}</n-button>
               </n-space>
             </div>
           </div>
         </n-spin>
+      </n-drawer-content>
+    </n-drawer>
+
+    <n-drawer
+      v-model:show="showMetaDrawer"
+      :to="drawerTarget"
+      placement="right"
+      width="100%"
+      :block-scroll="false"
+      :close-on-esc="true"
+      :style="{ '--n-border-radius': '0' }"
+    >
+      <n-drawer-content :title="t('metaInspector')" :closable="true">
+        <n-data-table
+          v-if="metaTreeData.length"
+          :columns="metaColumns"
+          :data="metaTreeData"
+          :row-props="metaRowProps"
+          default-expand-all
+          size="small"
+          :bordered="false"
+          :single-line="false"
+          :scroll-x="320"
+        />
+        <n-empty v-else :description="t('noData')" />
       </n-drawer-content>
     </n-drawer>
   </n-space>
@@ -163,6 +189,7 @@ const connStore = useConnectionStore();
 const subStore = useSubscriptionStore();
 const tagStore = useTagStore();
 const showArticle = ref(false);
+const showMetaDrawer = ref(false);
 const selectedArticle = ref<any>(null);
 const resolvedContent = ref<{ type: string; value: string }[]>([]);
 const resolvedContentLoading = ref(false);
@@ -172,6 +199,140 @@ const newTagTitle = ref("");
 const tagOptions = computed(() =>
   tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
 );
+
+const metaColumns = computed(() => [
+  {
+    title: t("metaKey"),
+    key: "key",
+    width: 160,
+    ellipsis: { tooltip: true },
+  },
+  {
+    title: t("metaType"),
+    key: "type",
+    width: 100,
+  },
+  {
+    title: t("metaValue"),
+    key: "value",
+    minWidth: 160,
+    ellipsis: { tooltip: true },
+  },
+]);
+
+interface MetaTreeRow {
+  key: string;
+  keyPath: string;
+  label: string;
+  type: string;
+  value: string;
+  depth: number;
+  children?: MetaTreeRow[];
+}
+
+function buildMetaTree(obj: any, parentKey = "", depth = 0): MetaTreeRow[] {
+  if (obj === null) {
+    return [
+      {
+        key: parentKey || "null",
+        keyPath: parentKey || "null",
+        label: parentKey ? parentKey.split(".").pop() || "" : "null",
+        type: "null",
+        value: "null",
+        depth,
+      },
+    ];
+  }
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) {
+      return [
+        {
+          key: parentKey,
+          keyPath: parentKey,
+          label: parentKey ? parentKey.split(".").pop() || "" : "",
+          type: "array",
+          value: "[]",
+          depth,
+        },
+      ];
+    }
+    return obj.flatMap((item, idx) => {
+      const itemKey = parentKey ? `${parentKey}.${idx}` : String(idx);
+      const children = buildMetaTree(item, itemKey, depth + 1);
+      if (children.length === 1 && children[0].key === itemKey) {
+        return children;
+      }
+      return [
+        {
+          key: itemKey,
+          keyPath: itemKey,
+          label: String(idx),
+          type: "array",
+          value: "",
+          depth,
+          children,
+        },
+      ];
+    });
+  }
+  if (typeof obj === "object") {
+    const keys = Object.keys(obj);
+    if (keys.length === 0) {
+      return [
+        {
+          key: parentKey,
+          keyPath: parentKey,
+          label: parentKey ? parentKey.split(".").pop() || "" : "",
+          type: "object",
+          value: "{}",
+          depth,
+        },
+      ];
+    }
+    return keys.flatMap((k) => {
+      const childKey = parentKey ? `${parentKey}.${k}` : k;
+      const children = buildMetaTree(obj[k], childKey, depth + 1);
+      if (children.length === 1 && children[0].key === childKey) {
+        return children;
+      }
+      return [
+        {
+          key: childKey,
+          keyPath: childKey,
+          label: k,
+          type: "object",
+          value: "",
+          depth,
+          children,
+        },
+      ];
+    });
+  }
+  return [
+    {
+      key: parentKey,
+      keyPath: parentKey,
+      label: parentKey ? parentKey.split(".").pop() || "" : String(obj),
+      type: typeof obj,
+      value: String(obj),
+      depth,
+    },
+  ];
+}
+
+const metaTreeData = computed(() => {
+  const meta = selectedArticle.value?.meta;
+  if (!meta || typeof meta !== "object") return [];
+  return buildMetaTree(meta);
+});
+
+function metaRowProps(row: MetaTreeRow) {
+  return {
+    style: {
+      paddingLeft: `${row.depth * 12}px`,
+    },
+  };
+}
 
 async function openArticle(art: any) {
   selectedArticle.value = art;
