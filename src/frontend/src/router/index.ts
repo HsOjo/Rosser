@@ -18,10 +18,18 @@ const router = createRouter({
   routes,
 });
 
+let initGuarded = false;
+
 router.beforeEach(async (to, _from, next) => {
   const conn = useConnectionStore();
+  if (!initGuarded) {
+    initGuarded = true;
+    await conn.init();
+  }
   if (!conn.isReady && to.path !== "/onboarding") {
     next("/onboarding");
+  } else if (conn.isReady && to.path === "/onboarding") {
+    next("/");
   } else {
     next();
   }

@@ -17,18 +17,14 @@ export function isTauri(): boolean {
 }
 
 export async function getPlatformConfig(): Promise<{ baseURL: string; token: string }> {
-  if (await detectTauri()) {
-    try {
-      const { invoke } = await import("@tauri-apps/api/core");
-      return await invoke("get_backend_config");
-    } catch {
-      // fallback
-    }
-  }
   const raw = localStorage.getItem("rosser_config");
   if (raw) {
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      return {
+        baseURL: parsed.baseURL || "",
+        token: parsed.token || "",
+      };
     } catch {
       return { baseURL: "", token: "" };
     }

@@ -34,9 +34,9 @@ export const useConnectionStore = defineStore("connection", () => {
       token.value = cfg.token;
       setBaseURL(cfg.baseURL);
       setAuthToken(cfg.token);
-      isReady.value = true;
-      wsClient.connect(`${cfg.baseURL.replace(/^http/, "ws")}/ws`, cfg.token);
       registerWebSocketHandlers();
+      wsClient.connect(`${cfg.baseURL.replace(/^http/, "ws")}/ws`, cfg.token);
+      isReady.value = true;
     }
   }
 

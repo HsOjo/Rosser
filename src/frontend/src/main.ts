@@ -5,7 +5,6 @@ import naive from "naive-ui";
 
 import App from "./App.vue";
 import router from "./router";
-import { useConnectionStore } from "@/stores";
 import zhCN from "./locales/zh-CN.json";
 import en from "./locales/en.json";
 
@@ -21,11 +20,7 @@ const i18n = createI18n({
 
 const app = createApp(App);
 app.use(createPinia());
-
-const conn = useConnectionStore();
-conn.init().then(() => {
-  app.use(router);
-  app.use(i18n);
-  app.use(naive);
-  app.mount("#app");
-});
+app.use(router);
+app.use(i18n);
+app.use(naive);
+app.mount("#app");
