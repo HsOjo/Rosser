@@ -39,7 +39,9 @@
         "height": 800,
         "resizable": true,
         "title": "Rosser",
-        "width": 1200
+        "width": 1200,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ]
   }

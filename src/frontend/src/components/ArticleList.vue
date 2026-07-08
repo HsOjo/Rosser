@@ -1,9 +1,5 @@
 <template>
   <n-space vertical>
-    <n-space justify="space-between" align="center">
-      <n-select v-model:value="order" :options="orderOptions" style="width: 160px" size="small" @update:value="onOrderChange" />
-    </n-space>
-
     <n-spin :show="artStore.loading">
       <n-list clickable>
         <n-list-item v-for="art in artStore.articles" :key="art.id"
@@ -104,6 +100,7 @@ const props = defineProps<{
   isRead?: boolean;
   isStar?: boolean;
   isHide?: boolean;
+  order?: string;
 }>();
 
 const emit = defineEmits<{
@@ -117,14 +114,6 @@ const showArticle = ref(false);
 const selectedArticle = ref<any>(null);
 const resolvedContent = ref<{ type: string; value: string }[]>([]);
 const selectedArticleTags = ref<string[]>([]);
-const order = ref("publish_time desc");
-
-const orderOptions = [
-  { label: t('sortPublishTimeDesc'), value: "publish_time desc" },
-  { label: t('sortPublishTimeAsc'), value: "publish_time asc" },
-  { label: t('sortTitleAsc'), value: "title asc" },
-  { label: t('sortTitleDesc'), value: "title desc" },
-];
 
 const tagOptions = computed(() =>
   tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
@@ -201,11 +190,6 @@ function onPageChange() {
   load();
 }
 
-function onOrderChange() {
-  artStore.page = 1;
-  load();
-}
-
 async function markRead(art: any) {
   await artStore.markRead([art.id]);
   art.is_read = true;
@@ -241,11 +225,11 @@ function load() {
   if (props.isRead !== undefined) params.is_read = props.isRead;
   if (props.isStar !== undefined) params.is_star = props.isStar;
   if (props.isHide !== undefined) params.is_hide = props.isHide;
-  params.order = order.value;
+  if (props.order) params.order = props.order;
   artStore.fetchList(params);
 }
 
-watch(() => [props.subscriptionId, props.categoryId, props.tag, props.search, props.isRead, props.isStar, props.isHide], () => {
+watch(() => [props.subscriptionId, props.categoryId, props.tag, props.search, props.isRead, props.isStar, props.isHide, props.order], () => {
   artStore.page = 1;
   load();
 }, { immediate: true });

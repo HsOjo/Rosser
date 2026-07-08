@@ -1,37 +1,37 @@
 <template>
-  <n-layout has-sider style="height: 100vh">
-    <n-layout-sider bordered width="260" style="display: flex; flex-direction: column">
-      <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center">
-        <span style="font-weight: bold; font-size: 18px">{{ $t('appName') }}</span>
-        <n-space>
+  <div class="app-shell">
+    <!-- Unified fixed top bar -->
+    <div class="top-bar" data-tauri-drag-region>
+      <div class="top-bar-left" :class="{ 'mac-layout': isMacClient }" :style="leftStyle" data-tauri-drag-region="no-drag">
+        <span class="app-name">{{ $t('appName') }}</span>
+        <div class="toolbar-group">
           <n-button text size="small" @click="showAddCat = true">
             <template #icon><n-icon><AddOutline /></n-icon></template>
           </n-button>
           <n-button text size="small" @click="refreshAll">
             <template #icon><n-icon><RefreshOutline /></n-icon></template>
           </n-button>
-        </n-space>
+        </div>
       </div>
 
-      <n-scrollbar style="flex: 1">
-        <n-menu
-          v-model:value="selectedKey"
-          :options="menuOptions"
-          :node-props="getMenuNodeProps"
-          @update:value="onMenuSelect"
-        />
-      </n-scrollbar>
-    </n-layout-sider>
+      <div class="top-bar-drag" data-tauri-drag-region @mousedown="startDraggingWindow"></div>
 
-    <n-layout>
-      <n-layout-header bordered style="padding: 12px; display: flex; align-items: center; gap: 12px">
-        <n-input v-model:value="searchInput" :placeholder="$t('search')" clearable style="max-width: 300px">
-          <template #prefix>
-            <n-icon><SearchOutline /></n-icon>
-          </template>
-        </n-input>
+      <div class="top-bar-right" data-tauri-drag-region="no-drag">
+        <div class="toolbar-group">
+          <n-popover trigger="click" placement="bottom-end" v-model:show="searchVisible">
+            <template #trigger>
+              <n-button text size="small">
+                <template #icon><n-icon><SearchOutline /></n-icon></template>
+              </n-button>
+            </template>
+            <n-input v-model:value="searchInput" :placeholder="$t('search')" clearable style="width: 220px">
+              <template #prefix>
+                <n-icon><SearchOutline /></n-icon>
+              </template>
+            </n-input>
+          </n-popover>
 
-        <n-space>
+          <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
           <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
           <n-button size="small" @click="showAddSub = true">{{ $t('addSubscription') }}</n-button>
           <n-button text size="small" @click="showNotifications = true">
@@ -46,8 +46,22 @@
               <n-icon><SettingsOutline /></n-icon>
             </template>
           </n-button>
-        </n-space>
-      </n-layout-header>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <n-layout has-sider class="app-body">
+      <n-layout-sider bordered width="260" style="display: flex; flex-direction: column; height: 100%">
+        <n-scrollbar style="flex: 1">
+          <n-menu
+            v-model:value="selectedKey"
+            :options="menuOptions"
+            :node-props="getMenuNodeProps"
+            @update:value="onMenuSelect"
+          />
+        </n-scrollbar>
+      </n-layout-sider>
 
       <n-layout-content style="padding: 16px">
         <article-list
@@ -58,11 +72,12 @@
           :is-read="selectedIsRead"
           :is-star="selectedIsStar"
           :is-hide="selectedIsHide"
+          :order="order"
           @refresh="onArticleRefresh"
         />
       </n-layout-content>
     </n-layout>
-  </n-layout>
+  </div>
 
   <!-- Add Category Modal -->
   <n-modal v-model:show="showAddCat" :title="t('addCategory')" preset="card" style="width: 400px">
@@ -159,6 +174,7 @@ import {
   useTagStore,
 } from "@/stores";
 import { api } from "@rosser/shared";
+import { needsMacTitleInset, startDraggingWindow, detectTauri, isMac } from "@/platform";
 import ArticleList from "@/components/ArticleList.vue";
 import NotificationsModal from "@/components/NotificationsModal.vue";
 import SettingsModal from "@/views/Settings.vue";
@@ -182,6 +198,22 @@ const selectedIsStar = ref<boolean | undefined>(undefined);
 const selectedIsHide = ref<boolean | undefined>(undefined);
 const searchInput = ref("");
 const debouncedSearch = ref("");
+const searchVisible = ref(false);
+const order = ref("publish_time desc");
+
+const orderOptions = [
+  { label: t('sortPublishTimeDesc'), value: "publish_time desc" },
+  { label: t('sortPublishTimeAsc'), value: "publish_time asc" },
+  { label: t('sortTitleAsc'), value: "title asc" },
+  { label: t('sortTitleDesc'), value: "title desc" },
+];
+
+const leftStyle = computed(() => ({
+  width: "260px",
+  padding: "0 12px",
+}));
+
+const isMacClient = ref(false);
 
 const showAddCat = ref(false);
 const newCatTitle = ref("");
@@ -561,6 +593,9 @@ onMounted(() => {
   catStore.fetchAll();
   tagStore.fetchAll();
   notificationStore.fetchUnreadCount();
+  detectTauri().then((isTauri) => {
+    isMacClient.value = isTauri && isMac();
+  });
 });
 </script>
 
@@ -570,5 +605,79 @@ onMounted(() => {
 }
 .tag-color-picker :deep(.n-color-picker__value) {
   display: none;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.top-bar {
+  height: 40px;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--n-border-color, #eee);
+  background: var(--n-color, #fff);
+  flex-shrink: 0;
+}
+
+.top-bar-left,
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.top-bar-left {
+  position: relative;
+  justify-content: flex-start;
+  padding: 0 12px;
+}
+
+.top-bar-left.mac-layout {
+  justify-content: center;
+}
+
+.top-bar-left .toolbar-group {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.top-bar-right {
+  justify-content: flex-end;
+  padding: 0 12px;
+}
+
+.app-name {
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-bar-drag {
+  flex: 1;
+  min-width: 40px;
 }
 </style>
