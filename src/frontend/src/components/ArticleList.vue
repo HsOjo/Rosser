@@ -492,6 +492,12 @@ watch(() => [props.subscriptionId, props.categoryId, props.siteId, props.tag, pr
   artStore.page = 1;
   load();
 }, { immediate: true });
+
+watch(() => artStore.articles, () => {
+  showArticle.value = false;
+  showMetaDrawer.value = false;
+  selectedArticle.value = null;
+}, { deep: true });
 </script>
 
 <style scoped>
