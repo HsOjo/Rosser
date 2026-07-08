@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.database import async_session
+from app.core.http import load_proxy_from_db, set_proxy, validate_proxy_url
 from app.core.security import get_current_token
 from app.models import Article, ArticleState, Category, Notification, SettingsSingleton, Site, Subscription, Tag, Task
 from app.schemas import (
@@ -118,7 +119,7 @@ async def create_subscription(data: SubscriptionCreate, token: str = Depends(get
         session.add(sub)
         await session.commit()
         await session.refresh(sub, attribute_names=["tags"])
-        await FetchService.fetch_subscription(sub.id)
+        asyncio.create_task(FetchService.fetch_subscription(sub.id))
         return sub
 
 
@@ -707,6 +708,11 @@ async def get_settings(token: str = Depends(get_current_token)):
 @router.put("/settings", response_model=SettingsOut)
 async def update_settings(data: SettingsUpdate, token: str = Depends(get_current_token)):
     from app.main import scheduler
+    if data.proxy_enabled:
+        try:
+            validate_proxy_url(data.proxy_url)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     async with async_session() as session:
         result = await session.execute(select(SettingsSingleton))
         row = result.scalar_one_or_none()
@@ -719,6 +725,10 @@ async def update_settings(data: SettingsUpdate, token: str = Depends(get_current
             row.theme = data.theme
         if data.font_size is not None:
             row.font_size = data.font_size
+        if data.proxy_enabled is not None:
+            row.proxy_enabled = data.proxy_enabled
+        if data.proxy_url is not None:
+            row.proxy_url = data.proxy_url.strip() or None
         await session.commit()
         await session.refresh(row)
 
@@ -727,6 +737,8 @@ async def update_settings(data: SettingsUpdate, token: str = Depends(get_current
                 scheduler.reschedule_job("auto_refresh", trigger="interval", minutes=data.auto_refresh_interval)
             except Exception:
                 pass
+
+        set_proxy(bool(row.proxy_enabled), row.proxy_url)
 
         return row
 

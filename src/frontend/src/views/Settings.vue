@@ -52,6 +52,23 @@
             <n-descriptions-item :label="t('baseURL')">{{ conn.baseURL }}</n-descriptions-item>
             <n-descriptions-item :label="t('token')">{{ conn.token.slice(0, 8) }}...</n-descriptions-item>
           </n-descriptions>
+
+          <n-card :title="t('proxy')" size="small">
+            <n-form label-placement="left" label-width="100">
+              <n-form-item :label="t('proxyEnabled')">
+                <n-switch v-model:value="form.proxy_enabled" />
+              </n-form-item>
+              <n-form-item :label="t('proxyUrl')">
+                <n-input
+                  v-model:value="form.proxy_url"
+                  :placeholder="t('proxyUrlPlaceholder')"
+                  :disabled="!form.proxy_enabled"
+                  style="width: 100%"
+                />
+              </n-form-item>
+            </n-form>
+          </n-card>
+
           <n-button @click="logout">{{ t('disconnect') }}</n-button>
         </n-space>
       </n-tab-pane>
@@ -126,7 +143,7 @@ const tagStore = useTagStore();
 
 const show = defineModel<boolean>("show", { default: false });
 
-const form = ref({ auto_refresh_interval: 30, theme: "auto", font_size: "medium" });
+const form = ref({ auto_refresh_interval: 30, theme: "auto", font_size: "medium", proxy_enabled: false, proxy_url: "" });
 const saving = ref(false);
 const importing = ref(false);
 const exporting = ref(false);
@@ -152,6 +169,8 @@ async function loadSettings() {
       auto_refresh_interval: settings.settings.auto_refresh_interval || 30,
       theme: settings.settings.theme || "auto",
       font_size: settings.settings.font_size || "medium",
+      proxy_enabled: settings.settings.proxy_enabled || false,
+      proxy_url: settings.settings.proxy_url || "",
     };
   }
 }
@@ -172,7 +191,11 @@ function changeLocale(val: string) {
 async function save() {
   saving.value = true;
   try {
-    await settings.update(form.value);
+    const payload = { ...form.value };
+    if (!payload.proxy_enabled) {
+      payload.proxy_url = "";
+    }
+    await settings.update(payload);
     message.success(t('saved'));
   } finally {
     saving.value = false;

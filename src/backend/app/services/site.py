@@ -1,7 +1,7 @@
-import httpx
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 
+from app.core.http import create_client
 from app.models import File, Site
 
 FETCH_TIMEOUT = 15.0
@@ -27,7 +27,7 @@ class SiteService:
 
         # Fetch title and favicon in background (best effort)
         try:
-            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, proxy=None, trust_env=False) as client:
+            async with create_client(timeout=FETCH_TIMEOUT) as client:
                 resp = await client.get(base_url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()
                 soup = BeautifulSoup(resp.text, "html.parser")
@@ -61,7 +61,7 @@ class SiteService:
             return None
 
         try:
-            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, proxy=None, trust_env=False) as client:
+            async with create_client(timeout=FETCH_TIMEOUT) as client:
                 resp = await client.get(site.url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()
                 soup = BeautifulSoup(resp.text, "html.parser")

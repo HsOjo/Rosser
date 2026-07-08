@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import router
 from app.core.config import settings
 from app.core.database import engine
+from app.core.http import load_proxy_from_db
 from app.core.security import get_current_token
 from app.models import Base
 from app.services.fetch import FetchService
@@ -51,6 +52,7 @@ FetchService.on_subscription_fetch(broadcast_subscription_fetch)
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await load_proxy_from_db()
     await init_scheduler()
     yield
     scheduler.shutdown()

@@ -7,13 +7,13 @@ from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
 import feedparser
-import httpx
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.database import async_session
+from app.core.http import create_client
 from app.models import (
     Article,
     ArticleAttachment,
@@ -63,7 +63,7 @@ class FetchService:
 
     @classmethod
     async def preview(cls, url: str) -> dict[str, str | None]:
-        async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, proxy=None, trust_env=False) as client:
+        async with create_client(timeout=FETCH_TIMEOUT) as client:
             try:
                 resp = await client.get(url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()
@@ -175,7 +175,7 @@ class FetchService:
     @classmethod
     async def _fetch_feed(cls, session, sub: Subscription) -> list[Article]:
         async with cls._semaphore:
-            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, proxy=None, trust_env=False) as client:
+            async with create_client(timeout=FETCH_TIMEOUT) as client:
                 resp = await client.get(sub.url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()
                 parsed = feedparser.parse(resp.content)

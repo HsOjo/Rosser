@@ -93,5 +93,9 @@
   "fontSizeLarge": "Large",
   "language": "Language",
   "connection": "Connection",
-  "disconnect": "Disconnect"
+  "disconnect": "Disconnect",
+  "proxy": "Proxy",
+  "proxyEnabled": "Enable proxy",
+  "proxyUrl": "Proxy URL",
+  "proxyUrlPlaceholder": "http://host:port or socks5://host:port"
 }

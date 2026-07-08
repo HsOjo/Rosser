@@ -2269,8 +2269,26 @@
             ],
             "title": "Subscription Id"
           },
+          "subscription_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Title"
+          },
           "create_time": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Create Time"
           }
         },
@@ -2392,6 +2410,22 @@
               }
             ],
             "title": "Font Size"
+          },
+          "proxy_enabled": {
+            "type": "boolean",
+            "title": "Proxy Enabled",
+            "default": false
+          },
+          "proxy_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proxy Url"
           }
         },
         "type": "object",
@@ -2434,6 +2468,28 @@
               }
             ],
             "title": "Font Size"
+          },
+          "proxy_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proxy Enabled"
+          },
+          "proxy_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proxy Url"
           }
         },
         "type": "object",

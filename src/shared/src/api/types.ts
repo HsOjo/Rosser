@@ -744,8 +744,10 @@ export interface components {
             is_read: boolean;
             /** Subscription Id */
             subscription_id?: string | null;
+            /** Subscription Title */
+            subscription_title?: string | null;
             /** Create Time */
-            create_time: string;
+            create_time: string | null;
         };
         /** PaginatedArticles */
         PaginatedArticles: {
@@ -780,6 +782,13 @@ export interface components {
             theme?: string | null;
             /** Font Size */
             font_size?: string | null;
+            /**
+             * Proxy Enabled
+             * @default false
+             */
+            proxy_enabled: boolean;
+            /** Proxy Url */
+            proxy_url?: string | null;
         };
         /** SettingsUpdate */
         SettingsUpdate: {
@@ -789,6 +798,10 @@ export interface components {
             theme?: string | null;
             /** Font Size */
             font_size?: string | null;
+            /** Proxy Enabled */
+            proxy_enabled?: boolean | null;
+            /** Proxy Url */
+            proxy_url?: string | null;
         };
         /** SiteOut */
         SiteOut: {

@@ -1,13 +1,14 @@
+import httpx
 import hashlib
 import re
 from pathlib import Path
 from urllib.parse import urlparse
 
-import httpx
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 
 from app.core.config import settings
+from app.core.http import create_client
 from app.models import File
 
 IMG_SRC_RE = re.compile(r'src=["\']([^"\']+)["\']')
@@ -57,7 +58,7 @@ class FileService:
                 return full
 
         # Download
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True, proxy=None, trust_env=False) as client:
+        async with create_client(timeout=60) as client:
             try:
                 resp = await client.get(file_obj.url, headers={"User-Agent": "Rosser/1.0"})
                 resp.raise_for_status()
@@ -81,7 +82,7 @@ class FileService:
         soup = BeautifulSoup(html, "html.parser")
         close_client = False
         if client is None:
-            client = httpx.AsyncClient(timeout=30, follow_redirects=True, proxy=None, trust_env=False)
+            client = create_client(timeout=30)
             close_client = True
 
         try:

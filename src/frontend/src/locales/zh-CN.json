@@ -93,5 +93,9 @@
   "fontSizeLarge": "大",
   "language": "语言",
   "connection": "连接",
-  "disconnect": "断开连接"
+  "disconnect": "断开连接",
+  "proxy": "代理",
+  "proxyEnabled": "启用代理",
+  "proxyUrl": "代理地址",
+  "proxyUrlPlaceholder": "http://host:port 或 socks5://host:port"
 }
