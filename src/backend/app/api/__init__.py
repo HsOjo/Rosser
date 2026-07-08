@@ -592,12 +592,29 @@ async def list_notifications(
     token: str = Depends(get_current_token),
 ):
     async with async_session() as session:
-        stmt = select(Notification).order_by(Notification.create_time.desc())
+        stmt = (
+            select(Notification, Subscription.title.label("subscription_title"))
+            .outerjoin(Subscription, Notification.subscription_id == Subscription.id)
+            .order_by(Notification.create_time.desc())
+        )
         if is_read is not None:
             stmt = stmt.where(Notification.is_read == is_read)
         stmt = stmt.offset((page - 1) * size).limit(size)
         result = await session.execute(stmt)
-        return result.scalars().all()
+        items = []
+        for row in result.mappings().all():
+            notif = row["Notification"]
+            title = row["subscription_title"]
+            items.append({
+                "id": notif.id,
+                "type": notif.type,
+                "params": notif.params,
+                "is_read": notif.is_read,
+                "subscription_id": notif.subscription_id,
+                "subscription_title": title,
+                "create_time": notif.create_time,
+            })
+        return items
 
 
 @router.get("/notifications/unread-count")

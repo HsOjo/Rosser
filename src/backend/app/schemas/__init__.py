@@ -1,10 +1,23 @@
-from typing import Any
+from datetime import datetime
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, BeforeValidator, ConfigDict, field_serializer
+
+
+StrOrDatetime = Annotated[
+    str,
+    BeforeValidator(lambda v: v.isoformat() if isinstance(v, datetime) else v),
+]
 
 
 class BaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("create_time", "update_time", "publish_time", "fetch_time", check_fields=False)
+    def _serialize_datetime(self, value: datetime | str | None) -> str | None:
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
 
 
 class CategoryCreate(BaseSchema):
@@ -78,7 +91,7 @@ class ArticleOut(BaseSchema):
     content: list[ArticleContentItem] | None = None
     author: str | None = None
     link: str | None = None
-    publish_time: str | None = None
+    publish_time: StrOrDatetime | None = None
     meta: dict[str, Any] | None = None
     is_read: bool = False
     is_hide: bool = False
@@ -141,7 +154,8 @@ class NotificationOut(BaseSchema):
     params: dict[str, Any] | None = None
     is_read: bool = False
     subscription_id: str | None = None
-    create_time: str
+    subscription_title: str | None = None
+    create_time: StrOrDatetime
 
 
 class SettingsOut(BaseSchema):

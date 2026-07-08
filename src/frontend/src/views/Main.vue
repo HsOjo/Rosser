@@ -179,7 +179,7 @@
   </n-modal>
 
   <!-- Notifications Modal -->
-  <notifications-modal v-model:show="showNotifications" />
+  <notifications-modal v-model:show="showNotifications" :on-navigate="handleNotificationNavigate" />
 
   <!-- Settings Modal -->
   <settings-modal v-model:show="showSettings" />
@@ -650,6 +650,10 @@ function onMenuSelect(key: string) {
   selectedIsRead.value = undefined;
   selectedIsStar.value = undefined;
   selectedIsHide.value = undefined;
+  applyMenuKey(key);
+}
+
+function applyMenuKey(key: string) {
   if (key === "unread") {
     selectedIsRead.value = false;
   } else if (key === "starred") {
@@ -667,6 +671,14 @@ function onMenuSelect(key: string) {
     selectedTag.value = tagId;
     const tag = tagStore.tags.find((t: any) => t.id === tagId);
     selectedTagTitle.value = tag?.title;
+  }
+}
+
+function handleNotificationNavigate(payload: { subscriptionId?: string }) {
+  if (payload.subscriptionId) {
+    selectedKey.value = `sub-${payload.subscriptionId}`;
+    applyMenuKey(selectedKey.value);
+    showNotifications.value = false;
   }
 }
 

@@ -64,7 +64,7 @@ class FetchService:
                 if articles:
                     notif = Notification(
                         type="articles.new",
-                        params={"subscription_id": sub.id, "subscription_title": sub.title, "count": len(articles)},
+                        params={"subscription_id": sub.id, "count": len(articles)},
                         subscription_id=sub.id,
                     )
                     session.add(notif)

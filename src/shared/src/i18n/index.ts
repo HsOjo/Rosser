@@ -1,11 +1,11 @@
 const messages: Record<string, Record<string, string>> = {
   "zh-CN": {
-    "notification.articles.new": "{{subscription}} 新增 {{count}} 篇文章",
-    "notification.fetch.error": "{{subscription}} 抓取失败",
+    "notification.articles.new": "{{subscription_title}} 新增 {{count}} 篇文章",
+    "notification.fetch.error": "{{subscription_title}} 抓取失败",
   },
   "en": {
-    "notification.articles.new": "{{subscription}} has {{count}} new articles",
-    "notification.fetch.error": "{{subscription}} fetch failed",
+    "notification.articles.new": "{{subscription_title}} has {{count}} new articles",
+    "notification.fetch.error": "{{subscription_title}} fetch failed",
   },
 };
 
