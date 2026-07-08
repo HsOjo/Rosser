@@ -34,10 +34,36 @@ USER_AGENT = "Rosser/1.0 (+https://github.com/rosser/rosser)"
 
 class FetchService:
     _semaphore = asyncio.Semaphore(MAX_CONCURRENT_FETCHES)
+    _on_new_articles: list[callable] = []
+    _on_subscription_fetch: list[callable] = []
+
+    @classmethod
+    def on_new_articles(cls, callback: callable):
+        cls._on_new_articles.append(callback)
+
+    @classmethod
+    def on_subscription_fetch(cls, callback: callable):
+        cls._on_subscription_fetch.append(callback)
+
+    @classmethod
+    async def _notify_new_articles(cls, subscription_id: str, count: int):
+        for callback in cls._on_new_articles:
+            try:
+                await callback(subscription_id, count)
+            except Exception:
+                pass
+
+    @classmethod
+    async def _notify_subscription_fetch(cls, subscription_id: str, added: int, error: str | None = None):
+        for callback in cls._on_subscription_fetch:
+            try:
+                await callback(subscription_id, added, error)
+            except Exception:
+                pass
 
     @classmethod
     async def preview(cls, url: str) -> dict[str, str | None]:
-        async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, proxy=None, trust_env=False) as client:
             try:
                 resp = await client.get(url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()
@@ -69,12 +95,15 @@ class FetchService:
                     )
                     session.add(notif)
                     await session.commit()
+                    await cls._notify_new_articles(sub.id, len(articles))
 
                 sub.fetch_time = datetime.now(timezone.utc).isoformat()
                 await session.commit()
+                await cls._notify_subscription_fetch(sub.id, len(articles))
 
                 return {"added": len(articles), "error": None}
             except Exception as e:
+                await cls._notify_subscription_fetch(subscription_id, 0, error=str(e))
                 return {"added": 0, "error": str(e)}
 
     @classmethod
@@ -83,10 +112,17 @@ class FetchService:
             result = await session.execute(select(Subscription))
             subs = result.scalars().all()
 
+        results = await asyncio.gather(
+            *(cls.fetch_subscription(sub.id, task_id=task_id) for sub in subs),
+            return_exceptions=True,
+        )
+
         total_added = 0
         errors = []
-        for sub in subs:
-            res = await cls.fetch_subscription(sub.id, task_id=task_id)
+        for sub, res in zip(subs, results):
+            if isinstance(res, Exception):
+                errors.append(f"{sub.title}: {res}")
+                continue
             total_added += res["added"]
             if res["error"]:
                 errors.append(f"{sub.title}: {res['error']}")
@@ -95,7 +131,9 @@ class FetchService:
 
     @classmethod
     async def fetch_expires(cls, task_id: str | None = None) -> dict[str, Any]:
-        # Fetch subscriptions that haven't been fetched in auto_refresh_interval minutes
+        # Fetch subscriptions whose last fetch_time is older than auto_refresh_interval minutes.
+        # This method is called every minute by the scheduler; each subscription is evaluated
+        # independently based on its own fetch_time.
         async with async_session() as session:
             settings_row = await session.execute(select(SettingsSingleton))
             settings_row = settings_row.scalar_one_or_none()
@@ -117,10 +155,17 @@ class FetchService:
                 except Exception:
                     to_fetch.append(sub)
 
+        results = await asyncio.gather(
+            *(cls.fetch_subscription(sub.id, task_id=task_id) for sub in to_fetch),
+            return_exceptions=True,
+        )
+
         total_added = 0
         errors = []
-        for sub in to_fetch:
-            res = await cls.fetch_subscription(sub.id, task_id=task_id)
+        for sub, res in zip(to_fetch, results):
+            if isinstance(res, Exception):
+                errors.append(f"{sub.title}: {res}")
+                continue
             total_added += res["added"]
             if res["error"]:
                 errors.append(f"{sub.title}: {res['error']}")
@@ -130,7 +175,7 @@ class FetchService:
     @classmethod
     async def _fetch_feed(cls, session, sub: Subscription) -> list[Article]:
         async with cls._semaphore:
-            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, proxy=None, trust_env=False) as client:
                 resp = await client.get(sub.url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()
                 parsed = feedparser.parse(resp.content)

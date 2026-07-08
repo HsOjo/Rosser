@@ -81,11 +81,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useArticleStore, useConnectionStore, useTagStore } from "@/stores";
-import { relativeTime, resolveFilePlaceholders } from "@rosser/shared";
+import { useArticleStore, useConnectionStore, useSubscriptionStore, useTagStore } from "@/stores";
+import { relativeTime, resolveFilePlaceholders, wsClient } from "@rosser/shared";
 import { openExternal } from "@/platform";
 import DOMPurify from "dompurify";
 
@@ -110,6 +110,7 @@ const emit = defineEmits<{
 
 const artStore = useArticleStore();
 const connStore = useConnectionStore();
+const subStore = useSubscriptionStore();
 const tagStore = useTagStore();
 const showArticle = ref(false);
 const selectedArticle = ref<any>(null);
@@ -230,6 +231,20 @@ function load() {
   if (props.order) params.order = props.order;
   artStore.fetchList(params);
 }
+
+function handleSubscriptionFetch(payload: { subscription_id?: string; added?: number; error?: string }) {
+  if (!props.subscriptionId || payload.subscription_id !== props.subscriptionId) return;
+  subStore.fetch(payload.subscription_id);
+  load();
+}
+
+onMounted(() => {
+  wsClient.on("subscription.fetch", handleSubscriptionFetch);
+});
+
+onUnmounted(() => {
+  wsClient.off("subscription.fetch", handleSubscriptionFetch);
+});
 
 watch(() => [props.subscriptionId, props.categoryId, props.siteId, props.tag, props.search, props.isRead, props.isStar, props.isHide, props.order], () => {
   artStore.page = 1;

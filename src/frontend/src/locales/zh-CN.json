@@ -76,6 +76,8 @@
   "fetchNow": "立即抓取",
   "fetchAll": "抓取全部",
   "saved": "已保存",
+  "lastFetch": "最后抓取",
+  "neverFetched": "从未抓取",
   "articleDetail": "文章详情",
   "tagTitle": "标签名称",
   "tagColor": "颜色",

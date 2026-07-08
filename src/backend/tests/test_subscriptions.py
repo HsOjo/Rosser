@@ -1,5 +1,6 @@
 import pytest
-from unittest.mock import patch
+import asyncio
+from unittest.mock import patch, AsyncMock
 
 
 class TestSubscriptions:
@@ -56,3 +57,38 @@ class TestSubscriptions:
             })
             assert resp.status_code == 200
             assert resp.json()["title"] == "Preview Title"
+
+    async def test_fetch_subscriptions_async_triggers_callback(self, client, auth_headers):
+        from app.services.fetch import FetchService
+        from app.main import manager
+
+        create_resp = await client.post("/api/subscriptions", headers=auth_headers, json={
+            "title": "Async Fetch", "url": "http://async.com/feed.xml"
+        })
+        sub_id = create_resp.json()["id"]
+
+        mock_article = AsyncMock()
+        mock_article.id = "article-1"
+        mock_article.hash = "hash-1"
+
+        callback_called = asyncio.Event()
+        received = {}
+
+        async def mock_broadcast(message):
+            if message.get("type") == "articles.new":
+                received["subscription_id"] = message.get("subscription_id")
+                received["count"] = message.get("count")
+                callback_called.set()
+
+        with patch.object(manager, "broadcast", mock_broadcast):
+            with patch.object(FetchService, "_fetch_feed", return_value=[mock_article]):
+                resp = await client.post("/api/subscriptions/fetch", headers=auth_headers, json={"ids": [sub_id]})
+                assert resp.status_code == 200
+                data = resp.json()
+                assert "task_id" in data
+
+                # Wait a bit for the background task to complete and call the callback
+                await asyncio.wait_for(callback_called.wait(), timeout=2.0)
+
+        assert received.get("subscription_id") == sub_id
+        assert received.get("count") == 1

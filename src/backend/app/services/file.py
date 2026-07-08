@@ -57,7 +57,7 @@ class FileService:
                 return full
 
         # Download
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=60, follow_redirects=True, proxy=None, trust_env=False) as client:
             try:
                 resp = await client.get(file_obj.url, headers={"User-Agent": "Rosser/1.0"})
                 resp.raise_for_status()
@@ -81,7 +81,7 @@ class FileService:
         soup = BeautifulSoup(html, "html.parser")
         close_client = False
         if client is None:
-            client = httpx.AsyncClient(timeout=30, follow_redirects=True)
+            client = httpx.AsyncClient(timeout=30, follow_redirects=True, proxy=None, trust_env=False)
             close_client = True
 
         try:

@@ -6,13 +6,12 @@ from typing import Any
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
 
 from app.api import router
 from app.core.config import settings
-from app.core.database import async_session, engine
+from app.core.database import engine
 from app.core.security import get_current_token
-from app.models import Base, SettingsSingleton
+from app.models import Base
 from app.services.fetch import FetchService
 
 scheduler = AsyncIOScheduler()
@@ -23,12 +22,29 @@ async def auto_refresh_job():
 
 
 async def init_scheduler():
-    async with async_session() as session:
-        result = await session.execute(select(SettingsSingleton))
-        row = result.scalar_one_or_none()
-        interval = row.auto_refresh_interval if row and row.auto_refresh_interval else 30
-    scheduler.add_job(auto_refresh_job, "interval", minutes=interval, id="auto_refresh")
+    scheduler.add_job(auto_refresh_job, "interval", minutes=1, id="auto_refresh")
     scheduler.start()
+
+
+async def broadcast_new_articles(subscription_id: str, count: int):
+    await manager.broadcast({
+        "type": "articles.new",
+        "subscription_id": subscription_id,
+        "count": count,
+    })
+
+
+async def broadcast_subscription_fetch(subscription_id: str, added: int, error: str | None = None):
+    await manager.broadcast({
+        "type": "subscription.fetch",
+        "subscription_id": subscription_id,
+        "added": added,
+        "error": error,
+    })
+
+
+FetchService.on_new_articles(broadcast_new_articles)
+FetchService.on_subscription_fetch(broadcast_subscription_fetch)
 
 
 @asynccontextmanager

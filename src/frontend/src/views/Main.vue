@@ -93,9 +93,15 @@
       </n-layout-sider>
 
       <n-layout-content style="padding: 16px">
-        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 12px;">
-          <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
-          <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <div v-if="selectedSubscription" style="font-size: 12px; color: #999;">
+            {{ $t('lastFetch') }}: {{ selectedFetchTime ? relativeTime(selectedFetchTime) : $t('neverFetched') }}
+          </div>
+          <div v-else></div>
+          <n-space>
+            <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
+            <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
+          </n-space>
         </div>
         <article-list
           :subscription-id="selectedSubscription"
@@ -218,7 +224,7 @@ import {
   useSiteStore,
   useConnectionStore,
 } from "@/stores";
-import { api, buildFileUrl } from "@rosser/shared";
+import { api, buildFileUrl, relativeTime } from "@rosser/shared";
 import { needsMacTitleInset, startDraggingWindow, detectTauri, isMac } from "@/platform";
 import ArticleList from "@/components/ArticleList.vue";
 import NotificationsModal from "@/components/NotificationsModal.vue";
@@ -255,6 +261,12 @@ const orderOptions = [
   { label: t('sortTitleAsc'), value: "title asc" },
   { label: t('sortTitleDesc'), value: "title desc" },
 ];
+
+const selectedFetchTime = computed(() => {
+  if (!selectedSubscription.value) return null;
+  const sub = subStore.subscriptions.find((s: any) => s.id === selectedSubscription.value);
+  return sub?.fetch_time || null;
+});
 
 const leftStyle = computed(() => ({
   width: "260px",
@@ -683,7 +695,7 @@ function handleNotificationNavigate(payload: { subscriptionId?: string }) {
 }
 
 function onArticleRefresh() {
-  artStore.fetchList();
+  artStore.refresh();
   notificationStore.fetchUnreadCount();
 }
 
@@ -696,7 +708,7 @@ watch(searchInput, (val) => {
 
 async function refreshAll() {
   await api.POST("/api/subscriptions/fetch-all");
-  await artStore.fetchList();
+  await artStore.refresh();
   await notificationStore.fetchUnreadCount();
 }
 
@@ -765,7 +777,6 @@ async function addSubscription() {
     previewResult.value = null;
     if (sub?.id) {
       await api.POST("/api/subscriptions/fetch", { body: { ids: [sub.id] } });
-      await artStore.fetchList();
     }
   } finally {
     adding.value = false;
@@ -798,8 +809,6 @@ async function fetchSubscription(sub: any) {
   fetchingSub.value = true;
   try {
     await api.POST("/api/subscriptions/fetch", { body: { ids: [sub.id] } });
-    await artStore.fetchList();
-    await notificationStore.fetchUnreadCount();
   } finally {
     fetchingSub.value = false;
   }

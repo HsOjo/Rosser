@@ -1,4 +1,6 @@
+import asyncio
 from typing import Any
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -166,13 +168,53 @@ async def preview_subscription(data: PreviewRequest, token: str = Depends(get_cu
     return await FetchService.preview(data.url)
 
 
+async def _run_fetch_task(task_id: str, subscription_ids: list[str]):
+    async with async_session() as session:
+        task = await session.execute(select(Task).where(Task.task_id == task_id))
+        task = task.scalar_one_or_none()
+        if task:
+            task.status = "running"
+            await session.commit()
+
+    total_added = 0
+    errors = []
+    try:
+        for sid in subscription_ids:
+            res = await FetchService.fetch_subscription(sid, task_id=task_id)
+            total_added += res.get("added", 0)
+            if res.get("error"):
+                errors.append(f"{sid}: {res['error']}")
+
+        async with async_session() as session:
+            task = await session.execute(select(Task).where(Task.task_id == task_id))
+            task = task.scalar_one_or_none()
+            if task:
+                task.status = "done"
+                task.progress = 100
+                task.result = f"added {total_added}"
+                if errors:
+                    task.error = "; ".join(errors)
+                await session.commit()
+    except Exception as e:
+        async with async_session() as session:
+            task = await session.execute(select(Task).where(Task.task_id == task_id))
+            task = task.scalar_one_or_none()
+            if task:
+                task.status = "failed"
+                task.error = str(e)
+                await session.commit()
+
+
 @router.post("/subscriptions/fetch")
 async def fetch_subscriptions(data: FetchRequest, token: str = Depends(get_current_token)):
-    results = []
-    for sid in data.ids:
-        res = await FetchService.fetch_subscription(sid)
-        results.append({"subscription_id": sid, **res})
-    return results
+    task_id = str(uuid4())
+    async with async_session() as session:
+        task = Task(task_id=task_id, name="fetch_subscriptions", status="ready")
+        session.add(task)
+        await session.commit()
+
+    asyncio.create_task(_run_fetch_task(task_id, data.ids))
+    return {"task_id": task_id}
 
 
 @router.post("/subscriptions/fetch-all")

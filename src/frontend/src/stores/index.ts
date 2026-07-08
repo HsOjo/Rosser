@@ -9,8 +9,8 @@ function registerWebSocketHandlers() {
   if (wsHandlersRegistered) return;
   wsHandlersRegistered = true;
   wsClient.on("articles.new", () => {
-    const artStore = useArticleStore();
-    artStore.refresh();
+    const notifStore = useNotificationStore();
+    notifStore.fetchUnreadCount();
   });
   wsClient.on("notification.new", () => {
     const notifStore = useNotificationStore();
@@ -95,7 +95,20 @@ export const useSubscriptionStore = defineStore("subscription", () => {
     subscriptions.value = subscriptions.value.filter((s) => s.id !== id);
   }
 
-  return { subscriptions, loading, fetchAll, create, update, remove };
+  async function fetch(id: string) {
+    const { data } = await api.GET("/api/subscriptions/{subscription_id}", { params: { path: { subscription_id: id } } });
+    if (data) {
+      const idx = subscriptions.value.findIndex((s) => s.id === id);
+      if (idx >= 0) {
+        subscriptions.value[idx] = data;
+      } else {
+        subscriptions.value.push(data);
+      }
+    }
+    return data;
+  }
+
+  return { subscriptions, loading, fetchAll, fetch, create, update, remove };
 });
 
 export const useArticleStore = defineStore("article", () => {

@@ -76,6 +76,8 @@
   "fetchNow": "Fetch Now",
   "fetchAll": "Fetch All",
   "saved": "Saved",
+  "lastFetch": "Last fetch",
+  "neverFetched": "Never",
   "articleDetail": "Article Detail",
   "tagTitle": "Tag Title",
   "tagColor": "Color",
