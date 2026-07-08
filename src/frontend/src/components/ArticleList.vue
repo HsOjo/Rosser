@@ -49,48 +49,97 @@
       />
     </n-spin>
 
-    <n-modal v-model:show="showArticle" preset="card" style="width: 80vw; max-width: 900px" :title="selectedArticle?.title">
-      <div v-if="selectedArticle" class="article-content">
-        <n-space v-if="tagStore.tags.length > 0" style="margin-bottom: 12px">
-          <n-select
-            v-model:value="selectedArticleTags"
-            :options="tagOptions"
-            multiple
-            clearable
-            size="small"
-            style="min-width: 200px"
-            :placeholder="t('tagged')"
-            @update:value="onArticleTagsChange"
-          />
-        </n-space>
-        <template v-for="(item, idx) in resolvedContent" :key="idx">
-          <div v-if="item.type === 'text/html'" v-html="item.value" />
-          <pre v-else-if="item.type === 'text/plain'" class="plain-text">{{ item.value }}</pre>
-          <n-tag v-else type="warning" size="small">{{ t('unsupportedType', { type: item.type }) }}</n-tag>
+    <n-drawer
+      v-model:show="showArticle"
+      :to="drawerTarget"
+      placement="right"
+      width="100%"
+      :block-scroll="false"
+      :close-on-esc="true"
+      :style="{ '--n-border-radius': '0' }"
+    >
+      <n-drawer-content :closable="true">
+        <template #header>
+          <div class="drawer-header">
+            <div class="drawer-title">{{ selectedArticle?.title }}</div>
+            <div class="drawer-meta">
+              <span v-if="selectedArticle?.author">{{ selectedArticle.author }}</span>
+              <span v-if="selectedArticle?.author && selectedArticle?.publish_time"> · </span>
+              <span v-if="selectedArticle?.publish_time">{{ relativeTime(selectedArticle.publish_time) }}</span>
+            </div>
+          </div>
         </template>
-      </div>
-      <template #footer>
-        <n-space>
-          <n-button @click="openDetail">{{ t('articleDetail') }}</n-button>
-          <n-button @click="openOriginal">{{ t('openOriginal') }}</n-button>
-          <n-button @click="showArticle = false">{{ t('close') }}</n-button>
-        </n-space>
-      </template>
-    </n-modal>
+
+        <n-spin :show="resolvedContentLoading">
+          <div v-if="selectedArticle" class="article-body">
+            <div class="article-content">
+              <template v-for="(item, idx) in resolvedContent" :key="idx">
+                <div v-if="item.type === 'text/html'" v-html="item.value" />
+                <pre v-else-if="item.type === 'text/plain'" class="plain-text">{{ item.value }}</pre>
+                <n-tag v-else type="warning" size="small">{{ t('unsupportedType', { type: item.type }) }}</n-tag>
+              </template>
+            </div>
+            <div class="article-actions">
+              <n-space justify="space-between" style="width: 100%">
+                <n-space>
+                  <n-button size="small" @click="openOriginal">{{ t('openOriginal') }}</n-button>
+                  <n-popover trigger="click" placement="top-start" :width="260">
+                    <template #trigger>
+                      <n-button size="small">{{ t('tagManagement') }}</n-button>
+                    </template>
+                    <n-space vertical style="padding: 8px 0">
+                      <n-select
+                        v-model:value="selectedArticleTags"
+                        :options="tagOptions"
+                        multiple
+                        clearable
+                        size="small"
+                        style="min-width: 200px"
+                        :placeholder="t('tagged')"
+                        @update:value="onArticleTagsChange"
+                      />
+                      <n-input-group>
+                        <n-input
+                          v-model:value="newTagTitle"
+                          size="small"
+                          :placeholder="t('addTag')"
+                          @keyup.enter="addNewTag"
+                        />
+                        <n-button size="small" @click="addNewTag">
+                          <template #icon>
+                            <n-icon><AddOutline /></n-icon>
+                          </template>
+                        </n-button>
+                      </n-input-group>
+                    </n-space>
+                  </n-popover>
+                </n-space>
+                <n-button
+                  size="small"
+                  :type="selectedArticle?.is_star ? 'warning' : 'default'"
+                  @click="toggleSelectedStar"
+                >
+                  {{ selectedArticle?.is_star ? t('unstar') : t('star') }}
+                </n-button>
+              </n-space>
+            </div>
+          </div>
+        </n-spin>
+      </n-drawer-content>
+    </n-drawer>
   </n-space>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { AddOutline } from "@vicons/ionicons5";
 import { useArticleStore, useConnectionStore, useSubscriptionStore, useTagStore } from "@/stores";
 import { relativeTime, resolveFilePlaceholders, wsClient } from "@rosser/shared";
 import { openExternal } from "@/platform";
 import DOMPurify from "dompurify";
 
 const { t } = useI18n();
-const router = useRouter();
 
 const props = defineProps<{
   subscriptionId?: string;
@@ -102,6 +151,7 @@ const props = defineProps<{
   isStar?: boolean;
   isHide?: boolean;
   order?: string;
+  drawerTarget?: HTMLElement | null;
 }>();
 
 const emit = defineEmits<{
@@ -115,7 +165,9 @@ const tagStore = useTagStore();
 const showArticle = ref(false);
 const selectedArticle = ref<any>(null);
 const resolvedContent = ref<{ type: string; value: string }[]>([]);
+const resolvedContentLoading = ref(false);
 const selectedArticleTags = ref<string[]>([]);
+const newTagTitle = ref("");
 
 const tagOptions = computed(() =>
   tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
@@ -125,35 +177,48 @@ async function openArticle(art: any) {
   selectedArticle.value = art;
   selectedArticleTags.value = art.tags?.map((t: any) => t.id) || [];
   showArticle.value = true;
+  resolvedContent.value = [];
+  resolvedContentLoading.value = true;
+
   if (!art.is_read) {
     artStore.markRead([art.id]);
     art.is_read = true;
   }
 
-  const items: { type: string; value: string }[] = [];
-  const rawContent = art.content;
-  if (Array.isArray(rawContent) && rawContent.length > 0) {
-    for (const item of rawContent) {
-      if (item.value) {
-        items.push({
-          type: item.type || "text/plain",
-          value: DOMPurify.sanitize(
-            await resolveFilePlaceholders(item.value, connStore.baseURL, connStore.token)
-          ),
-        });
+  try {
+    const full = await artStore.fetchOne(art.id);
+    if (full) {
+      selectedArticle.value = full;
+      selectedArticleTags.value = full.tags?.map((t: any) => t.id) || [];
+    }
+
+    const items: { type: string; value: string }[] = [];
+    const rawContent = selectedArticle.value?.content;
+    if (Array.isArray(rawContent) && rawContent.length > 0) {
+      for (const item of rawContent) {
+        if (item.value) {
+          items.push({
+            type: item.type || "text/plain",
+            value: DOMPurify.sanitize(
+              await resolveFilePlaceholders(item.value, connStore.baseURL, connStore.token)
+            ),
+          });
+        }
       }
     }
+    if (items.length === 0) {
+      const html = selectedArticle.value?.summary || "";
+      items.push({
+        type: "text/html",
+        value: DOMPurify.sanitize(
+          await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
+        ),
+      });
+    }
+    resolvedContent.value = items;
+  } finally {
+    resolvedContentLoading.value = false;
   }
-  if (items.length === 0) {
-    const html = art.summary || "";
-    items.push({
-      type: "text/html",
-      value: DOMPurify.sanitize(
-        await resolveFilePlaceholders(html, connStore.baseURL, connStore.token)
-      ),
-    });
-  }
-  resolvedContent.value = items;
 }
 
 async function onArticleTagsChange(tagIds: string[]) {
@@ -170,6 +235,29 @@ async function onArticleTagsChange(tagIds: string[]) {
   selectedArticle.value.tags = tagStore.tags.filter((t) => tagIds.includes(t.id));
 }
 
+async function addNewTag() {
+  const title = newTagTitle.value.trim();
+  if (!title || !selectedArticle.value) return;
+  const tag = await tagStore.create({ title });
+  newTagTitle.value = "";
+  if (tag) {
+    await tagStore.tagArticle(selectedArticle.value.id, [tag.id]);
+    if (!selectedArticleTags.value.includes(tag.id)) {
+      selectedArticleTags.value.push(tag.id);
+    }
+    if (!selectedArticle.value.tags) selectedArticle.value.tags = [];
+    selectedArticle.value.tags.push(tag);
+  }
+}
+
+async function toggleSelectedStar() {
+  if (!selectedArticle.value) return;
+  const listArt = artStore.articles.find((a) => a.id === selectedArticle.value.id);
+  if (listArt) listArt.is_star = selectedArticle.value.is_star;
+  await artStore.markStar([selectedArticle.value.id]);
+  selectedArticle.value.is_star = listArt?.is_star ?? !selectedArticle.value.is_star;
+}
+
 function stripHtml(html: string): string {
   const tmp = document.createElement("div");
   tmp.innerHTML = html;
@@ -179,12 +267,6 @@ function stripHtml(html: string): string {
 function openOriginal() {
   if (selectedArticle.value?.link) {
     openExternal(selectedArticle.value.link);
-  }
-}
-
-function openDetail() {
-  if (selectedArticle.value?.id) {
-    router.push(`/article/${selectedArticle.value.id}`);
   }
 }
 
@@ -257,6 +339,7 @@ watch(() => [props.subscriptionId, props.categoryId, props.siteId, props.tag, pr
   width: 100%;
   max-width: 100%;
   overflow-wrap: break-word;
+  flex: 1;
 }
 .article-content > div {
   max-width: 100%;
@@ -285,5 +368,28 @@ watch(() => [props.subscriptionId, props.categoryId, props.siteId, props.tag, pr
   white-space: pre-wrap;
   word-break: break-word;
   font-family: inherit;
+}
+.article-body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.article-actions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--n-border-color, #eee);
+}
+.drawer-header {
+  line-height: 1.3;
+}
+.drawer-title {
+  font-size: 16px;
+  font-weight: 600;
+  word-break: break-word;
+}
+.drawer-meta {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
 }
 </style>

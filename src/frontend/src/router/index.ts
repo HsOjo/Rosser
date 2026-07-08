@@ -11,11 +11,6 @@ const routes = [
     path: "/onboarding",
     component: () => import("@/views/Onboarding.vue"),
   },
-  {
-    path: "/article/:id",
-    component: () => import("@/views/ArticleDetail.vue"),
-    meta: { requiresAuth: true },
-  },
 ];
 
 const router = createRouter({

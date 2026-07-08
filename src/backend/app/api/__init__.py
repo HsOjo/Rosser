@@ -13,6 +13,7 @@ from app.core.security import get_current_token
 from app.models import Article, ArticleState, Category, Notification, SettingsSingleton, Site, Subscription, Tag, Task
 from app.schemas import (
     ArticleIds,
+    ArticleListItem,
     ArticleOut,
     CategoryCreate,
     CategoryOut,
@@ -320,17 +321,15 @@ async def list_articles(
         for art in articles:
             state = art.state
             items.append(
-                ArticleOut(
+                ArticleListItem(
                     id=art.id,
                     subscription_id=art.subscription_id,
                     hash=art.hash,
                     title=art.title,
                     summary=art.summary,
-                    content=art.content,
                     author=art.author,
                     link=art.link,
                     publish_time=art.publish_time,
-                    meta=art.meta,
                     is_read=state.is_read if state else False,
                     is_hide=state.is_hide if state else False,
                     is_star=state.is_star if state else False,

@@ -10,7 +10,7 @@ class TestArticles:
         })
         return resp.json()["id"]
 
-    async def _create_article(self, client, auth_headers, sub_id, title="Test Article"):
+    async def _create_article(self, client, auth_headers, sub_id, title="Test Article", content=None, meta=None):
         from app.core.database import async_session
         from app.models import Article, ArticleState
         TestArticles._hash_counter += 1
@@ -21,6 +21,8 @@ class TestArticles:
                 hash=hash_val,
                 title=title,
                 summary="Summary",
+                content=content,
+                meta=meta,
                 link="http://example.com/article",
                 publish_time="2024-01-01T00:00:00+00:00",
             )
@@ -33,7 +35,11 @@ class TestArticles:
 
     async def test_list_articles(self, client, auth_headers):
         sub_id = await self._create_subscription(client, auth_headers)
-        await self._create_article(client, auth_headers, sub_id)
+        art_id = await self._create_article(
+            client, auth_headers, sub_id,
+            content=[{"type": "text/html", "value": "<p>content</p>"}],
+            meta={"key": "value"},
+        )
         await self._create_article(client, auth_headers, sub_id, "Article 2")
 
         resp = await client.get("/api/articles", headers=auth_headers)
@@ -41,6 +47,15 @@ class TestArticles:
         data = resp.json()
         assert data["total"] == 2
         assert len(data["items"]) == 2
+        item = next(i for i in data["items"] if i["id"] == art_id)
+        assert "content" not in item
+        assert "meta" not in item
+
+        resp = await client.get(f"/api/articles/{art_id}", headers=auth_headers)
+        assert resp.status_code == 200
+        detail = resp.json()
+        assert detail["content"] == [{"type": "text/html", "value": "<p>content</p>"}]
+        assert detail["meta"] == {"key": "value"}
 
     async def test_mark_read(self, client, auth_headers):
         sub_id = await self._create_subscription(client, auth_headers)

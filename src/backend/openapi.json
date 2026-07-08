@@ -1982,6 +1982,101 @@
         ],
         "title": "ArticleIds"
       },
+      "ArticleListItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "subscription_id": {
+            "type": "string",
+            "title": "Subscription Id"
+          },
+          "hash": {
+            "type": "string",
+            "title": "Hash"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "publish_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publish Time"
+          },
+          "is_read": {
+            "type": "boolean",
+            "title": "Is Read",
+            "default": false
+          },
+          "is_hide": {
+            "type": "boolean",
+            "title": "Is Hide",
+            "default": false
+          },
+          "is_star": {
+            "type": "boolean",
+            "title": "Is Star",
+            "default": false
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagOut"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "subscription_id",
+          "hash",
+          "title"
+        ],
+        "title": "ArticleListItem"
+      },
       "ArticleOut": {
         "properties": {
           "id": {
@@ -2304,7 +2399,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ArticleOut"
+              "$ref": "#/components/schemas/ArticleListItem"
             },
             "type": "array",
             "title": "Items"

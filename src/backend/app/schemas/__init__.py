@@ -99,6 +99,21 @@ class ArticleOut(BaseSchema):
     tags: list["TagOut"] = []
 
 
+class ArticleListItem(BaseSchema):
+    id: str
+    subscription_id: str
+    hash: str
+    title: str
+    summary: str | None = None
+    author: str | None = None
+    link: str | None = None
+    publish_time: StrOrDatetime | None = None
+    is_read: bool = False
+    is_hide: bool = False
+    is_star: bool = False
+    tags: list["TagOut"] = []
+
+
 class ArticleListParams(BaseSchema):
     subscription_id: str | None = None
     category_id: str | None = None
@@ -114,7 +129,7 @@ class ArticleListParams(BaseSchema):
 
 
 class PaginatedArticles(BaseSchema):
-    items: list[ArticleOut]
+    items: list[ArticleListItem]
     total: int
     page: int
     size: int

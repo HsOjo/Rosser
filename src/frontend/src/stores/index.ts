@@ -182,7 +182,12 @@ export const useArticleStore = defineStore("article", () => {
     }
   }
 
-  return { articles, total, loading, page, size, lastParams, fetchList, refresh, markRead, markUnread, markHide, markUnhide, markStar };
+  async function fetchOne(id: string) {
+    const { data } = await api.GET("/api/articles/{article_id}", { params: { path: { article_id: id } } });
+    return data;
+  }
+
+  return { articles, total, loading, page, size, lastParams, fetchList, fetchOne, refresh, markRead, markUnread, markHide, markUnhide, markStar };
 });
 
 export const useCategoryStore = defineStore("category", () => {

@@ -92,29 +92,39 @@
         </n-scrollbar>
       </n-layout-sider>
 
-      <n-layout-content style="padding: 16px">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px;">
-          <div v-if="selectedSubscription" style="font-size: 12px; color: #999;">
-            {{ $t('lastFetch') }}: {{ selectedFetchTime ? relativeTime(selectedFetchTime) : $t('neverFetched') }}
+      <n-layout-content style="position: relative;">
+        <div
+          ref="contentRef"
+          style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 16px; overflow: hidden;"
+        >
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <div>
+              <div style="font-size: 16px; font-weight: 600; line-height: 1.4;">{{ selectedTitle }}</div>
+              <div v-if="selectedSubscription" style="font-size: 12px; color: #999; margin-top: 2px;">
+                {{ $t('lastFetch') }}: {{ selectedFetchTime ? relativeTime(selectedFetchTime) : $t('neverFetched') }}
+              </div>
+            </div>
+            <n-space>
+              <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
+              <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
+            </n-space>
           </div>
-          <div v-else></div>
-          <n-space>
-            <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
-            <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
-          </n-space>
+          <div style="flex: 1; overflow: auto; min-height: 0;">
+            <article-list
+              :drawer-target="contentRef"
+              :subscription-id="selectedSubscription"
+              :category-id="selectedCategory"
+              :site-id="selectedSite"
+              :tag="selectedTagTitle"
+              :search="debouncedSearch"
+              :is-read="selectedIsRead"
+              :is-star="selectedIsStar"
+              :is-hide="selectedIsHide"
+              :order="order"
+              @refresh="onArticleRefresh"
+            />
+          </div>
         </div>
-        <article-list
-          :subscription-id="selectedSubscription"
-          :category-id="selectedCategory"
-          :site-id="selectedSite"
-          :tag="selectedTagTitle"
-          :search="debouncedSearch"
-          :is-read="selectedIsRead"
-          :is-star="selectedIsStar"
-          :is-hide="selectedIsHide"
-          :order="order"
-          @refresh="onArticleRefresh"
-        />
       </n-layout-content>
     </n-layout>
   </div>
@@ -233,6 +243,7 @@ import SettingsModal from "@/views/Settings.vue";
 const { t } = useI18n();
 const subStore = useSubscriptionStore();
 const catStore = useCategoryStore();
+const contentRef = ref<HTMLElement | null>(null);
 const artStore = useArticleStore();
 const notificationStore = useNotificationStore();
 const tagStore = useTagStore();
@@ -266,6 +277,26 @@ const selectedFetchTime = computed(() => {
   if (!selectedSubscription.value) return null;
   const sub = subStore.subscriptions.find((s: any) => s.id === selectedSubscription.value);
   return sub?.fetch_time || null;
+});
+
+const selectedTitle = computed(() => {
+  if (selectedSubscription.value) {
+    const sub = subStore.subscriptions.find((s: any) => s.id === selectedSubscription.value);
+    return sub?.title || t('articles');
+  }
+  if (selectedCategory.value) {
+    const cat = catStore.categories.find((c: any) => c.id === selectedCategory.value);
+    return cat?.title || t('articles');
+  }
+  if (selectedSite.value) {
+    const site = siteStore.sites.find((s: any) => s.id === selectedSite.value);
+    return site?.title || t('articles');
+  }
+  if (selectedTagTitle.value) return selectedTagTitle.value;
+  if (selectedIsRead.value === false) return `${t('unread')} ${t('articles')}`;
+  if (selectedIsStar.value === true) return `${t('starred')} ${t('articles')}`;
+  if (selectedIsHide.value === true) return `${t('hidden')} ${t('articles')}`;
+  return `${t('all')} ${t('articles')}`;
 });
 
 const leftStyle = computed(() => ({

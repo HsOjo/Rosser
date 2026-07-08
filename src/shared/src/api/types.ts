@@ -642,6 +642,45 @@ export interface components {
             /** Ids */
             ids: string[];
         };
+        /** ArticleListItem */
+        ArticleListItem: {
+            /** Id */
+            id: string;
+            /** Subscription Id */
+            subscription_id: string;
+            /** Hash */
+            hash: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** Author */
+            author?: string | null;
+            /** Link */
+            link?: string | null;
+            /** Publish Time */
+            publish_time?: string | null;
+            /**
+             * Is Read
+             * @default false
+             */
+            is_read: boolean;
+            /**
+             * Is Hide
+             * @default false
+             */
+            is_hide: boolean;
+            /**
+             * Is Star
+             * @default false
+             */
+            is_star: boolean;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: components["schemas"]["TagOut"][];
+        };
         /** ArticleOut */
         ArticleOut: {
             /** Id */
@@ -752,7 +791,7 @@ export interface components {
         /** PaginatedArticles */
         PaginatedArticles: {
             /** Items */
-            items: components["schemas"]["ArticleOut"][];
+            items: components["schemas"]["ArticleListItem"][];
             /** Total */
             total: number;
             /** Page */
