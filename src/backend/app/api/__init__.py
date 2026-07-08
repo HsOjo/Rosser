@@ -23,6 +23,7 @@ from app.schemas import (
     SettingsOut,
     SettingsUpdate,
     SiteOut,
+    SiteUpdate,
     SubscriptionCreate,
     SubscriptionOut,
     SubscriptionUpdate,
@@ -538,6 +539,19 @@ async def get_site(site_id: str, token: str = Depends(get_current_token)):
         site = await session.get(Site, site_id)
         if not site:
             raise HTTPException(status_code=404, detail="Site not found")
+        return site
+
+
+@router.put("/sites/{site_id}", response_model=SiteOut)
+async def update_site(site_id: str, data: SiteUpdate, token: str = Depends(get_current_token)):
+    async with async_session() as session:
+        site = await session.get(Site, site_id)
+        if not site:
+            raise HTTPException(status_code=404, detail="Site not found")
+        if data.title is not None:
+            site.title = data.title
+        await session.commit()
+        await session.refresh(site)
         return site
 
 

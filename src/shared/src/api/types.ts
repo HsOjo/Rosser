@@ -429,7 +429,8 @@ export interface paths {
         };
         /** Get Site */
         get: operations["get_site_api_sites__site_id__get"];
-        put?: never;
+        /** Update Site */
+        put: operations["update_site_api_sites__site_id__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -799,6 +800,13 @@ export interface components {
             title?: string | null;
             /** Favicon Id */
             favicon_id?: string | null;
+        };
+        /** SiteUpdate */
+        SiteUpdate: {
+            /** Url */
+            url?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /** SubscriptionCreate */
         SubscriptionCreate: {
@@ -1876,6 +1884,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_site_api_sites__site_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                site_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

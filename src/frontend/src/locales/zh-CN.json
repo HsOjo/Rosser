@@ -18,6 +18,8 @@
   "tags": "标签",
   "sites": "站点",
   "unknownSite": "未知站点",
+  "editSite": "编辑站点",
+  "refreshFavicon": "刷新图标",
   "notifications": "通知",
   "noData": "暂无数据",
   "loading": "加载中...",

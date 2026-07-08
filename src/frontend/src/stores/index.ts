@@ -251,7 +251,23 @@ export const useSiteStore = defineStore("site", () => {
     return data;
   }
 
-  return { sites, loading, fetchAll, fetch, refreshFavicon, byId };
+  async function update(id: string, values: { title?: string | null }) {
+    const { data } = await api.PUT("/api/sites/{site_id}", {
+      params: { path: { site_id: id } },
+      body: { title: values.title ?? null },
+    });
+    if (data) {
+      const idx = sites.value.findIndex((s) => s.id === id);
+      if (idx >= 0) {
+        sites.value[idx] = data;
+      } else {
+        sites.value.push(data);
+      }
+    }
+    return data;
+  }
+
+  return { sites, loading, fetchAll, fetch, refreshFavicon, update, byId };
 });
 
 export const useSettingsStore = defineStore("settings", () => {

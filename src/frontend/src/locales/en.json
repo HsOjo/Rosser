@@ -18,6 +18,8 @@
   "tags": "Tags",
   "sites": "Sites",
   "unknownSite": "Unknown Site",
+  "editSite": "Edit Site",
+  "refreshFavicon": "Refresh Favicon",
   "notifications": "Notifications",
   "noData": "No data",
   "loading": "Loading...",

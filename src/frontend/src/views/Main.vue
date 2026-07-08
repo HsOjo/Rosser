@@ -137,6 +137,14 @@
     </n-space>
   </n-modal>
 
+  <!-- Edit Site Modal -->
+  <n-modal v-model:show="showEditSite" :title="t('editSite')" preset="card" style="width: 400px">
+    <n-space vertical>
+      <n-input v-model:value="editSiteTitle" :placeholder="t('title')" />
+      <n-button type="primary" :loading="savingSite" @click="saveEditSite">{{ t('save') }}</n-button>
+    </n-space>
+  </n-modal>
+
   <!-- Notifications Modal -->
   <notifications-modal v-model:show="showNotifications" />
 
@@ -255,7 +263,12 @@ const showSettings = ref(false);
 const showContextMenu = ref(false);
 const contextMenuX = ref(0);
 const contextMenuY = ref(0);
-const contextTarget = ref<{ type: "cat" | "sub" | "tag"; data: any } | null>(null);
+const contextTarget = ref<{ type: "cat" | "sub" | "tag" | "site"; data: any } | null>(null);
+
+const showEditSite = ref(false);
+const editingSite = ref<any>(null);
+const editSiteTitle = ref("");
+const savingSite = ref(false);
 
 const showEditTag = ref(false);
 const editingTag = ref<any>(null);
@@ -388,6 +401,7 @@ const menuOptions = computed(() => {
           key: `site-${siteId}`,
           label: site?.title || site?.url || t('unknownSite'),
           icon: siteIconRender(site),
+          contextMenu: { type: "site", data: site },
           children: subs.map((s: any) => ({
             key: `sub-${s.id}`,
             label: s.title,
@@ -444,6 +458,28 @@ async function openEditSubscription(sub: any) {
   showEditSub.value = true;
 }
 
+function openEditSite(site: any) {
+  editingSite.value = site;
+  editSiteTitle.value = site.title || "";
+  showEditSite.value = true;
+}
+
+async function saveEditSite() {
+  if (!editingSite.value || !editSiteTitle.value.trim()) return;
+  savingSite.value = true;
+  try {
+    await siteStore.update(editingSite.value.id, {
+      title: editSiteTitle.value.trim(),
+    });
+    showEditSite.value = false;
+    editingSite.value = null;
+    editSiteTitle.value = "";
+    message.success(t("saved"));
+  } finally {
+    savingSite.value = false;
+  }
+}
+
 function openEditTag(tag: any) {
   editingTag.value = tag;
   editTagTitle.value = tag.title;
@@ -478,7 +514,12 @@ const contextMenuOptions = computed(() => {
   if (contextTarget.value?.type === "sub") {
     options.push({ label: t("fetch"), key: "fetch" });
   }
-  options.push({ label: t("delete"), key: "delete" });
+  if (contextTarget.value?.type === "site") {
+    options.push({ label: t("refreshFavicon"), key: "refreshFavicon" });
+  }
+  if (contextTarget.value?.type !== "site") {
+    options.push({ label: t("delete"), key: "delete" });
+  }
   return options;
 });
 
@@ -492,7 +533,7 @@ function getMenuNodeProps(option: any) {
   return {};
 }
 
-function onContextMenu(e: MouseEvent, type: "cat" | "sub" | "tag", data: any) {
+function onContextMenu(e: MouseEvent, type: "cat" | "sub" | "tag" | "site", data: any) {
   e.preventDefault();
   e.stopPropagation();
   contextTarget.value = { type, data };
@@ -514,12 +555,20 @@ function onContextMenuSelect(key: string) {
       openEditCategory(target.data);
     } else if (target.type === "tag") {
       openEditTag(target.data);
+    } else if (target.type === "site") {
+      openEditSite(target.data);
     } else {
       openEditSubscription(target.data);
     }
   } else if (key === "fetch") {
     if (target.type === "sub") {
       fetchSubscription(target.data);
+    }
+  } else if (key === "refreshFavicon") {
+    if (target.type === "site") {
+      siteStore.refreshFavicon(target.data.id).then(() => {
+        message.success(t("saved"));
+      });
     }
   } else if (key === "delete") {
     dialog.warning({
