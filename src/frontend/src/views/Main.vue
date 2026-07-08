@@ -67,6 +67,7 @@
         <article-list
           :subscription-id="selectedSubscription"
           :category-id="selectedCategory"
+          :site-id="selectedSite"
           :tag="selectedTagTitle"
           :search="debouncedSearch"
           :is-read="selectedIsRead"
@@ -165,6 +166,7 @@ import {
   AddOutline,
   NotificationsOutline,
 } from "@vicons/ionicons5";
+import { h } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   useSubscriptionStore,
@@ -172,8 +174,10 @@ import {
   useArticleStore,
   useNotificationStore,
   useTagStore,
+  useSiteStore,
+  useConnectionStore,
 } from "@/stores";
-import { api } from "@rosser/shared";
+import { api, buildFileUrl } from "@rosser/shared";
 import { needsMacTitleInset, startDraggingWindow, detectTauri, isMac } from "@/platform";
 import ArticleList from "@/components/ArticleList.vue";
 import NotificationsModal from "@/components/NotificationsModal.vue";
@@ -185,12 +189,15 @@ const catStore = useCategoryStore();
 const artStore = useArticleStore();
 const notificationStore = useNotificationStore();
 const tagStore = useTagStore();
+const siteStore = useSiteStore();
+const connStore = useConnectionStore();
 const dialog = useDialog();
 const message = useMessage();
 
 const selectedKey = ref("all");
 const selectedSubscription = ref<string | undefined>(undefined);
 const selectedCategory = ref<string | undefined>(undefined);
+const selectedSite = ref<string | undefined>(undefined);
 const selectedTag = ref<string | undefined>(undefined);
 const selectedTagTitle = ref<string | undefined>(undefined);
 const selectedIsRead = ref<boolean | undefined>(undefined);
@@ -266,6 +273,76 @@ const tagOptions = computed(() =>
   tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
 );
 
+const faviconUrls = ref<Record<string, string>>({});
+
+async function resolveFaviconUrls() {
+  const result: Record<string, string> = {};
+  if (!connStore.baseURL || !connStore.token) {
+    faviconUrls.value = result;
+    return;
+  }
+  const sitesWithFavicon = siteStore.sites.filter((s: any) => s.favicon_id);
+  await Promise.all(
+    sitesWithFavicon.map(async (site: any) => {
+      try {
+        result[site.id] = await buildFileUrl(site.favicon_id, connStore.baseURL, connStore.token);
+      } catch {
+        // ignore single favicon resolution failures
+      }
+    })
+  );
+  faviconUrls.value = result;
+}
+
+watch(
+  () => [siteStore.sites.length, connStore.baseURL, connStore.token],
+  () => {
+    resolveFaviconUrls();
+  },
+  { immediate: true }
+);
+
+function siteIconRender(site: any) {
+  const url = faviconUrls.value[site.id];
+  if (!url) return undefined;
+  return () =>
+    h("img", {
+      src: url,
+      style: {
+        width: "16px",
+        height: "16px",
+        borderRadius: "2px",
+        objectFit: "cover",
+        verticalAlign: "middle",
+        marginRight: "8px",
+      },
+      onError: (e: Event) => {
+        (e.target as HTMLImageElement).style.display = "none";
+      },
+    });
+}
+
+function subFaviconRender(sub: any) {
+  if (!sub.site_id) return undefined;
+  const url = faviconUrls.value[sub.site_id];
+  if (!url) return undefined;
+  return () =>
+    h("img", {
+      src: url,
+      style: {
+        width: "16px",
+        height: "16px",
+        borderRadius: "2px",
+        objectFit: "cover",
+        verticalAlign: "middle",
+        marginRight: "8px",
+      },
+      onError: (e: Event) => {
+        (e.target as HTMLImageElement).style.display = "none";
+      },
+    });
+}
+
 const menuOptions = computed(() => {
   const items: any[] = [
     { key: "all", label: t('all') },
@@ -286,12 +363,48 @@ const menuOptions = computed(() => {
     });
   }
 
+  const sitesById = siteStore.byId;
+  const groupedBySite: Record<string, any[]> = {};
+  for (const sub of subStore.subscriptions) {
+    if (!sub.site_id) continue;
+    if (!groupedBySite[sub.site_id]) groupedBySite[sub.site_id] = [];
+    groupedBySite[sub.site_id].push(sub);
+  }
+  const siteIds = Object.keys(groupedBySite).sort((a, b) => {
+    const sa = sitesById[a];
+    const sb = sitesById[b];
+    const ta = (sa?.title || sa?.url || "").toLowerCase();
+    const tb = (sb?.title || sb?.url || "").toLowerCase();
+    return ta.localeCompare(tb);
+  });
+  if (siteIds.length > 0) {
+    items.push({
+      key: "sites",
+      label: t('sites'),
+      children: siteIds.map((siteId) => {
+        const site = sitesById[siteId];
+        const subs = groupedBySite[siteId];
+        return {
+          key: `site-${siteId}`,
+          label: site?.title || site?.url || t('unknownSite'),
+          icon: siteIconRender(site),
+          children: subs.map((s: any) => ({
+            key: `sub-${s.id}`,
+            label: s.title,
+            contextMenu: { type: "sub", data: s },
+          })),
+        };
+      }),
+    });
+  }
+
   for (const cat of catStore.categories) {
     const subs = subStore.subscriptions
       .filter((s: any) => s.category_id === cat.id)
       .map((s: any) => ({
         key: `sub-${s.id}`,
         label: s.title,
+        icon: subFaviconRender(s),
         contextMenu: { type: "sub", data: s },
       }));
     items.push({
@@ -306,6 +419,7 @@ const menuOptions = computed(() => {
     .map((s: any) => ({
       key: `sub-${s.id}`,
       label: s.title,
+      icon: subFaviconRender(s),
       contextMenu: { type: "sub", data: s },
     }));
   if (uncategorized.length > 0) {
@@ -434,6 +548,7 @@ function onContextMenuSelect(key: string) {
 function onMenuSelect(key: string) {
   selectedSubscription.value = undefined;
   selectedCategory.value = undefined;
+  selectedSite.value = undefined;
   selectedTag.value = undefined;
   selectedTagTitle.value = undefined;
   selectedIsRead.value = undefined;
@@ -449,6 +564,8 @@ function onMenuSelect(key: string) {
     selectedSubscription.value = key.replace("sub-", "");
   } else if (key.startsWith("cat-")) {
     selectedCategory.value = key.replace("cat-", "");
+  } else if (key.startsWith("site-")) {
+    selectedSite.value = key.replace("site-", "");
   } else if (key.startsWith("tag-")) {
     const tagId = key.replace("tag-", "");
     selectedTag.value = tagId;
@@ -592,6 +709,7 @@ onMounted(() => {
   subStore.fetchAll();
   catStore.fetchAll();
   tagStore.fetchAll();
+  siteStore.fetchAll();
   notificationStore.fetchUnreadCount();
   detectTauri().then((isTauri) => {
     isMacClient.value = isTauri && isMac();

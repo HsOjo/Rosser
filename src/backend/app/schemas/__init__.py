@@ -89,6 +89,7 @@ class ArticleOut(BaseSchema):
 class ArticleListParams(BaseSchema):
     subscription_id: str | None = None
     category_id: str | None = None
+    site_id: str | None = None
     tag: str | None = None
     is_read: bool | None = None
     is_star: bool | None = None

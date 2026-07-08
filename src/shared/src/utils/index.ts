@@ -15,6 +15,12 @@ export async function signFileUrl(fileId: string, exp: number, secret: string): 
     .slice(0, 32);
 }
 
+export async function buildFileUrl(fileId: string, baseURL: string, token: string): Promise<string> {
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const sig = await signFileUrl(fileId, exp, token);
+  return `${baseURL}/api/files/${fileId}/download?exp=${exp}&sig=${sig}`;
+}
+
 export async function resolveFilePlaceholders(
   html: string | null | undefined,
   baseURL: string,

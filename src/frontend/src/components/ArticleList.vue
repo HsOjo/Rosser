@@ -95,6 +95,7 @@ const router = useRouter();
 const props = defineProps<{
   subscriptionId?: string;
   categoryId?: string;
+  siteId?: string;
   tag?: string;
   search?: string;
   isRead?: boolean;
@@ -220,6 +221,7 @@ function load() {
   const params: Record<string, any> = {};
   if (props.subscriptionId) params.subscription_id = props.subscriptionId;
   if (props.categoryId) params.category_id = props.categoryId;
+  if (props.siteId) params.site_id = props.siteId;
   if (props.tag) params.tag = props.tag;
   if (props.search) params.search = props.search;
   if (props.isRead !== undefined) params.is_read = props.isRead;
@@ -229,7 +231,7 @@ function load() {
   artStore.fetchList(params);
 }
 
-watch(() => [props.subscriptionId, props.categoryId, props.tag, props.search, props.isRead, props.isStar, props.isHide, props.order], () => {
+watch(() => [props.subscriptionId, props.categoryId, props.siteId, props.tag, props.search, props.isRead, props.isStar, props.isHide, props.order], () => {
   artStore.page = 1;
   load();
 }, { immediate: true });

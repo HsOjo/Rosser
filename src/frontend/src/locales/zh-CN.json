@@ -16,6 +16,8 @@
   "readBeforeDays": "N天前已读",
   "search": "搜索",
   "tags": "标签",
+  "sites": "站点",
+  "unknownSite": "未知站点",
   "notifications": "通知",
   "noData": "暂无数据",
   "loading": "加载中...",

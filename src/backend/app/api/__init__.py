@@ -190,6 +190,7 @@ async def fetch_expires_subscriptions(token: str = Depends(get_current_token)):
 async def list_articles(
     subscription_id: str | None = None,
     category_id: str | None = None,
+    site_id: str | None = None,
     tag: str | None = None,
     is_read: bool | None = None,
     is_star: bool | None = None,
@@ -210,6 +211,13 @@ async def list_articles(
         if category_id:
             sub_ids_result = await session.execute(
                 select(Subscription.id).where(Subscription.category_id == category_id)
+            )
+            sub_ids = list(sub_ids_result.scalars().all())
+            stmt = stmt.where(Article.subscription_id.in_(sub_ids))
+            count_stmt = count_stmt.where(Article.subscription_id.in_(sub_ids))
+        if site_id:
+            sub_ids_result = await session.execute(
+                select(Subscription.id).where(Subscription.site_id == site_id)
             )
             sub_ids = list(sub_ids_result.scalars().all())
             stmt = stmt.where(Article.subscription_id.in_(sub_ids))

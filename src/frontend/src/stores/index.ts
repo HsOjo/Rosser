@@ -203,6 +203,57 @@ export const useCategoryStore = defineStore("category", () => {
   return { categories, fetchAll, create, update, remove };
 });
 
+export const useSiteStore = defineStore("site", () => {
+  const sites = ref<any[]>([]);
+  const loading = ref(false);
+
+  async function fetchAll() {
+    loading.value = true;
+    try {
+      const { data } = await api.GET("/api/sites");
+      sites.value = data || [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  const byId = computed(() => {
+    const map: Record<string, any> = {};
+    for (const site of sites.value) {
+      map[site.id] = site;
+    }
+    return map;
+  });
+
+  async function fetch(id: string) {
+    const { data } = await api.GET("/api/sites/{site_id}", { params: { path: { site_id: id } } });
+    if (data) {
+      const idx = sites.value.findIndex((s) => s.id === id);
+      if (idx >= 0) {
+        sites.value[idx] = data;
+      } else {
+        sites.value.push(data);
+      }
+    }
+    return data;
+  }
+
+  async function refreshFavicon(id: string) {
+    const { data } = await api.POST("/api/sites/{site_id}/fetch", { params: { path: { site_id: id } } });
+    if (data) {
+      const idx = sites.value.findIndex((s) => s.id === id);
+      if (idx >= 0) {
+        sites.value[idx] = data;
+      } else {
+        sites.value.push(data);
+      }
+    }
+    return data;
+  }
+
+  return { sites, loading, fetchAll, fetch, refreshFavicon, byId };
+});
+
 export const useSettingsStore = defineStore("settings", () => {
   const settings = ref<any>(null);
 

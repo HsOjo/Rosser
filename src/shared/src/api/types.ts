@@ -1313,6 +1313,7 @@ export interface operations {
             query?: {
                 subscription_id?: string | null;
                 category_id?: string | null;
+                site_id?: string | null;
                 tag?: string | null;
                 is_read?: boolean | null;
                 is_star?: boolean | null;

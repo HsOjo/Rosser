@@ -16,6 +16,8 @@
   "readBeforeDays": "Read before N days",
   "search": "Search",
   "tags": "Tags",
+  "sites": "Sites",
+  "unknownSite": "Unknown Site",
   "notifications": "Notifications",
   "noData": "No data",
   "loading": "Loading...",
