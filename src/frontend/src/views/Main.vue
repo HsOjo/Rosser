@@ -947,4 +947,21 @@ onMounted(() => {
   flex: 1;
   min-width: 40px;
 }
+
+:deep(.n-menu) {
+  --n-item-height: 32px !important;
+}
+
+:deep(.n-menu-item),
+:deep(.n-submenu) {
+  margin-top: 3px !important;
+}
+
+:deep(.n-menu .n-submenu-children .n-menu-item-content) {
+  padding-left: 32px !important;
+}
+
+:deep(.n-menu .n-submenu-children .n-submenu-children .n-menu-item-content) {
+  padding-left: 64px !important;
+}
 </style>
