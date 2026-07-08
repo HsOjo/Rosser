@@ -73,10 +73,7 @@
     <n-space vertical>
       <n-input v-model:value="editCatTitle" :placeholder="t('title')" />
       <n-input v-model:value="editCatDesc" :placeholder="t('description')" type="textarea" />
-      <n-space>
-        <n-button type="primary" @click="saveEditCategory">{{ t('save') }}</n-button>
-        <n-button type="error" @click="deleteCategory">{{ t('delete') }}</n-button>
-      </n-space>
+      <n-button type="primary" @click="saveEditCategory">{{ t('save') }}</n-button>
     </n-space>
   </n-modal>
 
@@ -101,11 +98,7 @@
       <n-input v-model:value="editSubDesc" :placeholder="t('description')" type="textarea" />
       <n-select v-model:value="editSubCategory" :options="categoryOptions" :placeholder="t('category')" clearable />
       <n-select v-model:value="editSubTags" :options="tagOptions" :placeholder="t('tags')" multiple clearable />
-      <n-space>
-        <n-button type="primary" @click="saveEditSubscription">{{ t('save') }}</n-button>
-        <n-button :loading="fetchingSub" @click="fetchSubscription">{{ t('fetch') }}</n-button>
-        <n-button type="error" @click="deleteSubscription">{{ t('delete') }}</n-button>
-      </n-space>
+      <n-button type="primary" @click="saveEditSubscription">{{ t('save') }}</n-button>
     </n-space>
   </n-modal>
 
@@ -114,10 +107,23 @@
 
   <!-- Settings Modal -->
   <settings-modal v-model:show="showSettings" />
+
+  <!-- Context Menu -->
+  <n-dropdown
+    trigger="manual"
+    placement="bottom-start"
+    :show="showContextMenu"
+    :x="contextMenuX"
+    :y="contextMenuY"
+    :options="contextMenuOptions"
+    @select="onContextMenuSelect"
+    @clickoutside="showContextMenu = false"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, h, watch } from "vue";
+import { ref, computed, onMounted, h, watch, nextTick } from "vue";
+import { useDialog, useMessage } from "naive-ui";
 import {
   RefreshOutline,
   SearchOutline,
@@ -144,6 +150,8 @@ const catStore = useCategoryStore();
 const artStore = useArticleStore();
 const notificationStore = useNotificationStore();
 const tagStore = useTagStore();
+const dialog = useDialog();
+const message = useMessage();
 
 const selectedKey = ref("all");
 const selectedSubscription = ref<string | undefined>(undefined);
@@ -186,6 +194,11 @@ const fetchingSub = ref(false);
 const showNotifications = ref(false);
 const showSettings = ref(false);
 
+const showContextMenu = ref(false);
+const contextMenuX = ref(0);
+const contextMenuY = ref(0);
+const contextTarget = ref<{ type: "cat" | "sub"; data: any } | null>(null);
+
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const categoryOptions = computed(() =>
@@ -220,31 +233,19 @@ const menuOptions = computed(() => {
       .filter((s: any) => s.category_id === cat.id)
       .map((s: any) => ({
         key: `sub-${s.id}`,
-        label: s.title,
-        extra: () => h('span', {
-          style: 'margin-left: auto; cursor: pointer; padding: 0 8px;',
-          onClick: (e: Event) => { e.stopPropagation(); openEditSubscription(s); }
-        }, '...')
+        label: renderMenuLabel(s.title, "sub", s),
       }));
     items.push({
       key: `cat-${cat.id}`,
-      label: cat.title,
+      label: renderMenuLabel(cat.title, "cat", cat),
       children: subs.length > 0 ? subs : undefined,
-      extra: () => h('span', {
-        style: 'margin-left: auto; cursor: pointer; padding: 0 8px;',
-        onClick: (e: Event) => { e.stopPropagation(); openEditCategory(cat); }
-      }, '...')
     });
   }
   const uncategorized = subStore.subscriptions
     .filter((s: any) => !s.category_id)
     .map((s: any) => ({
       key: `sub-${s.id}`,
-      label: s.title,
-      extra: () => h('span', {
-        style: 'margin-left: auto; cursor: pointer; padding: 0 8px;',
-        onClick: (e: Event) => { e.stopPropagation(); openEditSubscription(s); }
-      }, '...')
+      label: renderMenuLabel(s.title, "sub", s),
     }));
   if (uncategorized.length > 0) {
     items.push({ key: "uncategorized", label: t('uncategorized'), children: uncategorized });
@@ -266,6 +267,74 @@ async function openEditSubscription(sub: any) {
   editSubCategory.value = sub.category_id || null;
   editSubTags.value = sub.tags?.map((t: any) => t.id) || [];
   showEditSub.value = true;
+}
+
+const contextMenuOptions = computed(() => {
+  const options = [{ label: t("edit"), key: "edit" }];
+  if (contextTarget.value?.type === "sub") {
+    options.push({ label: t("fetch"), key: "fetch" });
+  }
+  options.push({ label: t("delete"), key: "delete" });
+  return options;
+});
+
+function renderMenuLabel(text: string, type: "cat" | "sub", data: any) {
+  return () =>
+    h(
+      "span",
+      {
+        style: "display: block;",
+        onContextmenu: (e: MouseEvent) => onContextMenu(e, type, data),
+      },
+      text
+    );
+}
+
+function onContextMenu(e: MouseEvent, type: "cat" | "sub", data: any) {
+  e.preventDefault();
+  e.stopPropagation();
+  contextTarget.value = { type, data };
+  contextMenuX.value = e.clientX;
+  contextMenuY.value = e.clientY;
+  showContextMenu.value = false;
+  nextTick(() => {
+    showContextMenu.value = true;
+  });
+}
+
+function onContextMenuSelect(key: string) {
+  showContextMenu.value = false;
+  const target = contextTarget.value;
+  if (!target) return;
+
+  if (key === "edit") {
+    if (target.type === "cat") {
+      openEditCategory(target.data);
+    } else {
+      openEditSubscription(target.data);
+    }
+  } else if (key === "fetch") {
+    if (target.type === "sub") {
+      fetchSubscription(target.data);
+    }
+  } else if (key === "delete") {
+    dialog.warning({
+      title: t("delete"),
+      content:
+        target.type === "cat"
+          ? t("confirmDeleteCategory", { title: target.data.title })
+          : t("confirmDeleteSubscription", { title: target.data.title }),
+      positiveText: t("delete"),
+      negativeText: t("close"),
+      onPositiveClick: () => {
+        if (target.type === "cat") {
+          deleteCategory(target.data);
+        } else {
+          deleteSubscription(target.data);
+        }
+      },
+    });
+  }
 }
 
 function onMenuSelect(key: string) {
@@ -340,11 +409,12 @@ async function saveEditCategory() {
   editingCat.value = null;
 }
 
-async function deleteCategory() {
-  if (!editingCat.value) return;
-  await catStore.remove(editingCat.value.id);
+async function deleteCategory(cat: any) {
+  if (!cat) return;
+  await catStore.remove(cat.id);
   showEditCat.value = false;
   editingCat.value = null;
+  message.success(t("deleted"));
 }
 
 async function preview() {
@@ -404,11 +474,11 @@ async function saveEditSubscription() {
   editingSub.value = null;
 }
 
-async function fetchSubscription() {
-  if (!editingSub.value || fetchingSub.value) return;
+async function fetchSubscription(sub: any) {
+  if (!sub || fetchingSub.value) return;
   fetchingSub.value = true;
   try {
-    await api.POST("/api/subscriptions/fetch", { body: { ids: [editingSub.value.id] } });
+    await api.POST("/api/subscriptions/fetch", { body: { ids: [sub.id] } });
     await artStore.fetchList();
     await notificationStore.fetchUnreadCount();
   } finally {
@@ -416,11 +486,12 @@ async function fetchSubscription() {
   }
 }
 
-async function deleteSubscription() {
-  if (!editingSub.value) return;
-  await subStore.remove(editingSub.value.id);
+async function deleteSubscription(sub: any) {
+  if (!sub) return;
+  await subStore.remove(sub.id);
   showEditSub.value = false;
   editingSub.value = null;
+  message.success(t("deleted"));
 }
 
 onMounted(() => {
