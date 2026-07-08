@@ -6,6 +6,8 @@ const routes = [
   { path: "/onboarding", component: () => import("@/views/Onboarding.vue") },
   { path: "/article/:id", component: () => import("@/views/Article.vue"), meta: { requiresAuth: true } },
   { path: "/settings", component: () => import("@/views/Settings.vue"), meta: { requiresAuth: true } },
+  { path: "/notifications", component: () => import("@/views/Notifications.vue"), meta: { requiresAuth: true } },
+  { path: "/manage", component: () => import("@/views/Manage.vue"), meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

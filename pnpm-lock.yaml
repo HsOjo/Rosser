@@ -112,12 +112,21 @@ importers:
         specifier: ^4.4.0
         version: 4.6.4(vue@3.5.39(typescript@5.9.3))
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.61.1
+        version: 1.61.1
       '@varlet/import-resolver':
         specifier: ^3.19.2
         version: 3.19.2(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.4.0)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
       '@vitejs/plugin-vue':
         specifier: ^5.1.0
         version: 5.2.4(vite@6.4.3(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
+      '@vue/test-utils':
+        specifier: ^2.4.11
+        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
@@ -127,6 +136,9 @@ importers:
       vite:
         specifier: ^6.0.0
         version: 6.4.3(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(jsdom@29.1.1)
       vue-tsc:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
