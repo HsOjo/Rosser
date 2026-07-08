@@ -7,10 +7,13 @@ import App from "./App.vue";
 import router from "./router";
 import zhCN from "./locales/zh-CN.json";
 import en from "./locales/en.json";
+import { getUISettings } from "@/platform";
+
+const ui = getUISettings();
 
 const i18n = createI18n({
   legacy: false,
-  locale: localStorage.getItem("rosser_locale") || "zh-CN",
+  locale: ui.value.locale,
   fallbackLocale: "en",
   messages: {
     "zh-CN": zhCN,

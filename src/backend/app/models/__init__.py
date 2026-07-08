@@ -138,8 +138,6 @@ class SettingsSingleton(Base):
     __tablename__ = "settings"
 
     auto_refresh_interval: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    theme: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
-    font_size: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     proxy_enabled: Mapped[bool] = mapped_column(default=False)
     proxy_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
 

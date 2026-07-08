@@ -817,10 +817,6 @@ export interface components {
             id: string;
             /** Auto Refresh Interval */
             auto_refresh_interval?: number | null;
-            /** Theme */
-            theme?: string | null;
-            /** Font Size */
-            font_size?: string | null;
             /**
              * Proxy Enabled
              * @default false
@@ -833,10 +829,6 @@ export interface components {
         SettingsUpdate: {
             /** Auto Refresh Interval */
             auto_refresh_interval?: number | null;
-            /** Theme */
-            theme?: string | null;
-            /** Font Size */
-            font_size?: string | null;
             /** Proxy Enabled */
             proxy_enabled?: boolean | null;
             /** Proxy Url */

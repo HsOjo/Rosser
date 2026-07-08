@@ -176,16 +176,12 @@ class NotificationOut(BaseSchema):
 class SettingsOut(BaseSchema):
     id: str
     auto_refresh_interval: int | None = None
-    theme: str | None = None
-    font_size: str | None = None
     proxy_enabled: bool = False
     proxy_url: str | None = None
 
 
 class SettingsUpdate(BaseSchema):
     auto_refresh_interval: int | None = None
-    theme: str | None = None
-    font_size: str | None = None
     proxy_enabled: bool | None = None
     proxy_url: str | None = None
 

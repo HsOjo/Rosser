@@ -36,6 +36,47 @@ export function savePlatformConfig(cfg: { baseURL: string; token: string }) {
   localStorage.setItem("rosser_config", JSON.stringify(cfg));
 }
 
+import { ref, type Ref } from "vue";
+
+const UI_STORAGE_KEY = "rosser_ui";
+
+type UISettings = {
+  theme: string;
+  fontSize: string;
+  locale: string;
+};
+
+const defaults: UISettings = { theme: "auto", fontSize: "medium", locale: "zh-CN" };
+
+function loadUISettings(): UISettings {
+  if (typeof window === "undefined") return { ...defaults };
+  const raw = localStorage.getItem(UI_STORAGE_KEY);
+  if (!raw) return { ...defaults };
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      theme: parsed.theme || defaults.theme,
+      fontSize: parsed.fontSize || defaults.fontSize,
+      locale: parsed.locale || defaults.locale,
+    };
+  } catch {
+    return { ...defaults };
+  }
+}
+
+const uiState = ref<UISettings>(loadUISettings());
+
+export const uiSettings = uiState;
+
+export function getUISettings(): Ref<UISettings> {
+  return uiState;
+}
+
+export function saveUISettings(settings: Partial<UISettings>) {
+  uiState.value = { ...uiState.value, ...settings };
+  localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState.value));
+}
+
 export function isMac(): boolean {
   if (typeof navigator === "undefined") return false;
   const uaData = (navigator as any).userAgentData;

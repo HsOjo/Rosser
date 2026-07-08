@@ -720,10 +720,6 @@ async def update_settings(data: SettingsUpdate, token: str = Depends(get_current
             session.add(row)
         if data.auto_refresh_interval is not None:
             row.auto_refresh_interval = data.auto_refresh_interval
-        if data.theme is not None:
-            row.theme = data.theme
-        if data.font_size is not None:
-            row.font_size = data.font_size
         if data.proxy_enabled is not None:
             row.proxy_enabled = data.proxy_enabled
         if data.proxy_url is not None:

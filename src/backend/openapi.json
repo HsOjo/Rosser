@@ -2484,28 +2484,6 @@
             ],
             "title": "Auto Refresh Interval"
           },
-          "theme": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Theme"
-          },
-          "font_size": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Font Size"
-          },
           "proxy_enabled": {
             "type": "boolean",
             "title": "Proxy Enabled",
@@ -2541,28 +2519,6 @@
               }
             ],
             "title": "Auto Refresh Interval"
-          },
-          "theme": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Theme"
-          },
-          "font_size": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Font Size"
           },
           "proxy_enabled": {
             "anyOf": [

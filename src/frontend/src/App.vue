@@ -11,12 +11,12 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import { darkTheme, lightTheme } from "naive-ui";
-import { useSettingsStore } from "@/stores";
+import { getUISettings, saveUISettings } from "@/platform";
 
-const settings = useSettingsStore();
+const ui = getUISettings();
 
 const theme = computed(() => {
-  const t = settings.settings?.theme || "auto";
+  const t = ui.value.theme;
   if (t === "dark") return darkTheme;
   if (t === "light") return lightTheme;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? darkTheme : lightTheme;
@@ -40,17 +40,19 @@ function applyFontSize(size: string) {
   document.body.style.fontSize = map[size] || "16px";
 }
 
-watch(() => settings.settings?.theme, (t) => {
-  if (t) applyThemeClass(t);
+watch(() => ui.value.theme, (t) => {
+  applyThemeClass(t);
+  saveUISettings({ theme: t });
 }, { immediate: true });
 
-watch(() => settings.settings?.font_size, (s) => {
-  if (s) applyFontSize(s);
+watch(() => ui.value.fontSize, (s) => {
+  applyFontSize(s);
+  saveUISettings({ fontSize: s });
 }, { immediate: true });
 
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 mediaQuery.addEventListener("change", () => {
-  if (settings.settings?.theme === "auto") {
+  if (ui.value.theme === "auto") {
     applyThemeClass("auto");
   }
 });

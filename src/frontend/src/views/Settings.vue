@@ -9,14 +9,14 @@
             <n-input-number v-model:value="form.auto_refresh_interval" :min="1" />
           </n-form-item>
           <n-form-item :label="t('theme')">
-            <n-select v-model:value="form.theme" :options="[
+            <n-select v-model:value="uiTheme" :options="[
               { label: t('themeLight'), value: 'light' },
               { label: t('themeDark'), value: 'dark' },
               { label: t('themeAuto'), value: 'auto' }
             ]" />
           </n-form-item>
           <n-form-item :label="t('fontSize')">
-            <n-select v-model:value="form.font_size" :options="[
+            <n-select v-model:value="uiFontSize" :options="[
               { label: t('fontSizeSmall'), value: 'small' },
               { label: t('fontSizeMedium'), value: 'medium' },
               { label: t('fontSizeLarge'), value: 'large' }
@@ -127,11 +127,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
 import { useConnectionStore, useSettingsStore, useTagStore } from "@/stores";
+import { getUISettings, saveUISettings } from "@/platform";
 import { api } from "@rosser/shared";
 
 const router = useRouter();
@@ -143,7 +144,10 @@ const tagStore = useTagStore();
 
 const show = defineModel<boolean>("show", { default: false });
 
-const form = ref({ auto_refresh_interval: 30, theme: "auto", font_size: "medium", proxy_enabled: false, proxy_url: "" });
+const ui = getUISettings();
+const uiTheme = ref(ui.value.theme);
+const uiFontSize = ref(ui.value.fontSize);
+const form = ref({ auto_refresh_interval: 30, proxy_enabled: false, proxy_url: "" });
 const saving = ref(false);
 const importing = ref(false);
 const exporting = ref(false);
@@ -167,8 +171,6 @@ async function loadSettings() {
   if (settings.settings) {
     form.value = {
       auto_refresh_interval: settings.settings.auto_refresh_interval || 30,
-      theme: settings.settings.theme || "auto",
-      font_size: settings.settings.font_size || "medium",
       proxy_enabled: settings.settings.proxy_enabled || false,
       proxy_url: settings.settings.proxy_url || "",
     };
@@ -185,7 +187,11 @@ watch(show, (val) => {
 
 function changeLocale(val: string) {
   locale.value = val;
-  localStorage.setItem("rosser_locale", val);
+  saveUISettings({ locale: val });
+}
+
+function saveUI() {
+  saveUISettings({ theme: ui.value.theme, fontSize: ui.value.fontSize });
 }
 
 async function save() {
@@ -196,6 +202,7 @@ async function save() {
       payload.proxy_url = "";
     }
     await settings.update(payload);
+    saveUISettings({ theme: uiTheme.value, fontSize: uiFontSize.value, locale: locale.value });
     message.success(t('saved'));
   } finally {
     saving.value = false;
