@@ -37,6 +37,7 @@
   "deleted": "Deleted",
   "confirmDeleteCategory": "Are you sure you want to delete category \"{title}\"? Subscriptions in it will become uncategorized.",
   "confirmDeleteSubscription": "Are you sure you want to delete subscription \"{title}\"?",
+  "confirmDeleteTag": "Are you sure you want to delete tag \"{title}\"? It will be removed from all tagged articles.",
   "uncategorized": "Uncategorized",
   "rssURL": "RSS URL",
   "category": "Category",

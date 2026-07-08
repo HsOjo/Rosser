@@ -102,6 +102,20 @@
     </n-space>
   </n-modal>
 
+  <!-- Edit Tag Modal -->
+  <n-modal v-model:show="showEditTag" preset="card" :title="t('editTag')" style="width: 360px">
+    <n-space vertical>
+      <n-input v-model:value="editTagTitle" :placeholder="t('tagTitle')" style="width: 100%" />
+      <div class="tag-color-picker" style="width: 34px">
+        <n-color-picker v-model:value="editTagColor" :modes="['hex']" />
+      </div>
+      <n-space>
+        <n-button type="primary" :loading="savingTag" @click="saveEditTag">{{ t('save') }}</n-button>
+        <n-button @click="showEditTag = false">{{ t('close') }}</n-button>
+      </n-space>
+    </n-space>
+  </n-modal>
+
   <!-- Notifications Modal -->
   <notifications-modal v-model:show="showNotifications" />
 
@@ -197,7 +211,13 @@ const showSettings = ref(false);
 const showContextMenu = ref(false);
 const contextMenuX = ref(0);
 const contextMenuY = ref(0);
-const contextTarget = ref<{ type: "cat" | "sub"; data: any } | null>(null);
+const contextTarget = ref<{ type: "cat" | "sub" | "tag"; data: any } | null>(null);
+
+const showEditTag = ref(false);
+const editingTag = ref<any>(null);
+const editTagTitle = ref("");
+const editTagColor = ref("");
+const savingTag = ref(false);
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -223,7 +243,7 @@ const menuOptions = computed(() => {
       label: t('tags'),
       children: tagStore.tags.map((tag: any) => ({
         key: `tag-${tag.id}`,
-        label: tag.title,
+        label: renderMenuLabel(tag.title, "tag", tag),
       })),
     });
   }
@@ -269,6 +289,35 @@ async function openEditSubscription(sub: any) {
   showEditSub.value = true;
 }
 
+function openEditTag(tag: any) {
+  editingTag.value = tag;
+  editTagTitle.value = tag.title;
+  editTagColor.value = tag.color;
+  showEditTag.value = true;
+}
+
+async function saveEditTag() {
+  if (!editingTag.value || !editTagTitle.value.trim()) return;
+  savingTag.value = true;
+  try {
+    await tagStore.update(editingTag.value.id, {
+      title: editTagTitle.value.trim(),
+      color: editTagColor.value,
+    });
+    showEditTag.value = false;
+    editingTag.value = null;
+    message.success(t("saved"));
+  } finally {
+    savingTag.value = false;
+  }
+}
+
+async function deleteTag(tag: any) {
+  if (!tag) return;
+  await tagStore.remove(tag.id);
+  message.success(t("deleted"));
+}
+
 const contextMenuOptions = computed(() => {
   const options = [{ label: t("edit"), key: "edit" }];
   if (contextTarget.value?.type === "sub") {
@@ -278,7 +327,7 @@ const contextMenuOptions = computed(() => {
   return options;
 });
 
-function renderMenuLabel(text: string, type: "cat" | "sub", data: any) {
+function renderMenuLabel(text: string, type: "cat" | "sub" | "tag", data: any) {
   return () =>
     h(
       "span",
@@ -290,7 +339,7 @@ function renderMenuLabel(text: string, type: "cat" | "sub", data: any) {
     );
 }
 
-function onContextMenu(e: MouseEvent, type: "cat" | "sub", data: any) {
+function onContextMenu(e: MouseEvent, type: "cat" | "sub" | "tag", data: any) {
   e.preventDefault();
   e.stopPropagation();
   contextTarget.value = { type, data };
@@ -310,6 +359,8 @@ function onContextMenuSelect(key: string) {
   if (key === "edit") {
     if (target.type === "cat") {
       openEditCategory(target.data);
+    } else if (target.type === "tag") {
+      openEditTag(target.data);
     } else {
       openEditSubscription(target.data);
     }
@@ -323,12 +374,16 @@ function onContextMenuSelect(key: string) {
       content:
         target.type === "cat"
           ? t("confirmDeleteCategory", { title: target.data.title })
+          : target.type === "tag"
+          ? t("confirmDeleteTag", { title: target.data.title })
           : t("confirmDeleteSubscription", { title: target.data.title }),
       positiveText: t("delete"),
       negativeText: t("close"),
       onPositiveClick: () => {
         if (target.type === "cat") {
           deleteCategory(target.data);
+        } else if (target.type === "tag") {
+          deleteTag(target.data);
         } else {
           deleteSubscription(target.data);
         }
@@ -501,3 +556,12 @@ onMounted(() => {
   notificationStore.fetchUnreadCount();
 });
 </script>
+
+<style scoped>
+.tag-color-picker :deep(.n-color-picker) {
+  width: 100%;
+}
+.tag-color-picker :deep(.n-color-picker__value) {
+  display: none;
+}
+</style>
