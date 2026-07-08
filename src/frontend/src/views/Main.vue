@@ -1,7 +1,7 @@
 <template>
-  <div class="app-shell">
+  <n-layout class="app-shell">
     <!-- Unified fixed top bar -->
-    <div class="top-bar" data-tauri-drag-region>
+    <n-layout-header class="top-bar" bordered data-tauri-drag-region>
       <div class="top-bar-left" :class="{ 'mac-layout': isMacClient }" :style="leftStyle" data-tauri-drag-region="no-drag">
         <span class="app-name">{{ $t('appName') }}</span>
         <div class="toolbar-group">
@@ -72,7 +72,7 @@
           </n-tooltip>
         </div>
       </div>
-    </div>
+    </n-layout-header>
 
     <!-- Body -->
     <n-layout has-sider class="app-body">
@@ -127,7 +127,7 @@
         </div>
       </n-layout-content>
     </n-layout>
-  </div>
+  </n-layout>
 
   <!-- Add Category Modal -->
   <n-modal v-model:show="showAddCat" :title="t('addCategory')" preset="card" style="width: 400px">
@@ -875,14 +875,12 @@ onMounted(() => {
 }
 
 .app-shell {
-  display: flex;
-  flex-direction: column;
   height: 100vh;
   overflow: hidden;
 }
 
 .app-body {
-  flex: 1;
+  height: calc(100vh - 40px);
   overflow: hidden;
 }
 
@@ -890,9 +888,12 @@ onMounted(() => {
   height: 40px;
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid var(--n-border-color, #eee);
-  background: var(--n-color, #fff);
   flex-shrink: 0;
+  padding: 0;
+}
+
+:deep(.n-layout-header__border) {
+  bottom: 0;
 }
 
 .top-bar-left,
