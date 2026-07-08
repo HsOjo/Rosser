@@ -392,6 +392,7 @@ watch(
 );
 
 function siteIconRender(site: any) {
+  if (!site) return undefined;
   const url = faviconUrls.value[site.id];
   if (!url) return undefined;
   return () =>
