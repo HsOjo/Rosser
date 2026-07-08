@@ -14,7 +14,12 @@
       </div>
 
       <n-scrollbar style="flex: 1">
-        <n-menu v-model:value="selectedKey" :options="menuOptions" @update:value="onMenuSelect" />
+        <n-menu
+          v-model:value="selectedKey"
+          :options="menuOptions"
+          :node-props="getMenuNodeProps"
+          @update:value="onMenuSelect"
+        />
       </n-scrollbar>
     </n-layout-sider>
 
@@ -136,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, h, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useDialog, useMessage } from "naive-ui";
 import {
   RefreshOutline,
@@ -243,7 +248,8 @@ const menuOptions = computed(() => {
       label: t('tags'),
       children: tagStore.tags.map((tag: any) => ({
         key: `tag-${tag.id}`,
-        label: renderMenuLabel(tag.title, "tag", tag),
+        label: tag.title,
+        contextMenu: { type: "tag", data: tag },
       })),
     });
   }
@@ -253,19 +259,22 @@ const menuOptions = computed(() => {
       .filter((s: any) => s.category_id === cat.id)
       .map((s: any) => ({
         key: `sub-${s.id}`,
-        label: renderMenuLabel(s.title, "sub", s),
+        label: s.title,
+        contextMenu: { type: "sub", data: s },
       }));
     items.push({
       key: `cat-${cat.id}`,
-      label: renderMenuLabel(cat.title, "cat", cat),
+      label: cat.title,
       children: subs.length > 0 ? subs : undefined,
+      contextMenu: { type: "cat", data: cat },
     });
   }
   const uncategorized = subStore.subscriptions
     .filter((s: any) => !s.category_id)
     .map((s: any) => ({
       key: `sub-${s.id}`,
-      label: renderMenuLabel(s.title, "sub", s),
+      label: s.title,
+      contextMenu: { type: "sub", data: s },
     }));
   if (uncategorized.length > 0) {
     items.push({ key: "uncategorized", label: t('uncategorized'), children: uncategorized });
@@ -327,16 +336,14 @@ const contextMenuOptions = computed(() => {
   return options;
 });
 
-function renderMenuLabel(text: string, type: "cat" | "sub" | "tag", data: any) {
-  return () =>
-    h(
-      "span",
-      {
-        style: "display: block;",
-        onContextmenu: (e: MouseEvent) => onContextMenu(e, type, data),
-      },
-      text
-    );
+function getMenuNodeProps(option: any) {
+  if (option.contextMenu) {
+    return {
+      onContextmenu: (e: MouseEvent) =>
+        onContextMenu(e, option.contextMenu.type, option.contextMenu.data),
+    };
+  }
+  return {};
 }
 
 function onContextMenu(e: MouseEvent, type: "cat" | "sub" | "tag", data: any) {
