@@ -95,9 +95,9 @@
       <n-layout-content style="position: relative;">
         <div
           ref="contentRef"
-          style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 16px; overflow: hidden;"
+          style="position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden;"
         >
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 16px 16px 12px;">
             <div>
               <div style="font-size: 16px; font-weight: 600; line-height: 1.4;">{{ selectedTitle }}</div>
               <div v-if="selectedSubscription" style="font-size: 12px; color: #999; margin-top: 2px;">

@@ -1,5 +1,5 @@
 <template>
-  <n-space vertical>
+  <div class="article-list">
     <n-spin :show="artStore.loading">
       <n-list clickable>
         <n-list-item v-for="art in artStore.articles" :key="art.id"
@@ -44,6 +44,7 @@
         :item-count="artStore.total"
         :page-sizes="[20, 50, 100]"
         show-size-picker
+        style="padding: 12px 16px"
         @update:page="onPageChange"
         @update:page-size="onPageChange"
       />
@@ -153,7 +154,7 @@
         <n-empty v-else :description="t('noData')" />
       </n-drawer-content>
     </n-drawer>
-  </n-space>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -501,6 +502,10 @@ watch(() => artStore.articles, () => {
 </script>
 
 <style scoped>
+.article-list {
+  width: 100%;
+  min-height: 100%;
+}
 .article-content {
   width: 100%;
   max-width: 100%;
