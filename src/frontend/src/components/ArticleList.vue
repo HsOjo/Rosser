@@ -498,7 +498,7 @@ watch(() => artStore.articles, () => {
   showArticle.value = false;
   showMetaDrawer.value = false;
   selectedArticle.value = null;
-}, { deep: true });
+});
 </script>
 
 <style scoped>
