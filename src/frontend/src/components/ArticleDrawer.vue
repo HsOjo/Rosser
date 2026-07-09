@@ -8,79 +8,98 @@
     :close-on-esc="true"
     :style="{ '--n-border-radius': '0' }"
   >
-    <n-drawer-content :closable="true">
-      <template #header>
-        <div class="drawer-header">
-          <div class="drawer-title">{{ selectedArticle?.title }}</div>
-          <div class="drawer-meta">
-            <span v-if="selectedArticle?.author">{{ selectedArticle.author }}</span>
-            <span v-if="selectedArticle?.author && selectedArticle?.publish_time"> · </span>
-            <span v-if="selectedArticle?.publish_time">{{ relativeTime(selectedArticle.publish_time) }}</span>
-          </div>
+  <n-drawer-content :closable="true">
+    <template #header>
+      <div class="drawer-header">
+        <div class="drawer-title">{{ selectedArticle?.title }}</div>
+        <div class="drawer-meta">
+          <span v-if="selectedArticle?.author">{{ selectedArticle.author }}</span>
+          <span v-if="selectedArticle?.author && selectedArticle?.publish_time"> · </span>
+          <span v-if="selectedArticle?.publish_time">{{ relativeTime(selectedArticle.publish_time) }}</span>
         </div>
-      </template>
+      </div>
+    </template>
 
-      <n-spin :show="resolvedContentLoading">
-        <div v-if="selectedArticle" class="article-body">
-          <div class="article-content">
-            <template v-for="(item, idx) in resolvedContent" :key="idx">
-              <HtmlRender
-                v-if="item.type === 'text/html'"
-                :html="item.value"
-              />
-              <pre v-else-if="item.type === 'text/plain'" class="plain-text">{{ item.value }}</pre>
-              <n-tag v-else type="warning" size="small">{{ t('unsupportedType', { type: item.type }) }}</n-tag>
-            </template>
-          </div>
-          <div class="article-actions">
-            <n-space justify="space-between" style="width: 100%">
-              <n-space>
-                <n-button size="small" @click="openOriginal">{{ t('openOriginal') }}</n-button>
-                <n-button
-                  size="small"
-                  :type="selectedArticle?.is_star ? 'warning' : 'default'"
-                  @click="toggleSelectedStar"
-                >
-                  {{ selectedArticle?.is_star ? t('unstar') : t('star') }}
-                </n-button>
-                <n-popover trigger="click" placement="top-start" :width="260">
-                  <template #trigger>
-                    <n-button size="small">{{ t('tagManagement') }}</n-button>
-                  </template>
-                  <n-space vertical style="padding: 8px 0">
-                    <n-select
-                      v-model:value="selectedArticleTags"
-                      :options="tagOptions"
-                      multiple
-                      clearable
-                      size="small"
-                      style="min-width: 200px"
-                      :placeholder="t('tagged')"
-                      @update:value="onArticleTagsChange"
-                    />
-                    <n-input-group>
-                      <n-input
-                        v-model:value="newTagTitle"
-                        size="small"
-                        :placeholder="t('addTag')"
-                        @keyup.enter="addNewTag"
-                      />
-                      <n-button size="small" @click="addNewTag">
-                        <template #icon>
-                          <n-icon><AddOutline /></n-icon>
-                        </template>
-                      </n-button>
-                    </n-input-group>
-                  </n-space>
-                </n-popover>
-              </n-space>
-              <n-button size="small" @click="openMeta">{{ t('metaInspector') }}</n-button>
-            </n-space>
-          </div>
+    <n-spin :show="resolvedContentLoading">
+      <div v-if="selectedArticle" class="article-body">
+        <div class="article-content" :class="{ 'with-outline': showOutline }">
+          <template v-for="(item, idx) in resolvedContent" :key="idx">
+            <HtmlRender
+              v-if="item.type === 'text/html'"
+              :html="item.value"
+              :block-index="idx"
+              @update:headings="onHeadings(idx, $event)"
+            />
+            <pre v-else-if="item.type === 'text/plain'" class="plain-text">{{ item.value }}</pre>
+            <n-tag v-else type="warning" size="small">{{ t('unsupportedType', { type: item.type }) }}</n-tag>
+          </template>
         </div>
-      </n-spin>
-    </n-drawer-content>
-  </n-drawer>
+      </div>
+    </n-spin>
+
+    <template #footer>
+      <div v-if="selectedArticle" class="article-actions">
+        <n-space justify="space-between" style="width: 100%">
+          <n-space>
+            <n-button size="small" @click="openOriginal">{{ t('openOriginal') }}</n-button>
+            <n-button
+              size="small"
+              :type="selectedArticle?.is_star ? 'warning' : 'default'"
+              @click="toggleSelectedStar"
+            >
+              {{ selectedArticle?.is_star ? t('unstar') : t('star') }}
+            </n-button>
+            <n-popover trigger="click" placement="top-start" :width="260">
+              <template #trigger>
+                <n-button size="small">{{ t('tagManagement') }}</n-button>
+              </template>
+              <n-space vertical style="padding: 8px 0">
+                <n-select
+                  v-model:value="selectedArticleTags"
+                  :options="tagOptions"
+                  multiple
+                  clearable
+                  size="small"
+                  style="min-width: 200px"
+                  :placeholder="t('tagged')"
+                  @update:value="onArticleTagsChange"
+                />
+                <n-input-group>
+                  <n-input
+                    v-model:value="newTagTitle"
+                    size="small"
+                    :placeholder="t('addTag')"
+                    @keyup.enter="addNewTag"
+                  />
+                  <n-button size="small" @click="addNewTag">
+                    <template #icon>
+                      <n-icon><AddOutline /></n-icon>
+                    </template>
+                  </n-button>
+                </n-input-group>
+              </n-space>
+            </n-popover>
+          </n-space>
+          <n-button size="small" @click="openMeta">{{ t('metaInspector') }}</n-button>
+        </n-space>
+      </div>
+    </template>
+  </n-drawer-content>
+
+  <div v-if="showOutline" class="article-outline">
+    <div class="article-outline-inner">
+      <n-anchor :offset-target="getScrollContainer" :ignore-gap="true" type="rail">
+        <n-anchor-link
+          v-for="h in headings"
+          :key="h.id"
+          :href="`#${h.id}`"
+          :title="h.text"
+          :class="`outline-link-level-${h.level}`"
+        />
+      </n-anchor>
+    </div>
+  </div>
+</n-drawer>
 
   <ArticleMetaDrawer ref="metaDrawerRef" :drawer-target="drawerTarget" />
 </template>
@@ -89,6 +108,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { AddOutline } from "@vicons/ionicons5";
+import { NAnchor, NAnchorLink } from "naive-ui";
 import { useArticleStore, useConnectionStore, useTagStore } from "@/stores";
 import { relativeTime, resolveFilePlaceholders } from "@rosser/shared";
 import { openExternal } from "@/platform";
@@ -114,6 +134,31 @@ const selectedArticleTags = ref<string[]>([]);
 const newTagTitle = ref("");
 const metaDrawerRef = ref<InstanceType<typeof ArticleMetaDrawer> | null>(null);
 
+const headingMap = ref<Map<number, { id: string; level: 1 | 2 | 3; text: string }[]>>(new Map());
+
+const headings = computed(() => {
+  const result: { id: string; level: 1 | 2 | 3; text: string }[] = [];
+  const map = headingMap.value;
+  const keys = Array.from(map.keys()).sort((a, b) => a - b);
+  for (const key of keys) {
+    const items = map.get(key);
+    if (items) result.push(...items);
+  }
+  return result;
+});
+
+const showOutline = computed(() => headings.value.length >= 2);
+
+function onHeadings(idx: number, items: { id: string; level: 1 | 2 | 3; text: string }[]) {
+  headingMap.value.set(idx, items);
+}
+
+function getScrollContainer(): HTMLElement | undefined {
+  const root = props.drawerTarget ?? document.body;
+  const el = root.querySelector<HTMLElement>(".n-drawer-body-content-wrapper");
+  return el ?? undefined;
+}
+
 const tagOptions = computed(() =>
   tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
 );
@@ -135,6 +180,7 @@ async function open(art: any) {
   selectedArticleTags.value = art.tags?.map((t: any) => t.id) || [];
   show.value = true;
   resolvedContent.value = [];
+  headingMap.value = new Map();
   resolvedContentLoading.value = true;
 
   if (!art.is_read) {
@@ -181,6 +227,7 @@ async function open(art: any) {
 function close() {
   show.value = false;
   metaDrawerRef.value?.close();
+  headingMap.value = new Map();
 }
 
 async function onArticleTagsChange(tagIds: string[]) {
@@ -247,6 +294,7 @@ defineExpose({ open, close });
   max-width: 100%;
   overflow-wrap: break-word;
   flex: 1;
+  box-sizing: border-box;
 }
 .article-content :deep(.n-image-preview-mask),
 .article-content :deep(.n-image-preview-container) {
@@ -263,9 +311,8 @@ defineExpose({ open, close });
   flex-direction: column;
 }
 .article-actions {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--n-border-color, #eee);
+  width: 100%;
+  box-sizing: border-box;
 }
 .drawer-header {
   line-height: 1.3;
@@ -279,5 +326,52 @@ defineExpose({ open, close });
   font-size: 12px;
   color: #999;
   margin-top: 4px;
+}
+
+.article-content.with-outline {
+  padding-right: 260px;
+}
+
+.article-outline {
+  position: fixed;
+  right: 18px;
+  top: 120px;
+  z-index: 1000;
+  max-height: calc(100vh - 160px);
+  pointer-events: none;
+}
+
+.article-outline-inner {
+  width: 220px;
+  min-height: 60px;
+  max-height: calc(100vh - 160px);
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  box-shadow: none;
+  transition: box-shadow 0.2s ease;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.article-outline-inner:hover {
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.08);
+}
+
+.article-outline :deep(.n-anchor) {
+  width: 100%;
+}
+
+.article-outline :deep(.outline-link-level-1) {
+  padding-left: 0 !important;
+}
+
+.article-outline :deep(.outline-link-level-2) {
+  padding-left: 12px !important;
+}
+
+.article-outline :deep(.outline-link-level-3) {
+  padding-left: 24px !important;
 }
 </style>

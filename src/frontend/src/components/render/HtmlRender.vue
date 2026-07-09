@@ -1,7 +1,7 @@
 <template></template>
 
 <script lang="ts">
-import { defineComponent, h, type VNode } from "vue";
+import { defineComponent, h, type VNode, computed, watch } from "vue";
 import {
   NImage,
   NImageGroup,
@@ -101,6 +101,23 @@ const BLOCK_MAP: Record<string, any> = {
   hr: NHr,
 };
 
+interface HeadingItem {
+  id: string;
+  level: 1 | 2 | 3;
+  text: string;
+}
+
+interface ParseContext {
+  blockIndex: number;
+  seq: number;
+  headings: HeadingItem[];
+}
+
+interface ParseResult {
+  vnode: VNode;
+  headings: HeadingItem[];
+}
+
 function isExternalHref(href: string): boolean {
   return /^(https?:|mailto:|tel:)/i.test(href);
 }
@@ -136,7 +153,11 @@ function renderComponent(
     : h(component, props, { default: () => children });
 }
 
-function domNodeToVNode(node: Node): VNode | string | null {
+function generateHeadingId(ctx: ParseContext): string {
+  return `heading-${ctx.blockIndex}-${ctx.seq++}`;
+}
+
+function domNodeToVNode(node: Node, ctx: ParseContext): VNode | string | null {
   if (node.nodeType === Node.TEXT_NODE) {
     return node.textContent || null;
   }
@@ -153,7 +174,7 @@ function domNodeToVNode(node: Node): VNode | string | null {
   const children = VOID_TAGS.has(tagName)
     ? undefined
     : Array.from(el.childNodes)
-        .map(domNodeToVNode)
+        .map((child) => domNodeToVNode(child, ctx))
         .filter((c): c is VNode | string => c !== null);
 
   if (tagName === "img") {
@@ -194,6 +215,15 @@ function domNodeToVNode(node: Node): VNode | string | null {
   }
 
   if (tagName in HEADING_MAP) {
+    if (tagName === "h1" || tagName === "h2" || tagName === "h3") {
+      const id = attrs.id || generateHeadingId(ctx);
+      attrs.id = id;
+      ctx.headings.push({
+        id,
+        level: tagName === "h1" ? 1 : tagName === "h2" ? 2 : 3,
+        text: el.textContent?.trim() || "",
+      });
+    }
     return renderComponent(HEADING_MAP[tagName], attrs, children);
   }
 
@@ -219,17 +249,18 @@ function hasImage(nodes: (VNode | string)[]): boolean {
   return false;
 }
 
-function renderHtml(html: string): VNode {
+function parseHtml(html: string, blockIndex: number): ParseResult {
   const doc = new DOMParser().parseFromString(html, "text/html");
+  const ctx: ParseContext = { blockIndex, seq: 0, headings: [] };
   const children = Array.from(doc.body.childNodes)
-    .map(domNodeToVNode)
+    .map((node) => domNodeToVNode(node, ctx))
     .filter((c): c is VNode | string => c !== null);
 
-  if (hasImage(children)) {
-    return h(NImageGroup, {}, { default: () => children });
-  }
+  const root = hasImage(children)
+    ? h(NImageGroup, {}, { default: () => children })
+    : h("div", { class: "html-render-root" }, children);
 
-  return h("div", { class: "html-render-root" }, children);
+  return { vnode: root, headings: ctx.headings };
 }
 
 export default defineComponent({
@@ -238,9 +269,24 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    blockIndex: {
+      type: Number,
+      default: 0,
+    },
   },
-  setup(props) {
-    return () => renderHtml(props.html);
+  emits: ["update:headings"],
+  setup(props, { emit }) {
+    const headings = computed(() => parseHtml(props.html, props.blockIndex).headings);
+
+    watch(
+      () => headings.value,
+      (items) => {
+        emit("update:headings", items);
+      },
+      { immediate: true },
+    );
+
+    return () => parseHtml(props.html, props.blockIndex).vnode;
   },
 });
 </script>

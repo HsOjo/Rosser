@@ -22,25 +22,27 @@ test.describe("Settings", () => {
       await route.fulfill({ json: { items: [], total: 0, page: 1, size: 20 } });
     });
 
-    await page.goto("/settings");
+    await page.goto("/");
+    await page.getByRole("button").nth(4).click();
   });
 
   test("displays settings form", async ({ page }) => {
-    await expect(page.locator("text=Settings")).toBeVisible();
-    await expect(page.locator("text=Auto Refresh Interval")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
+    await expect(page.locator("text=设置").first()).toBeVisible();
+    await expect(page.locator("text=自动刷新间隔（分钟）")).toBeVisible();
+    await expect(page.getByRole("button", { name: "保存" })).toBeVisible();
   });
 
   test("updates settings and shows connection info", async ({ page }) => {
     // Naive UI n-input-number renders input without type=number
     const numberInput = page.locator('.n-input-number input');
     await numberInput.fill("120");
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.locator("text=Auto Refresh Interval")).toBeVisible();
+    await page.getByRole("button", { name: "保存" }).click();
+    await expect(page.locator("text=自动刷新间隔（分钟）")).toBeVisible();
   });
 
   test("disconnect returns to onboarding", async ({ page }) => {
-    await page.getByRole("button", { name: "Disconnect" }).click();
+    await page.locator('text=连接').click();
+    await page.getByRole("button", { name: "断开连接" }).click();
     await page.waitForURL("/onboarding");
     await expect(page).toHaveURL("/onboarding");
   });

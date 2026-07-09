@@ -69,13 +69,13 @@ test.describe("Main - Articles", () => {
 
   test("click article opens modal", async ({ page }) => {
     await page.click("text=Article One");
-    await expect(page.locator("text=Hello world")).toBeVisible();
-    await expect(page.locator('.n-modal .n-card__footer button:has-text("Close")')).toBeVisible();
+    await expect(page.locator('role=paragraph >> text=Hello world')).toBeVisible();
+    await expect(page.locator('role=dialog')).toBeVisible();
   });
 
   test("mark read via article action", async ({ page }) => {
     const articleRow = page.locator('.n-list-item:has-text("Article One")');
-    await articleRow.locator('button:has-text("Read")').click();
-    await expect(page.locator('.n-list-item:has-text("Article One"):has-text("New")')).not.toBeVisible();
+    await articleRow.locator('button:has-text("已读")').click();
+    await expect(page.locator('.n-list-item:has-text("Article One"):has-text("新")')).not.toBeVisible();
   });
 });
