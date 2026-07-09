@@ -2,37 +2,16 @@
   <div class="article-list">
     <n-spin :show="artStore.loading">
       <n-list clickable>
-        <n-list-item v-for="art in artStore.articles" :key="art.id"
+        <ArticleListItem
+          v-for="art in artStore.articles"
+          :key="art.id"
+          :article="art"
           @click="openArticle(art)"
-          style="padding: 12px 16px"
-        >
-          <n-thing :title="art.title">
-            <template #header-extra>
-              <span style="font-size: 12px; color: #999; white-space: nowrap;">{{ relativeTime(art.publish_time) }}</span>
-            </template>
-            <template #description>
-              <n-ellipsis :line-clamp="2" :tooltip="false" style="font-size: 13px; color: #666;">
-                {{ stripHtml(art.summary || "") }}
-              </n-ellipsis>
-            </template>
-            <template #avatar>
-              <n-tag v-if="!art.is_read" type="success" size="small">{{ t('new') }}</n-tag>
-              <n-tag v-if="art.is_star" type="warning" size="small">{{ t('star') }}</n-tag>
-            </template>
-            <template #action>
-              <n-space>
-                <n-button v-if="art.is_read" text size="tiny" @click.stop="markUnread(art)"
-                  >{{ t('unread') }}</n-button>
-                <n-button v-else text size="tiny" @click.stop="markRead(art)"
-                  >{{ t('read') }}</n-button>
-                <n-button text size="tiny" @click.stop="toggleStar(art)"
-                  >{{ art.is_star ? t('unstar') : t('star') }}</n-button>
-                <n-button text size="tiny" @click.stop="toggleHide(art)"
-                  >{{ art.is_hide ? t('unhide') : t('hide') }}</n-button>
-              </n-space>
-            </template>
-          </n-thing>
-        </n-list-item>
+          @mark-read="markRead(art)"
+          @mark-unread="markUnread(art)"
+          @toggle-star="toggleStar(art)"
+          @toggle-hide="toggleHide(art)"
+        />
       </n-list>
 
       <n-empty v-if="!artStore.loading && artStore.articles.length === 0" :description="$t('noData')" />
@@ -75,7 +54,10 @@
           <div v-if="selectedArticle" class="article-body">
             <div class="article-content">
               <template v-for="(item, idx) in resolvedContent" :key="idx">
-                <div v-if="item.type === 'text/html'" v-html="item.value" />
+                <HtmlRender
+                  v-if="item.type === 'text/html'"
+                  :html="item.value"
+                />
                 <pre v-else-if="item.type === 'text/plain'" class="plain-text">{{ item.value }}</pre>
                 <n-tag v-else type="warning" size="small">{{ t('unsupportedType', { type: item.type }) }}</n-tag>
               </template>
@@ -164,6 +146,8 @@ import { AddOutline } from "@vicons/ionicons5";
 import { useArticleStore, useConnectionStore, useSubscriptionStore, useTagStore } from "@/stores";
 import { relativeTime, resolveFilePlaceholders, wsClient } from "@rosser/shared";
 import { openExternal } from "@/platform";
+import HtmlRender from "./render/HtmlRender.vue";
+import ArticleListItem from "./ArticleListItem.vue";
 import DOMPurify from "dompurify";
 
 const { t } = useI18n();
@@ -196,6 +180,17 @@ const resolvedContent = ref<{ type: string; value: string }[]>([]);
 const resolvedContentLoading = ref(false);
 const selectedArticleTags = ref<string[]>([]);
 const newTagTitle = ref("");
+function isImagePreviewOpen() {
+  return !!document.querySelector(".n-image-preview-container");
+}
+
+function onKeydownCapture(e: KeyboardEvent) {
+  if (e.key === "Escape" && isImagePreviewOpen()) {
+    e.stopImmediatePropagation();
+    const overlay = document.querySelector(".n-image-preview-overlay") as HTMLElement | null;
+    overlay?.click();
+  }
+}
 
 const tagOptions = computed(() =>
   tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
@@ -420,11 +415,6 @@ async function toggleSelectedStar() {
   selectedArticle.value.is_star = listArt?.is_star ?? !selectedArticle.value.is_star;
 }
 
-function stripHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
-}
-
 function openOriginal() {
   if (selectedArticle.value?.link) {
     openExternal(selectedArticle.value.link);
@@ -482,10 +472,12 @@ function handleSubscriptionFetch(payload: { subscription_id?: string; added?: nu
 }
 
 onMounted(() => {
+  document.addEventListener("keydown", onKeydownCapture, true);
   wsClient.on("subscription.fetch", handleSubscriptionFetch);
 });
 
 onUnmounted(() => {
+  document.removeEventListener("keydown", onKeydownCapture, true);
   wsClient.off("subscription.fetch", handleSubscriptionFetch);
 });
 
@@ -512,28 +504,9 @@ watch(() => artStore.articles, () => {
   overflow-wrap: break-word;
   flex: 1;
 }
-.article-content > div {
-  max-width: 100%;
-}
-.article-content :deep(img) {
-  max-width: 100% !important;
-  width: auto !important;
-  height: auto !important;
-  display: block;
-}
-.article-content :deep(table) {
-  max-width: 100%;
-  width: 100%;
-  table-layout: fixed;
-}
-.article-content :deep(pre) {
-  overflow-x: auto;
-  max-width: 100%;
-}
-.article-content :deep(pre),
-.article-content :deep(code) {
-  white-space: pre-wrap;
-  word-break: break-word;
+.article-content :deep(.n-image-preview-mask),
+.article-content :deep(.n-image-preview-container) {
+  z-index: 2500;
 }
 .article-content .plain-text {
   white-space: pre-wrap;
