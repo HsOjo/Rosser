@@ -8,7 +8,10 @@
     :close-on-esc="true"
     :style="{ '--n-border-radius': '0' }"
   >
-    <n-drawer-content :title="t('metaInspector')" :closable="true">
+    <n-drawer-content
+      :title="t('metaInspector')"
+      :closable="true"
+    >
       <n-data-table
         v-if="metaTreeData.length"
         :columns="metaColumns"
@@ -42,18 +45,22 @@ const metaColumns = computed(() => [
   {
     title: t("metaKey"),
     key: "key",
-    width: 160,
+    width: 200,
+    minWidth: 120,
+    resizable: true,
     ellipsis: { tooltip: true },
   },
   {
     title: t("metaType"),
     key: "type",
     width: 100,
+    resizable: true,
   },
   {
     title: t("metaValue"),
     key: "value",
     minWidth: 160,
+    resizable: true,
     ellipsis: { tooltip: true },
   },
 ]);
@@ -105,7 +112,7 @@ function buildMetaTree(obj: any, parentKey = "", depth = 0): MetaTreeRow[] {
           key: itemKey,
           keyPath: itemKey,
           label: String(idx),
-          type: "array",
+          type: Array.isArray(item) ? "array" : "object",
           value: "",
           depth,
           children,
@@ -138,7 +145,7 @@ function buildMetaTree(obj: any, parentKey = "", depth = 0): MetaTreeRow[] {
           key: childKey,
           keyPath: childKey,
           label: k,
-          type: "object",
+          type: Array.isArray(obj[k]) ? "array" : "object",
           value: "",
           depth,
           children,
@@ -182,3 +189,9 @@ function close() {
 
 defineExpose({ open, close });
 </script>
+
+<style scoped>
+:deep(.n-drawer-body-content-wrapper) {
+  padding: 0 !important;
+}
+</style>
