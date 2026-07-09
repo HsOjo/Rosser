@@ -77,6 +77,8 @@
   "fetchNow": "立即抓取",
   "fetchAll": "抓取全部",
   "saved": "已保存",
+  "copied": "已复制",
+  "copyFailed": "复制失败",
   "lastFetch": "最后抓取",
   "neverFetched": "从未抓取",
   "tagTitle": "标签名称",

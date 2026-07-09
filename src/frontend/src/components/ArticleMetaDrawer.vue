@@ -29,10 +29,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, h } from "vue";
 import { useI18n } from "vue-i18n";
+import { useMessage } from "naive-ui";
 
 const { t } = useI18n();
+const message = useMessage();
 
 const props = defineProps<{
   drawerTarget?: HTMLElement | null;
@@ -62,6 +64,15 @@ const metaColumns = computed(() => [
     minWidth: 160,
     resizable: true,
     ellipsis: { tooltip: true },
+    render(row: MetaTreeRow) {
+      return h(
+        "span",
+        {
+          onDblclick: () => copyValue(row.value),
+        },
+        row.value
+      );
+    },
   },
 ]);
 
@@ -169,6 +180,15 @@ const metaTreeData = computed(() => {
   if (!meta.value || typeof meta.value !== "object") return [];
   return buildMetaTree(meta.value);
 });
+
+async function copyValue(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    message.success(t("copied"));
+  } catch {
+    message.error(t("copyFailed"));
+  }
+}
 
 function metaRowProps(row: MetaTreeRow) {
   return {

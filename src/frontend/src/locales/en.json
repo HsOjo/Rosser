@@ -77,6 +77,8 @@
   "fetchNow": "Fetch Now",
   "fetchAll": "Fetch All",
   "saved": "Saved",
+  "copied": "Copied",
+  "copyFailed": "Copy failed",
   "lastFetch": "Last fetch",
   "neverFetched": "Never",
   "tagTitle": "Tag Title",
