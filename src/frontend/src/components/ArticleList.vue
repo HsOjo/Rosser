@@ -29,7 +29,7 @@
       />
     </n-spin>
 
-    <ArticleDrawer ref="articleDrawerRef" :drawer-target="drawerTarget" />
+    <ArticleDrawer ref="articleDrawerRef" :drawer-target="drawerTarget" @close="onDrawerClose" />
   </div>
 </template>
 
@@ -51,10 +51,12 @@ const props = defineProps<{
   isHide?: boolean;
   order?: string;
   drawerTarget?: HTMLElement | null;
+  openedArticleId?: string;
 }>();
 
 const emit = defineEmits<{
   (e: "refresh"): void;
+  (e: "update:openedArticleId", id: string | undefined): void;
 }>();
 
 const artStore = useArticleStore();
@@ -63,6 +65,13 @@ const articleDrawerRef = ref<InstanceType<typeof ArticleDrawer> | null>(null);
 
 function openArticle(art: any) {
   articleDrawerRef.value?.open(art);
+  emit("update:openedArticleId", art.id);
+}
+
+function onDrawerClose() {
+  if (props.openedArticleId) {
+    emit("update:openedArticleId", undefined);
+  }
 }
 
 function onPageChange() {
@@ -123,14 +132,39 @@ onUnmounted(() => {
   wsClient.off("subscription.fetch", handleSubscriptionFetch);
 });
 
-watch(() => [props.subscriptionId, props.categoryId, props.siteId, props.tag, props.search, props.isRead, props.isStar, props.isHide, props.order], () => {
-  artStore.page = 1;
-  load();
-}, { immediate: true });
+let initialPropsLoad = true;
 
-watch(() => artStore.articles, () => {
-  articleDrawerRef.value?.close();
-});
+watch(
+  () => [props.subscriptionId, props.categoryId, props.siteId, props.tag, props.search, props.isRead, props.isStar, props.isHide, props.order],
+  () => {
+    artStore.page = 1;
+    load();
+    if (!initialPropsLoad) {
+      articleDrawerRef.value?.close();
+      emit("update:openedArticleId", undefined);
+    }
+    initialPropsLoad = false;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.openedArticleId,
+  (id) => {
+    if (!id) {
+      articleDrawerRef.value?.close();
+      return;
+    }
+    const art = artStore.articles.find((a) => a.id === id);
+    if (art) {
+      articleDrawerRef.value?.open(art);
+    } else {
+      artStore.fetchOne(id).then((full) => {
+        if (full) articleDrawerRef.value?.open(full);
+      });
+    }
+  }
+);
 </script>
 
 <style scoped>

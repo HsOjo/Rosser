@@ -121,7 +121,9 @@
               :is-star="selectedIsStar"
               :is-hide="selectedIsHide"
               :order="order"
+              :opened-article-id="openedArticleId"
               @refresh="onArticleRefresh"
+              @update:opened-article-id="openedArticleId = $event"
             />
           </div>
         </div>
@@ -220,6 +222,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
 import {
   RefreshOutline,
@@ -246,6 +249,8 @@ import NotificationsModal from "@/components/NotificationsModal.vue";
 import SettingsModal from "@/views/Settings.vue";
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 const subStore = useSubscriptionStore();
 const catStore = useCategoryStore();
 const contentRef = ref<HTMLElement | null>(null);
@@ -270,6 +275,7 @@ const searchInput = ref("");
 const debouncedSearch = ref("");
 const searchVisible = ref(false);
 const order = ref("publish_time desc");
+const openedArticleId = ref<string | undefined>(undefined);
 
 const orderOptions = [
   { label: t('sortPublishTimeDesc'), value: "publish_time desc" },
@@ -359,6 +365,75 @@ const editTagColor = ref("");
 const savingTag = ref(false);
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function applyQuery() {
+  const q = route.query;
+  let key = "all";
+
+  if (typeof q.sub === "string") {
+    key = `sub-${q.sub}`;
+  } else if (typeof q.cat === "string") {
+    key = `cat-${q.cat}`;
+  } else if (typeof q.site === "string") {
+    key = `site-${q.site}`;
+  } else if (typeof q.tag === "string") {
+    const tag = tagStore.tags.find((t: any) => t.title === q.tag);
+    if (tag) key = `tag-${tag.id}`;
+  } else if (typeof q.filter === "string" && ["unread", "starred", "hidden"].includes(q.filter)) {
+    key = q.filter;
+  }
+
+  selectedKey.value = key;
+  applyMenuKey(key);
+
+  const search = typeof q.search === "string" ? q.search : "";
+  searchInput.value = search;
+  debouncedSearch.value = search;
+
+  order.value = typeof q.order === "string" ? q.order : "publish_time desc";
+  openedArticleId.value = typeof q.article === "string" ? q.article : undefined;
+}
+
+function syncQuery() {
+  const query: Record<string, string> = {};
+
+  if (selectedSubscription.value) query.sub = selectedSubscription.value;
+  else if (selectedCategory.value) query.cat = selectedCategory.value;
+  else if (selectedSite.value) query.site = selectedSite.value;
+  else if (selectedTagTitle.value) query.tag = selectedTagTitle.value;
+  else if (selectedIsRead.value === false) query.filter = "unread";
+  else if (selectedIsStar.value === true) query.filter = "starred";
+  else if (selectedIsHide.value === true) query.filter = "hidden";
+
+  if (searchInput.value.trim()) query.search = searchInput.value.trim();
+  if (order.value !== "publish_time desc") query.order = order.value;
+  if (openedArticleId.value) query.article = openedArticleId.value;
+
+  const current = route.query;
+  const same =
+    Object.keys(query).length === Object.keys(current).length &&
+    Object.entries(query).every(([k, v]) => current[k] === v);
+  if (!same) {
+    router.replace({ query });
+  }
+}
+
+watch(() => route.query, applyQuery);
+watch(
+  () => [
+    selectedSubscription.value,
+    selectedCategory.value,
+    selectedSite.value,
+    selectedTagTitle.value,
+    selectedIsRead.value,
+    selectedIsStar.value,
+    selectedIsHide.value,
+    searchInput.value,
+    order.value,
+    openedArticleId.value,
+  ],
+  syncQuery
+);
 
 const categoryOptions = computed(() =>
   catStore.categories.map((c: any) => ({ label: c.title, value: c.id }))
@@ -853,9 +928,14 @@ async function deleteSubscription(sub: any) {
 }
 
 onMounted(() => {
+  applyQuery();
   subStore.fetchAll();
   catStore.fetchAll();
-  tagStore.fetchAll();
+  tagStore.fetchAll().then(() => {
+    if (typeof route.query.tag === "string") {
+      applyQuery();
+    }
+  });
   siteStore.fetchAll();
   notificationStore.fetchUnreadCount();
   detectTauri().then((isTauri) => {

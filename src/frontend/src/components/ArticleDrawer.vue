@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { AddOutline } from "@vicons/ionicons5";
 import { NAnchor, NAnchorLink } from "naive-ui";
@@ -120,6 +120,10 @@ const { t } = useI18n();
 
 const props = defineProps<{
   drawerTarget?: HTMLElement | null;
+}>();
+
+const emit = defineEmits<{
+  (e: "close"): void;
 }>();
 
 const artStore = useArticleStore();
@@ -229,6 +233,10 @@ function close() {
   metaDrawerRef.value?.close();
   headingMap.value = new Map();
 }
+
+watch(show, (val) => {
+  if (!val) emit("close");
+});
 
 async function onArticleTagsChange(tagIds: string[]) {
   if (!selectedArticle.value) return;
