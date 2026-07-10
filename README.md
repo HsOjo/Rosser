@@ -2,6 +2,8 @@
 
 Rosser is an RSS reader rebuilt with modern technologies.
 
+![Rosser icon](src/frontend/src-tauri/icons/128x128@2x.png)
+
 ## Architecture
 
 - **Backend**: FastAPI + SQLAlchemy(async) + SQLite + Alembic + APScheduler
