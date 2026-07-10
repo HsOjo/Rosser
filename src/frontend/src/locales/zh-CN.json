@@ -105,5 +105,6 @@
   "proxy": "代理",
   "proxyEnabled": "启用代理",
   "proxyUrl": "代理地址",
-  "proxyUrlPlaceholder": "http://host:port 或 socks5://host:port"
+  "proxyUrlPlaceholder": "http://host:port 或 socks5://host:port",
+  "reload": "刷新页面"
 }

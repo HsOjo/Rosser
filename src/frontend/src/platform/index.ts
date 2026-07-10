@@ -126,3 +126,49 @@ export async function sendNotification(title: string, body: string) {
     }
   }
 }
+
+import type { Menu, Submenu } from "@tauri-apps/api/menu";
+
+let _menuSetupDone = false;
+
+export async function setupAppMenu(reloadText: string) {
+  if (_menuSetupDone || !(await detectTauri())) return;
+  _menuSetupDone = true;
+
+  const { Menu, Submenu, MenuItem } = await import("@tauri-apps/api/menu");
+  const menu = await Menu.default();
+
+  if (await menu.get("reload")) {
+    return;
+  }
+
+  const viewMenu = await findOrCreateViewSubmenu(menu, Submenu);
+  const accelerator = isMac() ? "Cmd+R" : "Ctrl+R";
+  const reloadItem = await MenuItem.new({
+    id: "reload",
+    text: reloadText,
+    accelerator,
+    action: () => {
+      window.location.reload();
+    },
+  });
+
+  await viewMenu.append(reloadItem);
+  await menu.setAsAppMenu();
+}
+
+async function findOrCreateViewSubmenu(
+  menu: Menu,
+  Submenu: typeof import("@tauri-apps/api/menu").Submenu
+): Promise<Submenu> {
+  const items = await menu.items();
+  for (const item of items) {
+    if (item.kind === "Submenu") {
+      const text = await (item as Submenu).text();
+      if (text === "View" || text === "视图") {
+        return item as Submenu;
+      }
+    }
+  }
+  return await Submenu.new({ text: "View" });
+}

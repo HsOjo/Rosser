@@ -2,7 +2,7 @@
   <n-layout class="app-shell">
     <!-- Unified fixed top bar -->
     <n-layout-header class="top-bar" bordered data-tauri-drag-region>
-      <div class="top-bar-left" :class="{ 'mac-layout': isMacClient }" :style="leftStyle" data-tauri-drag-region="no-drag">
+      <div class="top-bar-left" :class="{ 'mac-layout': isMacClient && !isFullscreen }" :style="leftStyle" data-tauri-drag-region="no-drag">
         <span class="app-name">{{ $t('appName') }}</span>
         <div class="toolbar-group">
           <n-tooltip>
@@ -221,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDialog, useMessage } from "naive-ui";
 import {
@@ -316,6 +316,8 @@ const leftStyle = computed(() => ({
 }));
 
 const isMacClient = ref(false);
+const isFullscreen = ref(false);
+let unlistenResize: (() => void) | null = null;
 
 const showAddCat = ref(false);
 const newCatTitle = ref("");
@@ -927,7 +929,7 @@ async function deleteSubscription(sub: any) {
   message.success(t("deleted"));
 }
 
-onMounted(() => {
+onMounted(async () => {
   applyQuery();
   subStore.fetchAll();
   catStore.fetchAll();
@@ -938,9 +940,19 @@ onMounted(() => {
   });
   siteStore.fetchAll();
   notificationStore.fetchUnreadCount();
-  detectTauri().then((isTauri) => {
-    isMacClient.value = isTauri && isMac();
-  });
+  if (await detectTauri()) {
+    isMacClient.value = isMac();
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    const win = getCurrentWindow();
+    isFullscreen.value = await win.isFullscreen();
+    unlistenResize = await win.onResized(async () => {
+      isFullscreen.value = await win.isFullscreen();
+    });
+  }
+});
+
+onUnmounted(() => {
+  unlistenResize?.();
 });
 </script>
 
@@ -984,12 +996,12 @@ onMounted(() => {
 
 .top-bar-left {
   position: relative;
-  justify-content: flex-start;
   padding: 0 12px;
 }
 
-.top-bar-left.mac-layout {
-  justify-content: center;
+.top-bar-left.mac-layout .app-name {
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
 }
 
 .top-bar-left .toolbar-group {
@@ -1005,6 +1017,9 @@ onMounted(() => {
 }
 
 .app-name {
+  position: absolute;
+  left: 8px;
+  top: 50%;
   font-weight: bold;
   font-size: 18px;
   line-height: 1;
@@ -1014,6 +1029,8 @@ onMounted(() => {
   -ms-user-select: none;
   user-select: none;
   cursor: default;
+  transform: translateY(-50%) translateX(0);
+  transition: left 0.3s ease, transform 0.3s ease;
 }
 
 .toolbar-group {

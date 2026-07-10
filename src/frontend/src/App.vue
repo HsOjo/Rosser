@@ -9,9 +9,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, watch, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { darkTheme, lightTheme } from "naive-ui";
-import { getUISettings, saveUISettings } from "@/platform";
+import { getUISettings, saveUISettings, detectTauri, setupAppMenu } from "@/platform";
+
+const { t } = useI18n();
 
 const ui = getUISettings();
 
@@ -40,6 +43,12 @@ const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 mediaQuery.addEventListener("change", () => {
   if (ui.value.theme === "auto") {
     applyThemeClass("auto");
+  }
+});
+
+onMounted(async () => {
+  if (await detectTauri()) {
+    await setupAppMenu(t("reload"));
   }
 });
 </script>

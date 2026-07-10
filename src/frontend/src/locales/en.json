@@ -105,5 +105,6 @@
   "proxy": "Proxy",
   "proxyEnabled": "Enable proxy",
   "proxyUrl": "Proxy URL",
-  "proxyUrlPlaceholder": "http://host:port or socks5://host:port"
+  "proxyUrlPlaceholder": "http://host:port or socks5://host:port",
+  "reload": "Reload"
 }
