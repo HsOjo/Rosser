@@ -8,6 +8,7 @@ use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{Emitter, Manager};
+use tauri_plugin_notification::NotificationExt;
 
 /// Wraps a child process so it is killed when the wrapper is dropped.
 struct KillOnDrop(Child);
@@ -25,6 +26,7 @@ struct BackendHandle {
     port: AtomicU16,
     token: Mutex<String>,
     started: AtomicBool,
+    quitting: AtomicBool,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -138,7 +140,7 @@ fn toggle_devtools(window: tauri::WebviewWindow) {
 }
 
 fn main() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .manage(BackendHandle {
@@ -147,11 +149,62 @@ fn main() {
             port: AtomicU16::new(0),
             token: Mutex::new(String::new()),
             started: AtomicBool::new(false),
+            quitting: AtomicBool::new(false),
         })
-        .setup(|_app| {
-            #[cfg(all(debug_assertions, target_os = "macos"))]
+        .setup(|app| {
+            #[cfg(target_os = "macos")]
             set_dock_icon();
+
+            // Build a tray icon without a menu. Left-click always shows and focuses the main window.
+            let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.png"))
+                .map_err(|e| e.to_string())?;
+            let _ = tauri::tray::TrayIconBuilder::with_id("tray")
+                .icon(tray_icon)
+                .tooltip("Rosser")
+                .show_menu_on_left_click(false)
+                .on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::Click {
+                        button: tauri::tray::MouseButton::Left,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            #[cfg(target_os = "macos")]
+                            {
+                                let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+                                set_dock_icon();
+                            }
+                        }
+                    }
+                })
+                .build(app)?;
+
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let app = window.app_handle();
+                let state = app.state::<BackendHandle>();
+                if !state.quitting.load(Ordering::Relaxed) {
+                    api.prevent_close();
+                    let _ = window.hide();
+
+                    let _ = app
+                        .notification()
+                        .builder()
+                        .title("Rosser")
+                        .body("Rosser 已隐藏到托盘，点击托盘图标可重新打开窗口")
+                        .show();
+
+                    #[cfg(target_os = "macos")]
+                    {
+                        let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+                    }
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             is_backend_ready,
@@ -159,11 +212,20 @@ fn main() {
             start_builtin_backend,
             toggle_devtools
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::ExitRequested { .. } = event {
+            app_handle
+                .state::<BackendHandle>()
+                .quitting
+                .store(true, Ordering::Relaxed);
+        }
+    });
 }
 
-#[cfg(all(debug_assertions, target_os = "macos"))]
+#[cfg(target_os = "macos")]
 fn set_dock_icon() {
     use objc2::ClassType;
     use objc2_app_kit::{NSApplication, NSImage};
