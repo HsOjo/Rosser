@@ -98,6 +98,8 @@
   "exportedTauri": "File saved to downloads folder",
   "dataManagement": "Data Management",
   "language": "Language",
+  "serverInfo": "Server Info",
+  "preferences": "Preferences",
   "connection": "Connection",
   "disconnect": "Disconnect",
   "proxy": "Proxy",

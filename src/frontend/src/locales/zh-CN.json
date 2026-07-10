@@ -98,6 +98,8 @@
   "exportedTauri": "文件已保存到下载目录",
   "dataManagement": "数据管理",
   "language": "语言",
+  "serverInfo": "服务器信息",
+  "preferences": "偏好设置",
   "connection": "连接",
   "disconnect": "断开连接",
   "proxy": "代理",

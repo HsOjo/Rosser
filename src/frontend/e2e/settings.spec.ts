@@ -32,13 +32,12 @@ test.describe("Settings", () => {
     await expect(page.getByRole("button", { name: "保存" })).toBeVisible();
   });
 
-  test("updates settings and shows connection info", async ({ page }) => {
+  test("updates settings and shows server info", async ({ page }) => {
     await page.getByRole("button", { name: "保存" }).click();
-    await expect(page.locator("text=代理")).toBeVisible();
+    await expect(page.locator("text=服务器信息")).toBeVisible();
   });
 
   test("disconnect returns to onboarding", async ({ page }) => {
-    await page.locator('text=连接').click();
     await page.getByRole("button", { name: "断开连接" }).click();
     await page.waitForURL("/onboarding");
     await expect(page).toHaveURL("/onboarding");
