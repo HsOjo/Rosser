@@ -20,7 +20,6 @@ from app.models import (
     ArticleState,
     File,
     Notification,
-    SettingsSingleton,
     Site,
     Subscription,
     Task,
@@ -28,14 +27,27 @@ from app.models import (
 from app.services.file import FileService
 
 FETCH_TIMEOUT = 30.0
-MAX_CONCURRENT_FETCHES = 5
 USER_AGENT = "Rosser/1.0 (+https://github.com/rosser/rosser)"
 
 
 class FetchService:
-    _semaphore = asyncio.Semaphore(MAX_CONCURRENT_FETCHES)
+    _site_semaphores: dict[str, tuple[int, asyncio.Semaphore]] = {}
+    _default_semaphore = asyncio.Semaphore(4)
     _on_new_articles: list[callable] = []
     _on_subscription_fetch: list[callable] = []
+
+    @classmethod
+    def _get_semaphore(cls, site: Site | None) -> asyncio.Semaphore:
+        if site is None:
+            return cls._default_semaphore
+        key = site.id
+        limit = site.concurrency_limit if site.concurrency_limit is not None else 4
+        entry = cls._site_semaphores.get(key)
+        if entry is None or entry[0] != limit:
+            semaphore = asyncio.Semaphore(limit)
+            cls._site_semaphores[key] = (limit, semaphore)
+            return semaphore
+        return entry[1]
 
     @classmethod
     def on_new_articles(cls, callback: callable):
@@ -79,7 +91,10 @@ class FetchService:
     @classmethod
     async def fetch_subscription(cls, subscription_id: str, task_id: str | None = None) -> dict[str, Any]:
         async with async_session() as session:
-            sub = await session.get(Subscription, subscription_id)
+            result = await session.execute(
+                select(Subscription).where(Subscription.id == subscription_id).options(selectinload(Subscription.site))
+            )
+            sub = result.scalar_one_or_none()
             if not sub:
                 return {"added": 0, "error": "Subscription not found"}
 
@@ -131,20 +146,17 @@ class FetchService:
 
     @classmethod
     async def fetch_expires(cls, task_id: str | None = None) -> dict[str, Any]:
-        # Fetch subscriptions whose last fetch_time is older than auto_refresh_interval minutes.
-        # This method is called every minute by the scheduler; each subscription is evaluated
-        # independently based on its own fetch_time.
+        # Fetch subscriptions whose last fetch_time is older than their own
+        # refresh_interval (in minutes). This method is called every minute by
+        # the scheduler; each subscription is evaluated independently.
         async with async_session() as session:
-            settings_row = await session.execute(select(SettingsSingleton))
-            settings_row = settings_row.scalar_one_or_none()
-            interval = (settings_row.auto_refresh_interval or 30) if settings_row else 30
-
             result = await session.execute(select(Subscription))
             subs = result.scalars().all()
 
         now = time.time()
         to_fetch = []
         for sub in subs:
+            interval = sub.refresh_interval if sub.refresh_interval is not None else 60
             if not sub.fetch_time:
                 to_fetch.append(sub)
             else:
@@ -174,7 +186,7 @@ class FetchService:
 
     @classmethod
     async def _fetch_feed(cls, session, sub: Subscription) -> list[Article]:
-        async with cls._semaphore:
+        async with cls._get_semaphore(sub.site):
             async with create_client(timeout=FETCH_TIMEOUT) as client:
                 resp = await client.get(sub.url, headers={"User-Agent": USER_AGENT})
                 resp.raise_for_status()

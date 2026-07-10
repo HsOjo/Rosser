@@ -5,7 +5,7 @@ test.use({ storageState: "playwright/.auth/user.json" });
 test.describe("Main - Articles", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/api/settings", async (route) => {
-      await route.fulfill({ json: { id: "s1", auto_refresh_interval: null, theme: "auto", font_size: "medium" } });
+      await route.fulfill({ json: { proxy: { enabled: false, url: null }, ui: { theme: "auto" } } });
     });
     await page.route("**/api/categories", async (route) => {
       await route.fulfill({ json: [{ id: "cat-1", title: "Tech" }] });

@@ -168,6 +168,9 @@
       <n-input v-model:value="editSubDesc" :placeholder="t('description')" type="textarea" />
       <n-select v-model:value="editSubCategory" :options="categoryOptions" :placeholder="t('category')" clearable />
       <n-select v-model:value="editSubTags" :options="tagOptions" :placeholder="t('tags')" multiple clearable />
+      <n-form-item :label="t('refreshInterval')" label-placement="left" label-width="120">
+        <n-input-number v-model:value="editSubRefreshInterval" :min="1" />
+      </n-form-item>
       <n-button type="primary" @click="saveEditSubscription">{{ t('save') }}</n-button>
     </n-space>
   </n-modal>
@@ -190,6 +193,9 @@
   <n-modal v-model:show="showEditSite" :title="t('editSite')" preset="card" style="width: 400px">
     <n-space vertical>
       <n-input v-model:value="editSiteTitle" :placeholder="t('title')" />
+      <n-form-item :label="t('concurrencyLimit')" label-placement="left" label-width="120">
+        <n-input-number v-model:value="editSiteConcurrency" :min="1" />
+      </n-form-item>
       <n-button type="primary" :loading="savingSite" @click="saveEditSite">{{ t('save') }}</n-button>
     </n-space>
   </n-modal>
@@ -331,6 +337,7 @@ const editSubTitle = ref("");
 const editSubDesc = ref("");
 const editSubCategory = ref<string | null>(null);
 const editSubTags = ref<string[]>([]);
+const editSubRefreshInterval = ref(60);
 const fetchingSub = ref(false);
 
 const showNotifications = ref(false);
@@ -344,6 +351,7 @@ const contextTarget = ref<{ type: "cat" | "sub" | "tag" | "site" | "blank"; data
 const showEditSite = ref(false);
 const editingSite = ref<any>(null);
 const editSiteTitle = ref("");
+const editSiteConcurrency = ref(4);
 const savingSite = ref(false);
 
 const showEditTag = ref(false);
@@ -532,12 +540,14 @@ async function openEditSubscription(sub: any) {
   editSubDesc.value = sub.description || "";
   editSubCategory.value = sub.category_id || null;
   editSubTags.value = sub.tags?.map((t: any) => t.id) || [];
+  editSubRefreshInterval.value = sub.refresh_interval ?? 60;
   showEditSub.value = true;
 }
 
 function openEditSite(site: any) {
   editingSite.value = site;
   editSiteTitle.value = site.title || "";
+  editSiteConcurrency.value = site.concurrency_limit ?? 4;
   showEditSite.value = true;
 }
 
@@ -547,10 +557,12 @@ async function saveEditSite() {
   try {
     await siteStore.update(editingSite.value.id, {
       title: editSiteTitle.value.trim(),
+      concurrency_limit: editSiteConcurrency.value,
     });
     showEditSite.value = false;
     editingSite.value = null;
     editSiteTitle.value = "";
+    editSiteConcurrency.value = 4;
     message.success(t("saved"));
   } finally {
     savingSite.value = false;
@@ -821,6 +833,7 @@ async function saveEditSubscription() {
     title: editSubTitle.value,
     description: editSubDesc.value,
     category_id: editSubCategory.value,
+    refresh_interval: editSubRefreshInterval.value,
   });
   const currentTagIds = editingSub.value.tags?.map((t: any) => t.id) || [];
   const toAdd = editSubTags.value.filter((id) => !currentTagIds.includes(id));
@@ -834,6 +847,7 @@ async function saveEditSubscription() {
   await subStore.fetchAll();
   showEditSub.value = false;
   editingSub.value = null;
+  editSubRefreshInterval.value = 60;
 }
 
 async function fetchSubscription(sub: any) {

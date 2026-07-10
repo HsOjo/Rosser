@@ -5,21 +5,11 @@
     <n-tabs type="line" placement="left" style="height: 100%">
       <n-tab-pane :tab="t('general')" name="general">
         <n-form label-placement="left" label-width="160">
-          <n-form-item :label="t('autoRefreshInterval')">
-            <n-input-number v-model:value="form.auto_refresh_interval" :min="1" />
-          </n-form-item>
           <n-form-item :label="t('theme')">
             <n-select v-model:value="uiTheme" :options="[
               { label: t('themeLight'), value: 'light' },
               { label: t('themeDark'), value: 'dark' },
               { label: t('themeAuto'), value: 'auto' }
-            ]" />
-          </n-form-item>
-          <n-form-item :label="t('fontSize')">
-            <n-select v-model:value="uiFontSize" :options="[
-              { label: t('fontSizeSmall'), value: 'small' },
-              { label: t('fontSizeMedium'), value: 'medium' },
-              { label: t('fontSizeLarge'), value: 'large' }
             ]" />
           </n-form-item>
           <n-form-item :label="t('language')">
@@ -56,13 +46,13 @@
           <n-card :title="t('proxy')" size="small">
             <n-form label-placement="left" label-width="100">
               <n-form-item :label="t('proxyEnabled')">
-                <n-switch v-model:value="form.proxy_enabled" />
+                <n-switch v-model:value="form.proxy.enabled" />
               </n-form-item>
               <n-form-item :label="t('proxyUrl')">
                 <n-input
-                  v-model:value="form.proxy_url"
+                  v-model:value="form.proxy.url"
                   :placeholder="t('proxyUrlPlaceholder')"
-                  :disabled="!form.proxy_enabled"
+                  :disabled="!form.proxy.enabled"
                   style="width: 100%"
                 />
               </n-form-item>
@@ -146,8 +136,7 @@ const show = defineModel<boolean>("show", { default: false });
 
 const ui = getUISettings();
 const uiTheme = ref(ui.value.theme);
-const uiFontSize = ref(ui.value.fontSize);
-const form = ref({ auto_refresh_interval: 30, proxy_enabled: false, proxy_url: "" });
+const form = ref({ proxy: { enabled: false, url: "" } });
 const saving = ref(false);
 const importing = ref(false);
 const exporting = ref(false);
@@ -169,10 +158,12 @@ function randomColor() {
 async function loadSettings() {
   await Promise.all([settings.fetch(), tagStore.fetchAll()]);
   if (settings.settings) {
+    const proxy = settings.settings.proxy || { enabled: false, url: "" };
     form.value = {
-      auto_refresh_interval: settings.settings.auto_refresh_interval || 30,
-      proxy_enabled: settings.settings.proxy_enabled || false,
-      proxy_url: settings.settings.proxy_url || "",
+      proxy: {
+        enabled: proxy.enabled || false,
+        url: proxy.url || "",
+      },
     };
   }
 }
@@ -190,19 +181,15 @@ function changeLocale(val: string) {
   saveUISettings({ locale: val });
 }
 
-function saveUI() {
-  saveUISettings({ theme: ui.value.theme, fontSize: ui.value.fontSize });
-}
-
 async function save() {
   saving.value = true;
   try {
-    const payload = { ...form.value };
-    if (!payload.proxy_enabled) {
-      payload.proxy_url = "";
+    const payload = { proxy: { ...form.value.proxy } };
+    if (!payload.proxy.enabled) {
+      payload.proxy.url = "";
     }
     await settings.update(payload);
-    saveUISettings({ theme: uiTheme.value, fontSize: uiFontSize.value, locale: locale.value });
+    saveUISettings({ theme: uiTheme.value, locale: locale.value });
     message.success(t('saved'));
   } finally {
     saving.value = false;

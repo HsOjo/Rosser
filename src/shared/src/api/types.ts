@@ -811,28 +811,28 @@ export interface components {
             /** Description */
             description?: string | null;
         };
-        /** SettingsOut */
-        SettingsOut: {
-            /** Id */
-            id: string;
-            /** Auto Refresh Interval */
-            auto_refresh_interval?: number | null;
+        /** ProxySettings */
+        ProxySettings: {
             /**
-             * Proxy Enabled
+             * Enabled
              * @default false
              */
-            proxy_enabled: boolean;
-            /** Proxy Url */
-            proxy_url?: string | null;
+            enabled: boolean;
+            /** Url */
+            url?: string | null;
+        };
+        /** SettingsOut */
+        SettingsOut: {
+            /**
+             * @default {
+             *       "enabled": false
+             *     }
+             */
+            proxy: components["schemas"]["ProxySettings"];
         };
         /** SettingsUpdate */
         SettingsUpdate: {
-            /** Auto Refresh Interval */
-            auto_refresh_interval?: number | null;
-            /** Proxy Enabled */
-            proxy_enabled?: boolean | null;
-            /** Proxy Url */
-            proxy_url?: string | null;
+            proxy?: components["schemas"]["ProxySettings"] | null;
         };
         /** SiteOut */
         SiteOut: {
@@ -844,6 +844,11 @@ export interface components {
             title?: string | null;
             /** Favicon Id */
             favicon_id?: string | null;
+            /**
+             * Concurrency Limit
+             * @default 4
+             */
+            concurrency_limit: number;
         };
         /** SiteUpdate */
         SiteUpdate: {
@@ -851,6 +856,8 @@ export interface components {
             url?: string | null;
             /** Title */
             title?: string | null;
+            /** Concurrency Limit */
+            concurrency_limit?: number | null;
         };
         /** SubscriptionCreate */
         SubscriptionCreate: {
@@ -862,6 +869,11 @@ export interface components {
             description?: string | null;
             /** Url */
             url: string;
+            /**
+             * Refresh Interval
+             * @default 60
+             */
+            refresh_interval: number | null;
         };
         /** SubscriptionOut */
         SubscriptionOut: {
@@ -880,6 +892,11 @@ export interface components {
             /** Fetch Time */
             fetch_time?: string | null;
             /**
+             * Refresh Interval
+             * @default 60
+             */
+            refresh_interval: number;
+            /**
              * Tags
              * @default []
              */
@@ -895,6 +912,8 @@ export interface components {
             description?: string | null;
             /** Url */
             url?: string | null;
+            /** Refresh Interval */
+            refresh_interval?: number | null;
         };
         /** TagCreate */
         TagCreate: {

@@ -44,6 +44,7 @@ class SiteCreate(BaseSchema):
 class SiteUpdate(BaseSchema):
     url: str | None = None
     title: str | None = None
+    concurrency_limit: int | None = None
 
 
 class SiteOut(BaseSchema):
@@ -51,6 +52,7 @@ class SiteOut(BaseSchema):
     url: str
     title: str | None = None
     favicon_id: str | None = None
+    concurrency_limit: int = 4
 
 
 class SubscriptionCreate(BaseSchema):
@@ -58,6 +60,7 @@ class SubscriptionCreate(BaseSchema):
     title: str
     description: str | None = None
     url: str
+    refresh_interval: int | None = 60
 
 
 class SubscriptionUpdate(BaseSchema):
@@ -65,6 +68,7 @@ class SubscriptionUpdate(BaseSchema):
     title: str | None = None
     description: str | None = None
     url: str | None = None
+    refresh_interval: int | None = None
 
 
 class SubscriptionOut(BaseSchema):
@@ -75,6 +79,7 @@ class SubscriptionOut(BaseSchema):
     description: str | None = None
     url: str
     fetch_time: str | None = None
+    refresh_interval: int = 60
     tags: list["TagOut"] = []
 
 
@@ -173,17 +178,18 @@ class NotificationOut(BaseSchema):
     create_time: StrOrDatetime
 
 
+class ProxySettings(BaseSchema):
+    enabled: bool = False
+    url: str | None = None
+
+
 class SettingsOut(BaseSchema):
-    id: str
-    auto_refresh_interval: int | None = None
-    proxy_enabled: bool = False
-    proxy_url: str | None = None
+    proxy: ProxySettings = ProxySettings()
 
 
 class SettingsUpdate(BaseSchema):
-    auto_refresh_interval: int | None = None
-    proxy_enabled: bool | None = None
-    proxy_url: str | None = None
+    model_config = ConfigDict(extra="ignore")
+    proxy: ProxySettings | None = None
 
 
 class TaskOut(BaseSchema):

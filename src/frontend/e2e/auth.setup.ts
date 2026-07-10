@@ -10,7 +10,7 @@ setup("authenticate", async ({ page }) => {
     await route.fulfill({ json: { status: "ok", version: "0.1.0" } });
   });
   await page.route("**/api/settings", async (route) => {
-    await route.fulfill({ json: { id: "settings-1", auto_refresh_interval: null, theme: "auto", font_size: "medium" } });
+    await route.fulfill({ json: { proxy: { enabled: false, url: null }, ui: { theme: "auto" } } });
   });
 
   await page.fill('input[placeholder*="服务器地址"]', "http://localhost:8000");

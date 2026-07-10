@@ -25,6 +25,7 @@ class Site(Base):
     favicon_id: Mapped[Optional[str]] = mapped_column(
         ForeignKey("file.id", ondelete="SET NULL"), nullable=True
     )
+    concurrency_limit: Mapped[int] = mapped_column(Integer, default=4, nullable=False, server_default="4")
 
     favicon: Mapped[Optional["File"]] = relationship(foreign_keys=[favicon_id])
     subscriptions: Mapped[list["Subscription"]] = relationship(
@@ -45,6 +46,7 @@ class Subscription(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     url: Mapped[str] = mapped_column(String(512), nullable=False)
     fetch_time: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    refresh_interval: Mapped[int] = mapped_column(Integer, default=60, nullable=False, server_default="60")
 
     category: Mapped[Optional["Category"]] = relationship(back_populates="subscriptions")
     site: Mapped[Optional["Site"]] = relationship(back_populates="subscriptions")
@@ -134,12 +136,11 @@ class Notification(Base):
     )
 
 
-class SettingsSingleton(Base):
+class Setting(Base):
     __tablename__ = "settings"
 
-    auto_refresh_interval: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    proxy_enabled: Mapped[bool] = mapped_column(default=False)
-    proxy_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
 
 class Task(Base):

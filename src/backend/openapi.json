@@ -2467,29 +2467,14 @@
         "type": "object",
         "title": "PreviewResponse"
       },
-      "SettingsOut": {
+      "ProxySettings": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "auto_refresh_interval": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Auto Refresh Interval"
-          },
-          "proxy_enabled": {
+          "enabled": {
             "type": "boolean",
-            "title": "Proxy Enabled",
+            "title": "Enabled",
             "default": false
           },
-          "proxy_url": {
+          "url": {
             "anyOf": [
               {
                 "type": "string"
@@ -2498,49 +2483,35 @@
                 "type": "null"
               }
             ],
-            "title": "Proxy Url"
+            "title": "Url"
           }
         },
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "title": "ProxySettings"
+      },
+      "SettingsOut": {
+        "properties": {
+          "proxy": {
+            "$ref": "#/components/schemas/ProxySettings",
+            "default": {
+              "enabled": false
+            }
+          }
+        },
+        "type": "object",
         "title": "SettingsOut"
       },
       "SettingsUpdate": {
         "properties": {
-          "auto_refresh_interval": {
+          "proxy": {
             "anyOf": [
               {
-                "type": "integer"
+                "$ref": "#/components/schemas/ProxySettings"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Auto Refresh Interval"
-          },
-          "proxy_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Proxy Enabled"
-          },
-          "proxy_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Proxy Url"
+            ]
           }
         },
         "type": "object",
@@ -2577,6 +2548,11 @@
               }
             ],
             "title": "Favicon Id"
+          },
+          "concurrency_limit": {
+            "type": "integer",
+            "title": "Concurrency Limit",
+            "default": 4
           }
         },
         "type": "object",
@@ -2609,6 +2585,17 @@
               }
             ],
             "title": "Title"
+          },
+          "concurrency_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concurrency Limit"
           }
         },
         "type": "object",
@@ -2645,6 +2632,18 @@
           "url": {
             "type": "string",
             "title": "Url"
+          },
+          "refresh_interval": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Interval",
+            "default": 60
           }
         },
         "type": "object",
@@ -2712,6 +2711,11 @@
             ],
             "title": "Fetch Time"
           },
+          "refresh_interval": {
+            "type": "integer",
+            "title": "Refresh Interval",
+            "default": 60
+          },
           "tags": {
             "items": {
               "$ref": "#/components/schemas/TagOut"
@@ -2774,6 +2778,17 @@
               }
             ],
             "title": "Url"
+          },
+          "refresh_interval": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Interval"
           }
         },
         "type": "object",

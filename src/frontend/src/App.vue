@@ -31,23 +31,9 @@ function applyThemeClass(t: string) {
   document.body.classList.add(`rosser-theme-${resolved}`);
 }
 
-function applyFontSize(size: string) {
-  const map: Record<string, string> = {
-    small: "14px",
-    medium: "16px",
-    large: "18px",
-  };
-  document.body.style.fontSize = map[size] || "16px";
-}
-
 watch(() => ui.value.theme, (t) => {
   applyThemeClass(t);
   saveUISettings({ theme: t });
-}, { immediate: true });
-
-watch(() => ui.value.fontSize, (s) => {
-  applyFontSize(s);
-  saveUISettings({ fontSize: s });
 }, { immediate: true });
 
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");

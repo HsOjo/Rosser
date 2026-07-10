@@ -42,11 +42,10 @@ const UI_STORAGE_KEY = "rosser_ui";
 
 type UISettings = {
   theme: string;
-  fontSize: string;
   locale: string;
 };
 
-const defaults: UISettings = { theme: "auto", fontSize: "medium", locale: "zh-CN" };
+const defaults: UISettings = { theme: "auto", locale: "zh-CN" };
 
 function loadUISettings(): UISettings {
   if (typeof window === "undefined") return { ...defaults };
@@ -56,7 +55,6 @@ function loadUISettings(): UISettings {
     const parsed = JSON.parse(raw);
     return {
       theme: parsed.theme || defaults.theme,
-      fontSize: parsed.fontSize || defaults.fontSize,
       locale: parsed.locale || defaults.locale,
     };
   } catch {

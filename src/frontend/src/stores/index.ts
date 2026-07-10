@@ -269,10 +269,10 @@ export const useSiteStore = defineStore("site", () => {
     return data;
   }
 
-  async function update(id: string, values: { title?: string | null }) {
+  async function update(id: string, values: { title?: string | null; concurrency_limit?: number | null }) {
     const { data } = await api.PUT("/api/sites/{site_id}", {
       params: { path: { site_id: id } },
-      body: { title: values.title ?? null },
+      body: { title: values.title ?? null, concurrency_limit: values.concurrency_limit },
     });
     if (data) {
       const idx = sites.value.findIndex((s) => s.id === id);

@@ -92,3 +92,41 @@ class TestSubscriptions:
 
         assert received.get("subscription_id") == sub_id
         assert received.get("count") == 1
+
+    async def test_create_subscription_defaults(self, client, auth_headers):
+        resp = await client.post("/api/subscriptions", headers=auth_headers, json={
+            "title": "Default Feed",
+            "url": "http://example.com/feed.xml",
+        })
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["refresh_interval"] == 60
+
+    async def test_update_subscription_refresh_interval(self, client, auth_headers):
+        create_resp = await client.post("/api/subscriptions", headers=auth_headers, json={
+            "title": "Old", "url": "http://old.com/feed.xml"
+        })
+        sub_id = create_resp.json()["id"]
+
+        resp = await client.put(f"/api/subscriptions/{sub_id}", headers=auth_headers, json={
+            "refresh_interval": 120
+        })
+        assert resp.status_code == 200
+        assert resp.json()["refresh_interval"] == 120
+
+    async def test_site_concurrency_limit(self, client, auth_headers):
+        sub_resp = await client.post("/api/subscriptions", headers=auth_headers, json={
+            "title": "Site Limit", "url": "http://limit.com/feed.xml"
+        })
+        site_id = sub_resp.json()["site_id"]
+        assert site_id
+
+        get_resp = await client.get(f"/api/sites/{site_id}", headers=auth_headers)
+        assert get_resp.status_code == 200
+        assert get_resp.json()["concurrency_limit"] == 4
+
+        put_resp = await client.put(f"/api/sites/{site_id}", headers=auth_headers, json={
+            "concurrency_limit": 2
+        })
+        assert put_resp.status_code == 200
+        assert put_resp.json()["concurrency_limit"] == 2

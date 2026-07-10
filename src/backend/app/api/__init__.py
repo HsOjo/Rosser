@@ -8,9 +8,9 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.database import async_session
-from app.core.http import load_proxy_from_db, set_proxy, validate_proxy_url
+from app.core.http import load_proxy_from_db, validate_proxy_url
 from app.core.security import get_current_token
-from app.models import Article, ArticleState, Category, Notification, SettingsSingleton, Site, Subscription, Tag, Task
+from app.models import Article, ArticleState, Category, Notification, Setting, Site, Subscription, Tag, Task
 from app.schemas import (
     ArticleIds,
     ArticleListItem,
@@ -24,6 +24,7 @@ from app.schemas import (
     PaginatedArticles,
     PreviewRequest,
     PreviewResponse,
+    ProxySettings,
     SettingsOut,
     SettingsUpdate,
     SiteOut,
@@ -145,7 +146,7 @@ async def update_subscription(subscription_id: str, data: SubscriptionUpdate, to
         sub = result.scalar_one_or_none()
         if not sub:
             raise HTTPException(status_code=404, detail="Subscription not found")
-        for field in ("category_id", "title", "description", "url"):
+        for field in ("category_id", "title", "description", "url", "refresh_interval"):
             val = getattr(data, field, None)
             if val is not None:
                 setattr(sub, field, val)
@@ -592,6 +593,8 @@ async def update_site(site_id: str, data: SiteUpdate, token: str = Depends(get_c
             raise HTTPException(status_code=404, detail="Site not found")
         if data.title is not None:
             site.title = data.title
+        if data.concurrency_limit is not None:
+            site.concurrency_limit = data.concurrency_limit
         await session.commit()
         await session.refresh(site)
         return site
@@ -694,48 +697,37 @@ async def mark_all_notifications_read(token: str = Depends(get_current_token)):
 @router.get("/settings", response_model=SettingsOut)
 async def get_settings(token: str = Depends(get_current_token)):
     async with async_session() as session:
-        result = await session.execute(select(SettingsSingleton))
-        row = result.scalar_one_or_none()
-        if not row:
-            row = SettingsSingleton()
-            session.add(row)
-            await session.commit()
-            await session.refresh(row)
-        return row
+        result = await session.execute(select(Setting))
+        rows = {row.id: row.value for row in result.scalars().all()}
+
+    proxy = ProxySettings(**(rows.get("proxy") or {}))
+    return SettingsOut(proxy=proxy)
 
 
 @router.put("/settings", response_model=SettingsOut)
 async def update_settings(data: SettingsUpdate, token: str = Depends(get_current_token)):
-    from app.main import scheduler
-    if data.proxy_enabled:
-        try:
-            validate_proxy_url(data.proxy_url)
-        except ValueError as exc:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     async with async_session() as session:
-        result = await session.execute(select(SettingsSingleton))
-        row = result.scalar_one_or_none()
-        if not row:
-            row = SettingsSingleton()
-            session.add(row)
-        if data.auto_refresh_interval is not None:
-            row.auto_refresh_interval = data.auto_refresh_interval
-        if data.proxy_enabled is not None:
-            row.proxy_enabled = data.proxy_enabled
-        if data.proxy_url is not None:
-            row.proxy_url = data.proxy_url.strip() or None
+        result = await session.execute(select(Setting))
+        existing = {row.id: row for row in result.scalars().all()}
+
+        if data.proxy is not None:
+            if data.proxy.enabled:
+                try:
+                    validate_proxy_url(data.proxy.url)
+                except ValueError as exc:
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+            proxy_value = data.proxy.model_dump()
+            if not proxy_value.get("enabled"):
+                proxy_value["url"] = None
+            if "proxy" in existing:
+                existing["proxy"].value = proxy_value
+            else:
+                session.add(Setting(id="proxy", value=proxy_value))
+
         await session.commit()
-        await session.refresh(row)
 
-        if data.auto_refresh_interval is not None:
-            try:
-                scheduler.reschedule_job("auto_refresh", trigger="interval", minutes=data.auto_refresh_interval)
-            except Exception:
-                pass
-
-        set_proxy(bool(row.proxy_enabled), row.proxy_url)
-
-        return row
+    await load_proxy_from_db()
+    return await get_settings(token=token)
 
 
 # --- Tasks ---

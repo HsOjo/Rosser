@@ -7,9 +7,9 @@ test.describe("Settings", () => {
     await page.route("**/api/settings", async (route, request) => {
       if (request.method() === "PUT") {
         const body = request.postDataJSON();
-        await route.fulfill({ json: { id: "s1", ...body } });
+        await route.fulfill({ json: body });
       } else {
-        await route.fulfill({ json: { id: "s1", auto_refresh_interval: null, theme: "auto", font_size: "medium" } });
+        await route.fulfill({ json: { proxy: { enabled: false, url: null }, ui: { theme: "auto" } } });
       }
     });
     await page.route("**/api/categories", async (route) => {
@@ -28,16 +28,13 @@ test.describe("Settings", () => {
 
   test("displays settings form", async ({ page }) => {
     await expect(page.locator("text=设置").first()).toBeVisible();
-    await expect(page.locator("text=自动刷新间隔（分钟）")).toBeVisible();
+    await expect(page.locator("text=主题")).toBeVisible();
     await expect(page.getByRole("button", { name: "保存" })).toBeVisible();
   });
 
   test("updates settings and shows connection info", async ({ page }) => {
-    // Naive UI n-input-number renders input without type=number
-    const numberInput = page.locator('.n-input-number input');
-    await numberInput.fill("120");
     await page.getByRole("button", { name: "保存" }).click();
-    await expect(page.locator("text=自动刷新间隔（分钟）")).toBeVisible();
+    await expect(page.locator("text=代理")).toBeVisible();
   });
 
   test("disconnect returns to onboarding", async ({ page }) => {

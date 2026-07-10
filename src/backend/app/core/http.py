@@ -5,8 +5,9 @@ import httpx
 
 from sqlalchemy import select
 
-from app.core.database import async_session
-from app.models import SettingsSingleton
+from app.core import database
+from app.models import Setting
+from app.schemas import ProxySettings
 
 DEFAULT_TIMEOUT = 30.0
 USER_AGENT = "Rosser/1.0 (+https://github.com/rosser/rosser)"
@@ -62,11 +63,12 @@ def create_client(*, timeout: float = DEFAULT_TIMEOUT, **kwargs: Any) -> httpx.A
 
 
 async def load_proxy_from_db() -> None:
-    """Load proxy configuration from SettingsSingleton into memory."""
-    async with async_session() as session:
-        result = await session.execute(select(SettingsSingleton))
+    """Load proxy configuration from Setting into memory."""
+    async with database.async_session() as session:
+        result = await session.execute(select(Setting).where(Setting.id == "proxy"))
         row = result.scalar_one_or_none()
-        if row:
-            set_proxy(bool(row.proxy_enabled), row.proxy_url)
+        if row and row.value:
+            proxy = ProxySettings(**row.value)
+            set_proxy(proxy.enabled, proxy.url)
         else:
             set_proxy(False, None)
