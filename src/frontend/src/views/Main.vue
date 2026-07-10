@@ -568,7 +568,6 @@ const menuOptions = computed(() => {
           children: subs.map((s: any) => ({
             key: `sub-${s.id}`,
             label: s.title,
-            icon: subFaviconRender(s),
             contextMenu: { type: "sub", data: s },
           })),
         };
