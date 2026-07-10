@@ -80,6 +80,12 @@ export function getUISettings(): Ref<UISettings> {
   return uiState;
 }
 
+export function getEffectiveTheme(theme: string): "light" | "dark" {
+  if (theme === "dark") return "dark";
+  if (theme === "light") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function saveUISettings(settings: Partial<UISettings>) {
   uiState.value = { ...uiState.value, ...settings };
   localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState.value));

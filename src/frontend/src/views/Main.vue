@@ -62,6 +62,20 @@
 
           <n-tooltip>
             <template #trigger>
+              <n-button text size="small" @click="toggleTheme">
+                <template #icon>
+                  <n-icon>
+                    <SunnyOutline v-if="isDark" />
+                    <MoonOutline v-else />
+                  </n-icon>
+                </template>
+              </n-button>
+            </template>
+            {{ $t('toggleTheme') }}
+          </n-tooltip>
+
+          <n-tooltip>
+            <template #trigger>
               <n-button text size="small" @click="showSettings = true">
                 <template #icon>
                   <n-icon><SettingsOutline /></n-icon>
@@ -232,6 +246,8 @@ import {
   SettingsOutline,
   AddOutline,
   NotificationsOutline,
+  SunnyOutline,
+  MoonOutline,
   AppsOutline,
   MailUnreadOutline,
   StarOutline,
@@ -255,7 +271,7 @@ import {
   useConnectionStore,
 } from "@/stores";
 import { api, buildFileUrl, relativeTime } from "@rosser/shared";
-import { needsMacTitleInset, startDraggingWindow, detectTauri, isMac } from "@/platform";
+import { needsMacTitleInset, startDraggingWindow, detectTauri, isMac, getUISettings, saveUISettings, getEffectiveTheme } from "@/platform";
 import ArticleList from "@/components/ArticleList.vue";
 import NotificationsModal from "@/components/NotificationsModal.vue";
 import SettingsModal from "@/views/Settings.vue";
@@ -273,6 +289,7 @@ const siteStore = useSiteStore();
 const connStore = useConnectionStore();
 const dialog = useDialog();
 const message = useMessage();
+const ui = getUISettings();
 
 const selectedKey = ref("all");
 const selectedSubscription = ref<string | undefined>(undefined);
@@ -296,6 +313,13 @@ const orderOptions = [
   { label: t('sortTitleAsc'), value: "title asc" },
   { label: t('sortTitleDesc'), value: "title desc" },
 ];
+
+const isDark = computed(() => getEffectiveTheme(ui.value.theme) === "dark");
+
+function toggleTheme() {
+  const next = isDark.value ? "light" : "dark";
+  saveUISettings({ theme: next });
+}
 
 const selectedFetchTime = computed(() => {
   if (!selectedSubscription.value) return null;

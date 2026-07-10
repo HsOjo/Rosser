@@ -180,7 +180,10 @@ onMounted(() => {
 });
 
 watch(show, (val) => {
-  if (val) loadSettings();
+  if (val) {
+    uiTheme.value = ui.value.theme;
+    loadSettings();
+  }
 });
 
 function changeLocale(val: string) {

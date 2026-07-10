@@ -17,7 +17,7 @@ import { computed, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { darkTheme, lightTheme } from "naive-ui";
 import { useConnectionStore } from "@/stores";
-import { getUISettings, saveUISettings, detectTauri, setupAppMenu } from "@/platform";
+import { getUISettings, saveUISettings, detectTauri, setupAppMenu, getEffectiveTheme } from "@/platform";
 
 const { t } = useI18n();
 const conn = useConnectionStore();
@@ -26,18 +26,12 @@ const loading = computed(() => conn.isInitializing);
 const ui = getUISettings();
 
 const theme = computed(() => {
-  const t = ui.value.theme;
-  if (t === "dark") return darkTheme;
-  if (t === "light") return lightTheme;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? darkTheme : lightTheme;
+  return getEffectiveTheme(ui.value.theme) === "dark" ? darkTheme : lightTheme;
 });
 
 function applyThemeClass(t: string) {
   document.body.classList.remove("rosser-theme-light", "rosser-theme-dark");
-  let resolved = t;
-  if (resolved === "auto") {
-    resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
+  const resolved = getEffectiveTheme(t);
   document.body.classList.add(`rosser-theme-${resolved}`);
 }
 

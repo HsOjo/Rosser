@@ -367,6 +367,14 @@ defineExpose({ open, close });
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.08);
 }
 
+body.rosser-theme-dark .article-outline-inner {
+  background: rgba(45, 45, 50, 0.85);
+}
+
+body.rosser-theme-dark .article-outline-inner:hover {
+  box-shadow: -2px 0 10px rgba(255, 255, 255, 0.12);
+}
+
 .article-outline :deep(.n-anchor) {
   width: 100%;
 }
