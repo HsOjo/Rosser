@@ -58,7 +58,9 @@ fn pick_free_port() -> u16 {
 /// Generate a random bearer token for the built-in backend.
 fn generate_token() -> String {
     let mut rng = rand::thread_rng();
-    (0..32).map(|_| format!("{:02x}", rng.gen::<u8>())).collect()
+    (0..32)
+        .map(|_| format!("{:02x}", rng.gen::<u8>()))
+        .collect()
 }
 
 #[tauri::command]
@@ -126,6 +128,15 @@ async fn start_builtin_backend(
     Ok(BuiltinBackendConfig { port, token })
 }
 
+#[tauri::command]
+fn toggle_devtools(window: tauri::WebviewWindow) {
+    if window.is_devtools_open() {
+        window.close_devtools();
+    } else {
+        window.open_devtools();
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -145,7 +156,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             is_backend_ready,
             get_builtin_backend_config,
-            start_builtin_backend
+            start_builtin_backend,
+            toggle_devtools
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

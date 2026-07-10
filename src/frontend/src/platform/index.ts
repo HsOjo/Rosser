@@ -23,65 +23,23 @@ export interface ServerConfig {
 }
 
 const SERVER_STORAGE_KEY = "rosser_server";
-const LEGACY_CONFIG_KEY = "rosser_config";
-const OLD_BUILTIN_URL = "http://127.0.0.1:8000";
-const OLD_BUILTIN_TOKEN = "dev-token-change-me";
-
-function isStaleBuiltInConfig(parsed: any): boolean {
-  // Built-in server ports are dynamically assigned each launch, so any saved
-  // built-in config (including the old fixed-port one) is stale.
-  if (parsed.isBuiltIn === true) return true;
-  if (parsed.baseURL === OLD_BUILTIN_URL && parsed.token === OLD_BUILTIN_TOKEN) {
-    return true;
-  }
-  return false;
-}
 
 export async function getPlatformConfig(): Promise<ServerConfig> {
   const empty = { baseURL: "", token: "", isBuiltIn: false };
 
-  const migrate = (parsed: any): ServerConfig | null => {
-    if (isStaleBuiltInConfig(parsed)) return null;
+  const raw = localStorage.getItem(SERVER_STORAGE_KEY);
+  if (!raw) return empty;
+
+  try {
+    const parsed = JSON.parse(raw);
     return {
       baseURL: parsed.baseURL || "",
       token: parsed.token || "",
       isBuiltIn: parsed.isBuiltIn ?? false,
     };
-  };
-
-  const raw = localStorage.getItem(SERVER_STORAGE_KEY);
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      const cfg = migrate(parsed);
-      if (cfg === null) {
-        localStorage.removeItem(SERVER_STORAGE_KEY);
-        return empty;
-      }
-      return cfg;
-    } catch {
-      return empty;
-    }
+  } catch {
+    return empty;
   }
-
-  // Migrate legacy config key if present.
-  const legacy = localStorage.getItem(LEGACY_CONFIG_KEY);
-  if (legacy) {
-    try {
-      const parsed = JSON.parse(legacy);
-      const cfg = migrate(parsed);
-      localStorage.removeItem(LEGACY_CONFIG_KEY);
-      if (cfg === null) {
-        return empty;
-      }
-      localStorage.setItem(SERVER_STORAGE_KEY, JSON.stringify(cfg));
-      return cfg;
-    } catch {
-      localStorage.removeItem(LEGACY_CONFIG_KEY);
-    }
-  }
-
-  return empty;
 }
 
 export function savePlatformConfig(cfg: ServerConfig) {
@@ -180,10 +138,15 @@ export async function sendNotification(title: string, body: string) {
 }
 
 import type { Menu, Submenu } from "@tauri-apps/api/menu";
+import { emit } from "@tauri-apps/api/event";
 
 let _menuSetupDone = false;
 
-export async function setupAppMenu(reloadText: string) {
+export async function setupAppMenu(
+  reloadText: string,
+  preferencesText: string,
+  devToolsText: string
+) {
   if (_menuSetupDone || !(await detectTauri())) return;
   _menuSetupDone = true;
 
@@ -194,7 +157,38 @@ export async function setupAppMenu(reloadText: string) {
     return;
   }
 
+  // Add Preferences to the app menu (macOS) or Edit menu.
+  const appMenu = await findAppSubmenu(menu);
+  const prefsAccelerator = isMac() ? "Cmd+," : "Ctrl+,";
+  const prefsItem = await MenuItem.new({
+    id: "preferences",
+    text: preferencesText,
+    accelerator: prefsAccelerator,
+    action: () => {
+      emit("menu:open-settings");
+    },
+  });
+  if (appMenu) {
+    await appMenu.insert(prefsItem, 2);
+  } else {
+    const editMenu = await findOrCreateEditSubmenu(menu, Submenu);
+    await editMenu.append(prefsItem);
+  }
+
   const viewMenu = await findOrCreateViewSubmenu(menu, Submenu);
+
+  const devToolsAccelerator = isMac() ? "Cmd+Option+I" : "Ctrl+Shift+I";
+  const devToolsItem = await MenuItem.new({
+    id: "developer-tools",
+    text: devToolsText,
+    accelerator: devToolsAccelerator,
+    action: async () => {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("toggle_devtools").catch(console.error);
+    },
+  });
+  await viewMenu.append(devToolsItem);
+
   const accelerator = isMac() ? "Cmd+R" : "Ctrl+R";
   const reloadItem = await MenuItem.new({
     id: "reload",
@@ -207,6 +201,31 @@ export async function setupAppMenu(reloadText: string) {
 
   await viewMenu.append(reloadItem);
   await menu.setAsAppMenu();
+}
+
+async function findAppSubmenu(menu: Menu): Promise<Submenu | null> {
+  const items = await menu.items();
+  const first = items[0];
+  if (first && first.kind === "Submenu") {
+    return first as Submenu;
+  }
+  return null;
+}
+
+async function findOrCreateEditSubmenu(
+  menu: Menu,
+  Submenu: typeof import("@tauri-apps/api/menu").Submenu
+): Promise<Submenu> {
+  const items = await menu.items();
+  for (const item of items) {
+    if (item.kind === "Submenu") {
+      const text = await (item as Submenu).text();
+      if (text === "Edit" || text === "编辑") {
+        return item as Submenu;
+      }
+    }
+  }
+  return await Submenu.new({ text: "Edit" });
 }
 
 async function findOrCreateViewSubmenu(

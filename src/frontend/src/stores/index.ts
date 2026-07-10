@@ -39,6 +39,17 @@ export const useConnectionStore = defineStore("connection", () => {
   async function init() {
     try {
       const cfg = await getPlatformConfig();
+      if (cfg.isBuiltIn && isTauri()) {
+        if (import.meta.env.PROD) {
+          // Desktop release builds bundle the backend; start it on demand.
+          const builtin = await invoke<BuiltinBackendConfig>("start_builtin_backend");
+          await connect(`http://127.0.0.1:${builtin.port}`, builtin.token, true);
+        } else if (cfg.baseURL && cfg.token) {
+          // Dev mode uses a fixed backend URL, restore the previous connection.
+          await connect(cfg.baseURL, cfg.token, true);
+        }
+        return;
+      }
       if (!cfg.baseURL && isTauri() && import.meta.env.PROD) {
         // Desktop release builds bundle the backend; start it on demand.
         const builtin = await invoke<BuiltinBackendConfig>("start_builtin_backend");
@@ -80,9 +91,7 @@ export const useConnectionStore = defineStore("connection", () => {
     isBuiltIn.value = builtIn;
     setBaseURL(url);
     setAuthToken(t);
-    if (!builtIn) {
-      savePlatformConfig({ baseURL: url, token: t, isBuiltIn: false });
-    }
+    savePlatformConfig({ baseURL: url, token: t, isBuiltIn: builtIn });
     isReady.value = true;
     wsClient.connect(`${url.replace(/^http/, "ws")}/ws`, t);
     registerWebSocketHandlers();

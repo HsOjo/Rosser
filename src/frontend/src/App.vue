@@ -57,7 +57,7 @@ mediaQuery.addEventListener("change", () => {
 
 onMounted(async () => {
   if (await detectTauri()) {
-    await setupAppMenu(t("reload"));
+    await setupAppMenu(t("reload"), t("preferences"), t("developerTools"));
   }
 
   if (conn.isBuiltIn) {

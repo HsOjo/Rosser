@@ -107,5 +107,6 @@
   "proxyUrl": "Proxy URL",
   "proxyUrlPlaceholder": "http://host:port or socks5://host:port",
   "reload": "Reload",
+  "developerTools": "Developer Tools",
   "loadingBackend": "Starting built-in backend..."
 }

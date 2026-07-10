@@ -225,6 +225,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDialog, useMessage, NIcon } from "naive-ui";
+import { listen } from "@tauri-apps/api/event";
 import {
   RefreshOutline,
   SearchOutline,
@@ -330,6 +331,7 @@ const leftStyle = computed(() => ({
 const isMacClient = ref(false);
 const isFullscreen = ref(false);
 let unlistenResize: (() => void) | null = null;
+let unlistenMenu: (() => void) | null = null;
 
 const showAddCat = ref(false);
 const newCatTitle = ref("");
@@ -964,11 +966,15 @@ onMounted(async () => {
     unlistenResize = await win.onResized(async () => {
       isFullscreen.value = await win.isFullscreen();
     });
+    unlistenMenu = await listen("menu:open-settings", () => {
+      showSettings.value = true;
+    });
   }
 });
 
 onUnmounted(() => {
   unlistenResize?.();
+  unlistenMenu?.();
 });
 </script>
 

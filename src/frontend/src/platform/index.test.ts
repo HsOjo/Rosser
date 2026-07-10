@@ -31,10 +31,16 @@ describe("platform", () => {
     expect(cfg).toEqual({ baseURL: "http://localhost:8000", token: "my-token", isBuiltIn: false });
   });
 
-  it("stale built-in config is ignored and cleared", async () => {
+  it("built-in config is preserved", async () => {
     savePlatformConfig({ baseURL: "http://127.0.0.1:8000", token: "dev-token-change-me", isBuiltIn: true });
     const cfg = await getPlatformConfig();
+    expect(cfg).toEqual({ baseURL: "http://127.0.0.1:8000", token: "dev-token-change-me", isBuiltIn: true });
+  });
+
+  it("getPlatformConfig returns empty for invalid JSON without clearing storage", async () => {
+    localStorage.setItem("rosser_server", "not-json");
+    const cfg = await getPlatformConfig();
     expect(cfg).toEqual({ baseURL: "", token: "", isBuiltIn: false });
-    expect(localStorage.getItem("rosser_server")).toBeNull();
+    expect(localStorage.getItem("rosser_server")).toBe("not-json");
   });
 });

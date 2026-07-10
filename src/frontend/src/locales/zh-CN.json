@@ -107,5 +107,6 @@
   "proxyUrl": "代理地址",
   "proxyUrlPlaceholder": "http://host:port 或 socks5://host:port",
   "reload": "刷新页面",
+  "developerTools": "开发者工具",
   "loadingBackend": "正在启动内建后端..."
 }

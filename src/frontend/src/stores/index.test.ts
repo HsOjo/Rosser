@@ -53,6 +53,18 @@ describe("stores", () => {
       expect(wsClient.connect).toHaveBeenCalledWith("ws://localhost:8000/ws", "token-123");
     });
 
+    it("connect with built-in also saves platform config", async () => {
+      const { savePlatformConfig } = await import("@/platform");
+      const store = useConnectionStore();
+      await store.connect("http://127.0.0.1:8000", "dev-token-change-me", true);
+      expect(store.isBuiltIn).toBe(true);
+      expect(savePlatformConfig).toHaveBeenCalledWith({
+        baseURL: "http://127.0.0.1:8000",
+        token: "dev-token-change-me",
+        isBuiltIn: true,
+      });
+    });
+
     it("disconnect clears state", async () => {
       const { wsClient } = await import("@rosser/shared");
       const store = useConnectionStore();
