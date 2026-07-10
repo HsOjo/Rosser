@@ -306,13 +306,5 @@ export const useTagStore = defineStore("tag", () => {
     await api.DELETE("/api/articles/{article_id}/tags/{tag_id}", { params: { path: { article_id: articleId, tag_id: tagId } } });
   }
 
-  async function tagSubscription(subscriptionId: string, tagIds: string[]) {
-    await api.POST("/api/subscriptions/{subscription_id}/tags", { params: { path: { subscription_id: subscriptionId } }, body: tagIds });
-  }
-
-  async function untagSubscription(subscriptionId: string, tagId: string) {
-    await api.DELETE("/api/subscriptions/{subscription_id}/tags/{tag_id}", { params: { path: { subscription_id: subscriptionId, tag_id: tagId } } });
-  }
-
-  return { tags, loading, fetchAll, create, update, remove, tagArticle, untagArticle, tagSubscription, untagSubscription };
+  return { tags, loading, fetchAll, create, update, remove, tagArticle, untagArticle };
 });

@@ -103,7 +103,7 @@ async def delete_category(category_id: str, token: str = Depends(get_current_tok
 @router.get("/subscriptions", response_model=list[SubscriptionOut])
 async def list_subscriptions(token: str = Depends(get_current_token)):
     async with async_session() as session:
-        result = await session.execute(select(Subscription).options(selectinload(Subscription.tags)))
+        result = await session.execute(select(Subscription))
         return result.scalars().all()
 
 
@@ -120,7 +120,7 @@ async def create_subscription(data: SubscriptionCreate, token: str = Depends(get
         )
         session.add(sub)
         await session.commit()
-        await session.refresh(sub, attribute_names=["tags"])
+        await session.refresh(sub)
         asyncio.create_task(FetchService.fetch_subscription(sub.id))
         return sub
 
@@ -129,7 +129,7 @@ async def create_subscription(data: SubscriptionCreate, token: str = Depends(get
 async def get_subscription(subscription_id: str, token: str = Depends(get_current_token)):
     async with async_session() as session:
         result = await session.execute(
-            select(Subscription).where(Subscription.id == subscription_id).options(selectinload(Subscription.tags))
+            select(Subscription).where(Subscription.id == subscription_id)
         )
         sub = result.scalar_one_or_none()
         if not sub:
@@ -141,7 +141,7 @@ async def get_subscription(subscription_id: str, token: str = Depends(get_curren
 async def update_subscription(subscription_id: str, data: SubscriptionUpdate, token: str = Depends(get_current_token)):
     async with async_session() as session:
         result = await session.execute(
-            select(Subscription).where(Subscription.id == subscription_id).options(selectinload(Subscription.tags))
+            select(Subscription).where(Subscription.id == subscription_id)
         )
         sub = result.scalar_one_or_none()
         if not sub:
@@ -151,7 +151,7 @@ async def update_subscription(subscription_id: str, data: SubscriptionUpdate, to
             if val is not None:
                 setattr(sub, field, val)
         await session.commit()
-        await session.refresh(sub, attribute_names=["tags"])
+        await session.refresh(sub)
         return sub
 
 
@@ -504,36 +504,6 @@ async def delete_tag(tag_id: str, token: str = Depends(get_current_token)):
         await session.commit()
         return None
 
-
-@router.post("/subscriptions/{subscription_id}/tags")
-async def tag_subscription(subscription_id: str, tag_ids: list[str], token: str = Depends(get_current_token)):
-    async with async_session() as session:
-        result = await session.execute(
-            select(Subscription).options(selectinload(Subscription.tags)).where(Subscription.id == subscription_id)
-        )
-        sub = result.scalar_one_or_none()
-        if not sub:
-            raise HTTPException(status_code=404, detail="Subscription not found")
-        for tid in tag_ids:
-            tag = await session.get(Tag, tid)
-            if tag and tag not in sub.tags:
-                sub.tags.append(tag)
-        await session.commit()
-        return {"ok": True}
-
-
-@router.delete("/subscriptions/{subscription_id}/tags/{tag_id}")
-async def untag_subscription(subscription_id: str, tag_id: str, token: str = Depends(get_current_token)):
-    async with async_session() as session:
-        result = await session.execute(
-            select(Subscription).options(selectinload(Subscription.tags)).where(Subscription.id == subscription_id)
-        )
-        sub = result.scalar_one_or_none()
-        if not sub:
-            raise HTTPException(status_code=404, detail="Subscription not found")
-        sub.tags = [t for t in sub.tags if t.id != tag_id]
-        await session.commit()
-        return {"ok": True}
 
 
 @router.post("/articles/{article_id}/tags")

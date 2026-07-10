@@ -53,9 +53,6 @@ class Subscription(Base):
     articles: Mapped[list["Article"]] = relationship(
         back_populates="subscription", cascade="all, delete-orphan"
     )
-    tags: Mapped[list["Tag"]] = relationship(
-        secondary="subscription_tag", back_populates="subscriptions"
-    )
 
 
 class Article(Base):
@@ -160,20 +157,10 @@ class Tag(Base):
     title: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     color: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
 
-    subscriptions: Mapped[list["Subscription"]] = relationship(
-        secondary="subscription_tag", back_populates="tags"
-    )
     articles: Mapped[list["Article"]] = relationship(
         secondary="article_tag", back_populates="tags"
     )
 
-
-subscription_tag = Table(
-    "subscription_tag",
-    Base.metadata,
-    Column("subscription_id", ForeignKey("subscription.id", ondelete="CASCADE"), primary_key=True),
-    Column("tag_id", ForeignKey("tag.id", ondelete="CASCADE"), primary_key=True),
-)
 
 article_tag = Table(
     "article_tag",

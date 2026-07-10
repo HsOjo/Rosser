@@ -80,7 +80,6 @@ class SubscriptionOut(BaseSchema):
     url: str
     fetch_time: str | None = None
     refresh_interval: int = 60
-    tags: list["TagOut"] = []
 
 
 class ArticleContentItem(BaseSchema):
@@ -218,10 +217,6 @@ class FetchRequest(BaseSchema):
 class HealthOut(BaseSchema):
     status: str
     version: str
-
-
-class SubscriptionTagRequest(BaseSchema):
-    tag_ids: list[str]
 
 
 class ArticleTagRequest(BaseSchema):

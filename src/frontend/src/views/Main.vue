@@ -167,9 +167,8 @@
       <n-input v-model:value="editSubTitle" :placeholder="t('title')" />
       <n-input v-model:value="editSubDesc" :placeholder="t('description')" type="textarea" />
       <n-select v-model:value="editSubCategory" :options="categoryOptions" :placeholder="t('category')" clearable />
-      <n-select v-model:value="editSubTags" :options="tagOptions" :placeholder="t('tags')" multiple clearable />
       <n-form-item :label="t('refreshInterval')" label-placement="left" label-width="120">
-        <n-input-number v-model:value="editSubRefreshInterval" :min="1" />
+        <n-input-number v-model:value="editSubRefreshInterval" :min="1" :placeholder="t('refreshIntervalPlaceholder')" />
       </n-form-item>
       <n-button type="primary" @click="saveEditSubscription">{{ t('save') }}</n-button>
     </n-space>
@@ -336,7 +335,6 @@ const editingSub = ref<any>(null);
 const editSubTitle = ref("");
 const editSubDesc = ref("");
 const editSubCategory = ref<string | null>(null);
-const editSubTags = ref<string[]>([]);
 const editSubRefreshInterval = ref(60);
 const fetchingSub = ref(false);
 
@@ -364,10 +362,6 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const categoryOptions = computed(() =>
   catStore.categories.map((c: any) => ({ label: c.title, value: c.id }))
-);
-
-const tagOptions = computed(() =>
-  tagStore.tags.map((tag: any) => ({ label: tag.title, value: tag.id }))
 );
 
 const faviconUrls = ref<Record<string, string>>({});
@@ -539,7 +533,6 @@ async function openEditSubscription(sub: any) {
   editSubTitle.value = sub.title;
   editSubDesc.value = sub.description || "";
   editSubCategory.value = sub.category_id || null;
-  editSubTags.value = sub.tags?.map((t: any) => t.id) || [];
   editSubRefreshInterval.value = sub.refresh_interval ?? 60;
   showEditSub.value = true;
 }
@@ -835,15 +828,6 @@ async function saveEditSubscription() {
     category_id: editSubCategory.value,
     refresh_interval: editSubRefreshInterval.value,
   });
-  const currentTagIds = editingSub.value.tags?.map((t: any) => t.id) || [];
-  const toAdd = editSubTags.value.filter((id) => !currentTagIds.includes(id));
-  const toRemove = currentTagIds.filter((id: string) => !editSubTags.value.includes(id));
-  for (const tagId of toAdd) {
-    await tagStore.tagSubscription(editingSub.value.id, [tagId]);
-  }
-  for (const tagId of toRemove) {
-    await tagStore.untagSubscription(editingSub.value.id, tagId);
-  }
   await subStore.fetchAll();
   showEditSub.value = false;
   editingSub.value = null;

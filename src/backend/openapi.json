@@ -1179,113 +1179,6 @@
         }
       }
     },
-    "/api/subscriptions/{subscription_id}/tags": {
-      "post": {
-        "summary": "Tag Subscription",
-        "operationId": "tag_subscription_api_subscriptions__subscription_id__tags_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "subscription_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Subscription Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "title": "Tag Ids"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/subscriptions/{subscription_id}/tags/{tag_id}": {
-      "delete": {
-        "summary": "Untag Subscription",
-        "operationId": "untag_subscription_api_subscriptions__subscription_id__tags__tag_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "subscription_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Subscription Id"
-            }
-          },
-          {
-            "name": "tag_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Tag Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/articles/{article_id}/tags": {
       "post": {
         "summary": "Tag Article",
@@ -2715,14 +2608,6 @@
             "type": "integer",
             "title": "Refresh Interval",
             "default": 60
-          },
-          "tags": {
-            "items": {
-              "$ref": "#/components/schemas/TagOut"
-            },
-            "type": "array",
-            "title": "Tags",
-            "default": []
           }
         },
         "type": "object",

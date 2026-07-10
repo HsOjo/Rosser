@@ -57,9 +57,6 @@
                 :value="cat.id"
               />
             </var-select>
-            <var-select v-model="newSubTags" :placeholder="$t('tags')" multiple clearable variant="outlined">
-              <var-option v-for="tag in tagStore.tags" :key="tag.id" :label="tag.title" :value="tag.id" />
-            </var-select>
             <var-button type="primary" :loading="addingSub" @click="addSubscription">{{ $t('addSubscription') }}</var-button>
           </template>
 
@@ -126,9 +123,6 @@
         <var-select v-model="editSubCategory" :placeholder="$t('category')" clearable variant="outlined">
           <var-option v-for="cat in catStore.categories" :key="cat.id" :label="cat.title" :value="cat.id" />
         </var-select>
-        <var-select v-model="editSubTags" :placeholder="$t('tags')" multiple clearable variant="outlined">
-          <var-option v-for="tag in tagStore.tags" :key="tag.id" :label="tag.title" :value="tag.id" />
-        </var-select>
       </var-space>
       <template #actions>
         <var-space>
@@ -179,7 +173,6 @@ const newSubUrl = ref("");
 const newSubTitle = ref("");
 const newSubDesc = ref("");
 const newSubCategory = ref<string | null>(null);
-const newSubTags = ref<string[]>([]);
 const previewLoading = ref(false);
 const previewResult = ref<any>(null);
 const addingSub = ref(false);
@@ -188,7 +181,6 @@ const editingSub = ref<any>(null);
 const editSubTitle = ref("");
 const editSubDesc = ref("");
 const editSubCategory = ref<string | null>(null);
-const editSubTags = ref<string[]>([]);
 const fetchingSub = ref(false);
 
 const newTagTitle = ref("");
@@ -272,16 +264,10 @@ async function addSubscription() {
       description: newSubDesc.value,
       category_id: newSubCategory.value,
     });
-    if (sub?.id && newSubTags.value.length > 0) {
-      for (const tagId of newSubTags.value) {
-        await tagStore.tagSubscription(sub.id, [tagId]);
-      }
-    }
     newSubUrl.value = "";
     newSubTitle.value = "";
     newSubDesc.value = "";
     newSubCategory.value = null;
-    newSubTags.value = [];
     previewResult.value = null;
     Snackbar.success("已保存");
     if (sub?.id) {
@@ -297,7 +283,6 @@ function openEditSub(sub: any) {
   editSubTitle.value = sub.title;
   editSubDesc.value = sub.description || "";
   editSubCategory.value = sub.category_id || null;
-  editSubTags.value = sub.tags?.map((t: any) => t.id) || [];
   showEditSub.value = true;
 }
 
@@ -308,15 +293,6 @@ async function saveEditSub() {
     description: editSubDesc.value,
     category_id: editSubCategory.value,
   });
-  const currentTagIds = editingSub.value.tags?.map((t: any) => t.id) || [];
-  const toAdd = editSubTags.value.filter((id) => !currentTagIds.includes(id));
-  const toRemove = currentTagIds.filter((id: string) => !editSubTags.value.includes(id));
-  for (const tagId of toAdd) {
-    await tagStore.tagSubscription(editingSub.value.id, [tagId]);
-  }
-  for (const tagId of toRemove) {
-    await tagStore.untagSubscription(editingSub.value.id, tagId);
-  }
   await subStore.fetchAll();
   showEditSub.value = false;
   editingSub.value = null;
