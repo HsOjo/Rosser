@@ -14,3 +14,11 @@ watch(locale, (val) => {
   localStorage.setItem("rosser_locale", val);
 });
 </script>
+
+<style>
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+}
+</style>
