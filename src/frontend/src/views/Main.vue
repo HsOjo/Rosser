@@ -223,13 +223,23 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useDialog, useMessage } from "naive-ui";
+import { useDialog, useMessage, NIcon } from "naive-ui";
 import {
   RefreshOutline,
   SearchOutline,
   SettingsOutline,
   AddOutline,
   NotificationsOutline,
+  AppsOutline,
+  MailUnreadOutline,
+  StarOutline,
+  EyeOffOutline,
+  PricetagsOutline,
+  PricetagOutline,
+  GlobeOutline,
+  FolderOutline,
+  FolderOpenOutline,
+  NewspaperOutline,
 } from "@vicons/ionicons5";
 import { h } from "vue";
 import { useI18n } from "vue-i18n";
@@ -470,10 +480,11 @@ watch(
   { immediate: true }
 );
 
-function siteIconRender(site: any) {
-  if (!site) return undefined;
-  const url = faviconUrls.value[site.id];
-  if (!url) return undefined;
+function renderIcon(icon: any) {
+  return () => h(NIcon, { size: 16 }, { default: () => h(icon) });
+}
+
+function faviconImgRender(url: string) {
   return () =>
     h("img", {
       src: url,
@@ -491,42 +502,37 @@ function siteIconRender(site: any) {
     });
 }
 
+function siteIconRender(site: any) {
+  if (!site) return undefined;
+  const url = faviconUrls.value[site.id];
+  if (url) return faviconImgRender(url);
+  return renderIcon(GlobeOutline);
+}
+
 function subFaviconRender(sub: any) {
-  if (!sub.site_id) return undefined;
-  const url = faviconUrls.value[sub.site_id];
-  if (!url) return undefined;
-  return () =>
-    h("img", {
-      src: url,
-      style: {
-        width: "16px",
-        height: "16px",
-        borderRadius: "2px",
-        objectFit: "cover",
-        verticalAlign: "middle",
-        marginRight: "8px",
-      },
-      onError: (e: Event) => {
-        (e.target as HTMLImageElement).style.display = "none";
-      },
-    });
+  if (!sub) return undefined;
+  const url = sub.site_id ? faviconUrls.value[sub.site_id] : undefined;
+  if (url) return faviconImgRender(url);
+  return renderIcon(NewspaperOutline);
 }
 
 const menuOptions = computed(() => {
   const items: any[] = [
-    { key: "all", label: t('all') },
-    { key: "unread", label: t('unread') },
-    { key: "starred", label: t('starred') },
-    { key: "hidden", label: t('hidden') },
+    { key: "all", label: t('all'), icon: renderIcon(AppsOutline) },
+    { key: "unread", label: t('unread'), icon: renderIcon(MailUnreadOutline) },
+    { key: "starred", label: t('starred'), icon: renderIcon(StarOutline) },
+    { key: "hidden", label: t('hidden'), icon: renderIcon(EyeOffOutline) },
   ];
 
   if (tagStore.tags.length > 0) {
     items.push({
       key: "tags",
       label: t('tags'),
+      icon: renderIcon(PricetagsOutline),
       children: tagStore.tags.map((tag: any) => ({
         key: `tag-${tag.id}`,
         label: tag.title,
+        icon: renderIcon(PricetagOutline),
         contextMenu: { type: "tag", data: tag },
       })),
     });
@@ -550,6 +556,7 @@ const menuOptions = computed(() => {
     items.push({
       key: "sites",
       label: t('sites'),
+      icon: renderIcon(GlobeOutline),
       children: siteIds.map((siteId) => {
         const site = sitesById[siteId];
         const subs = groupedBySite[siteId];
@@ -561,6 +568,7 @@ const menuOptions = computed(() => {
           children: subs.map((s: any) => ({
             key: `sub-${s.id}`,
             label: s.title,
+            icon: subFaviconRender(s),
             contextMenu: { type: "sub", data: s },
           })),
         };
@@ -580,6 +588,7 @@ const menuOptions = computed(() => {
     items.push({
       key: `cat-${cat.id}`,
       label: cat.title,
+      icon: renderIcon(FolderOutline),
       children: subs.length > 0 ? subs : undefined,
       contextMenu: { type: "cat", data: cat },
     });
@@ -593,7 +602,12 @@ const menuOptions = computed(() => {
       contextMenu: { type: "sub", data: s },
     }));
   if (uncategorized.length > 0) {
-    items.push({ key: "uncategorized", label: t('uncategorized'), children: uncategorized });
+    items.push({
+      key: "uncategorized",
+      label: t('uncategorized'),
+      icon: renderIcon(FolderOpenOutline),
+      children: uncategorized,
+    });
   }
   return items;
 });
