@@ -111,6 +111,7 @@
           </div>
           <div style="flex: 1; overflow: auto; min-height: 0;">
             <article-list
+              v-if="ready"
               :drawer-target="contentRef"
               :subscription-id="selectedSubscription"
               :category-id="selectedCategory"
@@ -286,6 +287,7 @@ const debouncedSearch = ref("");
 const searchVisible = ref(false);
 const order = ref("publish_time desc");
 const openedArticleId = ref<string | undefined>(undefined);
+const ready = ref(false);
 
 const orderOptions = [
   { label: t('sortPublishTimeDesc'), value: "publish_time desc" },
@@ -944,6 +946,7 @@ async function deleteSubscription(sub: any) {
 
 onMounted(async () => {
   applyQuery();
+  ready.value = true;
   subStore.fetchAll();
   catStore.fetchAll();
   tagStore.fetchAll().then(() => {
