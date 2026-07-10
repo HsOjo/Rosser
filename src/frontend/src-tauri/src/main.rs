@@ -147,22 +147,42 @@ fn set_locale(locale: String, i18n: tauri::State<'_, I18n>) {
     i18n.set_locale(&locale);
 }
 
+/// Show and focus the main window. On macOS also ensures the app is visible in
+/// the Dock and has its icon set.
+fn show_and_focus_main_window(app: &tauri::AppHandle) {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+        set_dock_icon();
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+/// Show a Rust-side notification using the current i18n locale. Errors are logged
+/// but not propagated to avoid breaking the single-instance / tray flows.
+fn show_notification(app: &tauri::AppHandle, body_key: &str) {
+    let i18n = app.state::<I18n>();
+    if let Err(e) = app
+        .notification()
+        .builder()
+        .title("Rosser")
+        .body(i18n.t(body_key))
+        .show()
+    {
+        eprintln!("Failed to show notification ({}): {}", body_key, e);
+    }
+}
+
 fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
-            let i18n = app.state::<I18n>();
-            let _ = app
-                .notification()
-                .builder()
-                .title("Rosser")
-                .body(i18n.t("notification_already_running"))
-                .show();
+            show_and_focus_main_window(app);
+            show_notification(app, "notification_already_running");
         }))
         .manage(BackendHandle {
             child: Arc::new(Mutex::new(None)),
@@ -175,7 +195,10 @@ fn main() {
         .manage(I18n::new())
         .setup(|app| {
             #[cfg(target_os = "macos")]
-            set_dock_icon();
+            {
+                set_dock_icon();
+                let _ = app.notification().request_permission();
+            }
 
             // Build a tray icon without a menu. Left-click always shows and focuses the main window.
             let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.png"))
@@ -191,15 +214,7 @@ fn main() {
                     } = event
                     {
                         let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            #[cfg(target_os = "macos")]
-                            {
-                                let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
-                                set_dock_icon();
-                            }
-                        }
+                        show_and_focus_main_window(app);
                     }
                 })
                 .build(app)?;
@@ -214,13 +229,7 @@ fn main() {
                     api.prevent_close();
                     let _ = window.hide();
 
-                    let i18n = app.state::<I18n>();
-                    let _ = app
-                        .notification()
-                        .builder()
-                        .title("Rosser")
-                        .body(i18n.t("notification_hidden_to_tray"))
-                        .show();
+                    show_notification(app, "notification_hidden_to_tray");
 
                     #[cfg(target_os = "macos")]
                     {
@@ -240,11 +249,18 @@ fn main() {
         .expect("error while building tauri application");
 
     app.run(|app_handle, event| {
-        if let tauri::RunEvent::ExitRequested { .. } = event {
-            app_handle
-                .state::<BackendHandle>()
-                .quitting
-                .store(true, Ordering::Relaxed);
+        match event {
+            tauri::RunEvent::ExitRequested { .. } => {
+                app_handle
+                    .state::<BackendHandle>()
+                    .quitting
+                    .store(true, Ordering::Relaxed);
+            }
+            tauri::RunEvent::Reopen { .. } => {
+                show_and_focus_main_window(app_handle);
+                show_notification(app_handle, "notification_already_running");
+            }
+            _ => {}
         }
     });
 }
