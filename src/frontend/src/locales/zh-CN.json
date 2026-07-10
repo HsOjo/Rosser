@@ -94,6 +94,8 @@
   "metaValue": "值",
   "opmlImport": "导入 OPML",
   "opmlExport": "导出 OPML",
+  "exported": "导出完成",
+  "exportedTauri": "文件已保存到下载目录",
   "dataManagement": "数据管理",
   "language": "语言",
   "connection": "连接",

@@ -122,7 +122,7 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
 import { useConnectionStore, useSettingsStore, useTagStore } from "@/stores";
-import { getUISettings, saveUISettings } from "@/platform";
+import { getUISettings, saveUISettings, isTauri } from "@/platform";
 import { api } from "@rosser/shared";
 
 const router = useRouter();
@@ -218,7 +218,7 @@ async function handleImport(e: Event) {
 async function handleExport() {
   exporting.value = true;
   try {
-    const { data } = await api.GET("/api/opml/export");
+    const { data } = await api.GET("/api/opml/export", { parseAs: "text" });
     const blob = new Blob([data as any], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -226,6 +226,7 @@ async function handleExport() {
     a.download = `rosser-export-${new Date().toISOString().slice(0, 10)}.opml`;
     a.click();
     URL.revokeObjectURL(url);
+    message.success(t(isTauri() ? 'exportedTauri' : 'exported'));
   } finally {
     exporting.value = false;
   }

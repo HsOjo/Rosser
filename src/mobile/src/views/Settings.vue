@@ -219,7 +219,7 @@ async function handleImport(e: Event) {
 async function handleExport() {
   exporting.value = true;
   try {
-    const { data } = await api.GET("/api/opml/export");
+    const { data } = await api.GET("/api/opml/export", { parseAs: "text" });
     const blob = new Blob([data as any], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

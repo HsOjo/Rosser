@@ -94,6 +94,8 @@
   "metaValue": "Value",
   "opmlImport": "Import OPML",
   "opmlExport": "Export OPML",
+  "exported": "Export completed",
+  "exportedTauri": "File saved to downloads folder",
   "dataManagement": "Data Management",
   "language": "Language",
   "connection": "Connection",
