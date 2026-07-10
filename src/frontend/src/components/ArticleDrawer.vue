@@ -364,7 +364,8 @@ defineExpose({ open, close });
 }
 
 .article-outline :deep(.outline-link-level-1) {
-  padding-left: 0 !important;
+  padding-left: 12px !important;
+  font-weight: bold;
 }
 
 .article-outline :deep(.outline-link-level-2) {

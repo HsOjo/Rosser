@@ -300,7 +300,7 @@ export default defineComponent({
   text-align: left;
 }
 :deep(.n-image) {
-  max-width: 50% !important;
+  max-width: 66% !important;
   display: inline-block;
 }
 :deep(.n-image img) {
