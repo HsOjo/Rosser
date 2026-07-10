@@ -66,15 +66,13 @@ export const useConnectionStore = defineStore("connection", () => {
       let t = cfg.token;
       let builtIn = cfg.isBuiltIn ?? false;
 
-      if (!url && isTauri() && import.meta.env.PROD) {
-        // Desktop release builds bundle the backend; start it on demand.
+      if (builtIn && isTauri() && import.meta.env.PROD) {
+        // Desktop release builds bundle the backend; start it on demand and
+        // refresh the port/token so each launch uses a fresh built-in instance.
         const builtin = await invoke<BuiltinBackendConfig>("start_builtin_backend");
         url = `http://127.0.0.1:${builtin.port}`;
         t = builtin.token;
-        builtIn = true;
-      }
 
-      if (builtIn && isTauri() && import.meta.env.PROD) {
         // Wait for the bundled backend to be ready before the health check.
         try {
           await pollUntil(
