@@ -14,5 +14,14 @@ tauri-plugin-notification = "2"
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5"
+objc2-app-kit = { version = "0.2", features = ["NSApplication", "NSResponder", "NSImage"] }
+objc2-foundation = { version = "0.2", features = ["NSData", "NSThread"] }
+
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+
+[[bin]]
+name = "Rosser"
+path = "src/main.rs"

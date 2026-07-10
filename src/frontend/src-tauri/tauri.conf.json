@@ -27,7 +27,8 @@
   },
   "productName": "Rosser",
   "version": "0.1.0",
-  "identifier": "com.rosser.app",
+  "identifier": "com.hsojo.rosser",
+  "mainBinaryName": "Rosser",
   "plugins": {},
   "app": {
     "security": {
