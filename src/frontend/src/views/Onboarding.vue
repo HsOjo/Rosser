@@ -25,15 +25,29 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useConnectionStore } from "@/stores";
-import { detectTauri } from "@/platform";
+import { useMessage } from "naive-ui";
+import { invoke } from "@tauri-apps/api/core";
+import { useConnectionStore, BUILTIN_TOKEN } from "@/stores";
+import { detectTauri, getPlatformConfig } from "@/platform";
 
 const router = useRouter();
+const message = useMessage();
 const conn = useConnectionStore();
 const tauri = ref(false);
 
 onMounted(async () => {
   tauri.value = await detectTauri();
+  const cfg = await getPlatformConfig();
+  if (cfg.baseURL) {
+    mode.value = cfg.isBuiltIn ? "builtin" : "remote";
+    if (!cfg.isBuiltIn) {
+      url.value = cfg.baseURL;
+      tokenInput.value = cfg.token;
+    }
+  } else if (import.meta.env.PROD && tauri.value) {
+    // No saved config likely means the previous session was built-in (not persisted).
+    mode.value = "builtin";
+  }
 });
 
 const mode = ref("remote");
@@ -45,13 +59,21 @@ async function handleConnect() {
   connecting.value = true;
   try {
     if (mode.value === "builtin") {
-      await conn.connect("http://127.0.0.1:8000", "dev-token-change-me");
+      let port = 8000;
+      let token = BUILTIN_TOKEN;
+      if (import.meta.env.PROD) {
+        const cfg = await invoke<{ port: number; token: string }>("start_builtin_backend");
+        port = cfg.port;
+        token = cfg.token;
+      }
+      await conn.connect(`http://127.0.0.1:${port}`, token, true);
     } else {
       await conn.connect(url.value, tokenInput.value);
     }
     router.push("/");
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || "连接失败，请检查服务器地址和 Token");
   } finally {
     connecting.value = false;
   }

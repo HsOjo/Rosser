@@ -22,12 +22,19 @@ describe("platform", () => {
 
   it("getPlatformConfig returns empty when localStorage empty", async () => {
     const cfg = await getPlatformConfig();
-    expect(cfg).toEqual({ baseURL: "", token: "" });
+    expect(cfg).toEqual({ baseURL: "", token: "", isBuiltIn: false });
   });
 
   it("savePlatformConfig and getPlatformConfig round-trip", async () => {
-    savePlatformConfig({ baseURL: "http://localhost:8000", token: "my-token" });
+    savePlatformConfig({ baseURL: "http://localhost:8000", token: "my-token", isBuiltIn: false });
     const cfg = await getPlatformConfig();
-    expect(cfg).toEqual({ baseURL: "http://localhost:8000", token: "my-token" });
+    expect(cfg).toEqual({ baseURL: "http://localhost:8000", token: "my-token", isBuiltIn: false });
+  });
+
+  it("stale built-in config is ignored and cleared", async () => {
+    savePlatformConfig({ baseURL: "http://127.0.0.1:8000", token: "dev-token-change-me", isBuiltIn: true });
+    const cfg = await getPlatformConfig();
+    expect(cfg).toEqual({ baseURL: "", token: "", isBuiltIn: false });
+    expect(localStorage.getItem("rosser_server")).toBeNull();
   });
 });

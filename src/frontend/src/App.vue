@@ -2,19 +2,28 @@
   <n-config-provider :theme="theme">
     <n-message-provider>
       <n-dialog-provider>
-        <router-view />
+        <div v-if="loadingBackend" class="backend-loading">
+          <n-spin size="large" />
+          <p>{{ t("loadingBackend") }}</p>
+        </div>
+        <router-view v-else />
       </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted } from "vue";
+import { computed, watch, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { darkTheme, lightTheme } from "naive-ui";
+import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
+import { useConnectionStore } from "@/stores";
 import { getUISettings, saveUISettings, detectTauri, setupAppMenu } from "@/platform";
 
 const { t } = useI18n();
+const loadingBackend = ref(false);
+const conn = useConnectionStore();
 
 const ui = getUISettings();
 
@@ -50,6 +59,23 @@ onMounted(async () => {
   if (await detectTauri()) {
     await setupAppMenu(t("reload"));
   }
+
+  if (conn.isBuiltIn) {
+    loadingBackend.value = true;
+    try {
+      if (await invoke("is_backend_ready")) {
+        loadingBackend.value = false;
+        return;
+      }
+      const unlisten = await listen("backend:ready", () => {
+        loadingBackend.value = false;
+        unlisten();
+      });
+    } catch (e) {
+      console.error("Failed to wait for built-in backend:", e);
+      loadingBackend.value = false;
+    }
+  }
 });
 </script>
 
@@ -61,5 +87,15 @@ html, body, #app {
 }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.backend-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 </style>

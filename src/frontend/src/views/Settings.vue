@@ -5,17 +5,6 @@
     <n-tabs class="settings-tabs" type="line" placement="left" style="height: 100%">
       <n-tab-pane :tab="t('general')" name="general">
         <n-space vertical>
-          <n-card :title="t('serverInfo')" size="small">
-            <n-space vertical>
-              <n-descriptions :column="1" label-placement="top">
-                <n-descriptions-item :label="t('baseURL')">{{ conn.baseURL }}</n-descriptions-item>
-                <n-descriptions-item :label="t('token')">{{ conn.token.slice(0, 8) }}...</n-descriptions-item>
-              </n-descriptions>
-
-              <n-button @click="logout">{{ t('disconnect') }}</n-button>
-            </n-space>
-          </n-card>
-
           <n-card :title="t('preferences')" size="small">
             <n-form label-placement="top">
               <n-form-item :label="t('theme')">
@@ -32,6 +21,18 @@
                 ]" @update:value="changeLocale" />
               </n-form-item>
             </n-form>
+          </n-card>
+
+          <n-card :title="t('serverInfo')" size="small">
+            <n-space vertical>
+              <n-descriptions :column="1" label-placement="top">
+                <n-descriptions-item :label="t('baseURL')">{{ conn.baseURL }}</n-descriptions-item>
+                <n-descriptions-item :label="t('token')">{{ conn.token.slice(0, 8) }}...</n-descriptions-item>
+                <n-descriptions-item :label="t('connection')">{{ conn.isBuiltIn ? t('builtIn') : t('remote') }}</n-descriptions-item>
+              </n-descriptions>
+
+              <n-button @click="logout">{{ t('disconnect') }}</n-button>
+            </n-space>
           </n-card>
         </n-space>
       </n-tab-pane>

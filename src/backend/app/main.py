@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import platform
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -16,6 +18,37 @@ from app.models import Base
 from app.services.fetch import FetchService
 
 scheduler = AsyncIOScheduler()
+
+
+def is_process_alive(pid: int) -> bool:
+    """Check whether a process with the given PID is still running."""
+    if platform.system() == "Windows":
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        SYNCHRONIZE = 0x00100000
+        handle = kernel32.OpenProcess(SYNCHRONIZE, False, pid)
+        if not handle:
+            return False
+        kernel32.CloseHandle(handle)
+        return True
+    else:
+        try:
+            os.kill(pid, 0)
+            return True
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+
+
+async def monitor_parent(parent_pid: int):
+    """Exit the process if the parent process dies."""
+    while True:
+        await asyncio.sleep(5)
+        if not is_process_alive(parent_pid):
+            print(f"Parent process {parent_pid} died, exiting")
+            os._exit(1)
 
 
 async def auto_refresh_job():
@@ -50,11 +83,20 @@ FetchService.on_subscription_fetch(broadcast_subscription_fetch)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    parent_pid = os.environ.get("ROSSER_PARENT_PID")
+    monitor_task = None
+    if parent_pid:
+        try:
+            monitor_task = asyncio.create_task(monitor_parent(int(parent_pid)))
+        except ValueError:
+            pass
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await load_proxy_from_db()
     await init_scheduler()
     yield
+    if monitor_task:
+        monitor_task.cancel()
     scheduler.shutdown()
 
 

@@ -100,6 +100,11 @@ alembic.ini
 src/frontend/src-tauri/target/
 src/frontend/src-tauri/gen/
 src/frontend/src-tauri/Cargo.lock
+src/frontend/src-tauri/binaries/
+
+# Backend / PyInstaller build artifacts
+src/backend/build/
+src/backend/scripts/backend-sidecar.spec
 
 # Mobile / PWA
 src/mobile/dist/

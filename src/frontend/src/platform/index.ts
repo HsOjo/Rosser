@@ -16,24 +16,76 @@ export function isTauri(): boolean {
   return _isTauriCache ?? false;
 }
 
-export async function getPlatformConfig(): Promise<{ baseURL: string; token: string }> {
-  const raw = localStorage.getItem("rosser_config");
+export interface ServerConfig {
+  baseURL: string;
+  token: string;
+  isBuiltIn?: boolean;
+}
+
+const SERVER_STORAGE_KEY = "rosser_server";
+const LEGACY_CONFIG_KEY = "rosser_config";
+const OLD_BUILTIN_URL = "http://127.0.0.1:8000";
+const OLD_BUILTIN_TOKEN = "dev-token-change-me";
+
+function isStaleBuiltInConfig(parsed: any): boolean {
+  // Built-in server ports are dynamically assigned each launch, so any saved
+  // built-in config (including the old fixed-port one) is stale.
+  if (parsed.isBuiltIn === true) return true;
+  if (parsed.baseURL === OLD_BUILTIN_URL && parsed.token === OLD_BUILTIN_TOKEN) {
+    return true;
+  }
+  return false;
+}
+
+export async function getPlatformConfig(): Promise<ServerConfig> {
+  const empty = { baseURL: "", token: "", isBuiltIn: false };
+
+  const migrate = (parsed: any): ServerConfig | null => {
+    if (isStaleBuiltInConfig(parsed)) return null;
+    return {
+      baseURL: parsed.baseURL || "",
+      token: parsed.token || "",
+      isBuiltIn: parsed.isBuiltIn ?? false,
+    };
+  };
+
+  const raw = localStorage.getItem(SERVER_STORAGE_KEY);
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      return {
-        baseURL: parsed.baseURL || "",
-        token: parsed.token || "",
-      };
+      const cfg = migrate(parsed);
+      if (cfg === null) {
+        localStorage.removeItem(SERVER_STORAGE_KEY);
+        return empty;
+      }
+      return cfg;
     } catch {
-      return { baseURL: "", token: "" };
+      return empty;
     }
   }
-  return { baseURL: "", token: "" };
+
+  // Migrate legacy config key if present.
+  const legacy = localStorage.getItem(LEGACY_CONFIG_KEY);
+  if (legacy) {
+    try {
+      const parsed = JSON.parse(legacy);
+      const cfg = migrate(parsed);
+      localStorage.removeItem(LEGACY_CONFIG_KEY);
+      if (cfg === null) {
+        return empty;
+      }
+      localStorage.setItem(SERVER_STORAGE_KEY, JSON.stringify(cfg));
+      return cfg;
+    } catch {
+      localStorage.removeItem(LEGACY_CONFIG_KEY);
+    }
+  }
+
+  return empty;
 }
 
-export function savePlatformConfig(cfg: { baseURL: string; token: string }) {
-  localStorage.setItem("rosser_config", JSON.stringify(cfg));
+export function savePlatformConfig(cfg: ServerConfig) {
+  localStorage.setItem(SERVER_STORAGE_KEY, JSON.stringify(cfg));
 }
 
 import { ref, type Ref } from "vue";

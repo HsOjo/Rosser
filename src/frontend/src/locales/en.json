@@ -106,5 +106,6 @@
   "proxyEnabled": "Enable proxy",
   "proxyUrl": "Proxy URL",
   "proxyUrlPlaceholder": "http://host:port or socks5://host:port",
-  "reload": "Reload"
+  "reload": "Reload",
+  "loadingBackend": "Starting built-in backend..."
 }

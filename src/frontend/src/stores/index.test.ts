@@ -13,7 +13,7 @@ vi.mock("@/platform", () => ({
 
 vi.mock("@rosser/shared", () => ({
   api: {
-    GET: vi.fn(),
+    GET: vi.fn().mockResolvedValue({ error: undefined }),
     POST: vi.fn(),
     PUT: vi.fn(),
     DELETE: vi.fn(),
@@ -35,24 +35,31 @@ describe("stores", () => {
 
   describe("useConnectionStore", () => {
     it("connect sets state and calls shared client", async () => {
-      const { getPlatformConfig } = await import("@/platform");
+      const { savePlatformConfig } = await import("@/platform");
       const { setBaseURL, setAuthToken, wsClient } = await import("@rosser/shared");
       const store = useConnectionStore();
       await store.connect("http://localhost:8000", "token-123");
       expect(store.baseURL).toBe("http://localhost:8000");
       expect(store.token).toBe("token-123");
+      expect(store.isBuiltIn).toBe(false);
       expect(store.isReady).toBe(true);
       expect(setBaseURL).toHaveBeenCalledWith("http://localhost:8000");
       expect(setAuthToken).toHaveBeenCalledWith("token-123");
+      expect(savePlatformConfig).toHaveBeenCalledWith({
+        baseURL: "http://localhost:8000",
+        token: "token-123",
+        isBuiltIn: false,
+      });
       expect(wsClient.connect).toHaveBeenCalledWith("ws://localhost:8000/ws", "token-123");
     });
 
     it("disconnect clears state", async () => {
       const { wsClient } = await import("@rosser/shared");
       const store = useConnectionStore();
-      await store.connect("http://x", "t");
+      await store.connect("http://x", "t", true);
       store.disconnect();
       expect(store.isReady).toBe(false);
+      expect(store.isBuiltIn).toBe(false);
       expect(store.baseURL).toBe("");
       expect(wsClient.disconnect).toHaveBeenCalled();
     });

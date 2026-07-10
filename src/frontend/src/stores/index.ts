@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 import { api, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
 import { getPlatformConfig, savePlatformConfig, isTauri } from "@/platform";
 
@@ -21,6 +22,14 @@ function registerWebSocketHandlers() {
   });
 }
 
+interface BuiltinBackendConfig {
+  port: number;
+  token: string;
+}
+
+// Fallback token used in dev mode where the backend is not bundled.
+export const BUILTIN_TOKEN = "dev-token-change-me";
+
 export const useConnectionStore = defineStore("connection", () => {
   const baseURL = ref("");
   const token = ref("");
@@ -28,34 +37,66 @@ export const useConnectionStore = defineStore("connection", () => {
   const isBuiltIn = ref(false);
 
   async function init() {
-    const cfg = await getPlatformConfig();
-    if (cfg.baseURL && cfg.token) {
-      baseURL.value = cfg.baseURL;
-      token.value = cfg.token;
-      setBaseURL(cfg.baseURL);
-      setAuthToken(cfg.token);
-      registerWebSocketHandlers();
-      wsClient.connect(`${cfg.baseURL.replace(/^http/, "ws")}/ws`, cfg.token);
-      isReady.value = true;
+    try {
+      const cfg = await getPlatformConfig();
+      if (!cfg.baseURL && isTauri() && import.meta.env.PROD) {
+        // Desktop release builds bundle the backend; start it on demand.
+        const builtin = await invoke<BuiltinBackendConfig>("start_builtin_backend");
+        await connect(`http://127.0.0.1:${builtin.port}`, builtin.token, true);
+        return;
+      }
+      if (cfg.baseURL && cfg.token) {
+        await connect(cfg.baseURL, cfg.token, cfg.isBuiltIn ?? false);
+      }
+    } catch (e) {
+      console.error("Failed to initialize connection:", e);
     }
   }
 
-  async function connect(url: string, t: string) {
+  async function connect(url: string, t: string, builtIn = false) {
+    // Clear stale data from any previous connection.
+    resetAllStores();
+
+    // Remote connections must be reachable before we switch to the main page.
+    if (!builtIn) {
+      setBaseURL(url);
+      setAuthToken(t);
+      let healthError: any = null;
+      try {
+        const { error } = await api.GET("/api/health");
+        healthError = error;
+      } catch (e) {
+        healthError = e;
+      }
+      if (healthError) {
+        setBaseURL("");
+        setAuthToken("");
+        throw new Error(`无法连接到服务器: ${url}`);
+      }
+    }
+
     baseURL.value = url;
     token.value = t;
+    isBuiltIn.value = builtIn;
     setBaseURL(url);
     setAuthToken(t);
-    savePlatformConfig({ baseURL: url, token: t });
+    if (!builtIn) {
+      savePlatformConfig({ baseURL: url, token: t, isBuiltIn: false });
+    }
     isReady.value = true;
     wsClient.connect(`${url.replace(/^http/, "ws")}/ws`, t);
     registerWebSocketHandlers();
   }
 
   async function disconnect() {
+    wsClient.disconnect();
+    setBaseURL("");
+    setAuthToken("");
+    resetAllStores();
     baseURL.value = "";
     token.value = "";
     isReady.value = false;
-    wsClient.disconnect();
+    isBuiltIn.value = false;
   }
 
   return { baseURL, token, isReady, isBuiltIn, init, connect, disconnect };
@@ -108,7 +149,12 @@ export const useSubscriptionStore = defineStore("subscription", () => {
     return data;
   }
 
-  return { subscriptions, loading, fetchAll, fetch, create, update, remove };
+  function reset() {
+    subscriptions.value = [];
+    loading.value = false;
+  }
+
+  return { subscriptions, loading, fetchAll, fetch, create, update, remove, reset };
 });
 
 export const useArticleStore = defineStore("article", () => {
@@ -187,7 +233,16 @@ export const useArticleStore = defineStore("article", () => {
     return data;
   }
 
-  return { articles, total, loading, page, size, lastParams, fetchList, fetchOne, refresh, markRead, markUnread, markHide, markUnhide, markStar };
+  function reset() {
+    articles.value = [];
+    total.value = 0;
+    loading.value = false;
+    page.value = 1;
+    size.value = 20;
+    lastParams.value = {};
+  }
+
+  return { articles, total, loading, page, size, lastParams, fetchList, fetchOne, refresh, markRead, markUnread, markHide, markUnhide, markStar, reset };
 });
 
 export const useCategoryStore = defineStore("category", () => {
@@ -218,7 +273,11 @@ export const useCategoryStore = defineStore("category", () => {
     categories.value = categories.value.filter((c) => c.id !== id);
   }
 
-  return { categories, fetchAll, create, update, remove };
+  function reset() {
+    categories.value = [];
+  }
+
+  return { categories, fetchAll, create, update, remove, reset };
 });
 
 export const useSiteStore = defineStore("site", () => {
@@ -285,7 +344,12 @@ export const useSiteStore = defineStore("site", () => {
     return data;
   }
 
-  return { sites, loading, fetchAll, fetch, refreshFavicon, update, byId };
+  function reset() {
+    sites.value = [];
+    loading.value = false;
+  }
+
+  return { sites, loading, fetchAll, fetch, refreshFavicon, update, byId, reset };
 });
 
 export const useSettingsStore = defineStore("settings", () => {
@@ -301,7 +365,11 @@ export const useSettingsStore = defineStore("settings", () => {
     settings.value = data;
   }
 
-  return { settings, fetch, update };
+  function reset() {
+    settings.value = null;
+  }
+
+  return { settings, fetch, update, reset };
 });
 
 export const useNotificationStore = defineStore("notification", () => {
@@ -340,7 +408,13 @@ export const useNotificationStore = defineStore("notification", () => {
     unreadCount.value = 0;
   }
 
-  return { notifications, unreadCount, loading, fetchAll, fetchUnreadCount, markRead, markAllRead };
+  function reset() {
+    notifications.value = [];
+    unreadCount.value = 0;
+    loading.value = false;
+  }
+
+  return { notifications, unreadCount, loading, fetchAll, fetchUnreadCount, markRead, markAllRead, reset };
 });
 
 export const useTagStore = defineStore("tag", () => {
@@ -385,5 +459,20 @@ export const useTagStore = defineStore("tag", () => {
     await api.DELETE("/api/articles/{article_id}/tags/{tag_id}", { params: { path: { article_id: articleId, tag_id: tagId } } });
   }
 
-  return { tags, loading, fetchAll, create, update, remove, tagArticle, untagArticle };
+  function reset() {
+    tags.value = [];
+    loading.value = false;
+  }
+
+  return { tags, loading, fetchAll, create, update, remove, tagArticle, untagArticle, reset };
 });
+
+function resetAllStores() {
+  useSubscriptionStore().reset();
+  useArticleStore().reset();
+  useCategoryStore().reset();
+  useSiteStore().reset();
+  useSettingsStore().reset();
+  useNotificationStore().reset();
+  useTagStore().reset();
+}
