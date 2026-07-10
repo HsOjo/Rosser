@@ -2,7 +2,7 @@
   <n-config-provider :theme="theme">
     <n-message-provider>
       <n-dialog-provider>
-        <div v-if="loadingBackend" class="backend-loading">
+        <div v-if="loading" class="backend-loading">
           <n-spin size="large" />
           <p>{{ t("loadingBackend") }}</p>
         </div>
@@ -13,17 +13,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, ref } from "vue";
+import { computed, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { darkTheme, lightTheme } from "naive-ui";
-import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
 import { useConnectionStore } from "@/stores";
 import { getUISettings, saveUISettings, detectTauri, setupAppMenu } from "@/platform";
 
 const { t } = useI18n();
-const loadingBackend = ref(false);
 const conn = useConnectionStore();
+const loading = computed(() => conn.isInitializing);
 
 const ui = getUISettings();
 
@@ -62,23 +60,6 @@ mediaQuery.addEventListener("change", () => {
 onMounted(async () => {
   if (await detectTauri()) {
     await setupAppMenu(t("reload"), t("preferences"), t("developerTools"));
-  }
-
-  if (conn.isBuiltIn) {
-    loadingBackend.value = true;
-    try {
-      if (await invoke("is_backend_ready")) {
-        loadingBackend.value = false;
-        return;
-      }
-      const unlisten = await listen("backend:ready", () => {
-        loadingBackend.value = false;
-        unlisten();
-      });
-    } catch (e) {
-      console.error("Failed to wait for built-in backend:", e);
-      loadingBackend.value = false;
-    }
   }
 });
 </script>

@@ -108,7 +108,7 @@
   "proxyUrlPlaceholder": "http://host:port 或 socks5://host:port",
   "reload": "刷新页面",
   "developerTools": "开发者工具",
-  "loadingBackend": "正在启动内建后端...",
+  "loadingBackend": "正在连接服务器...",
   "welcomeTitle": "欢迎使用 Rosser",
   "welcomeDescription": "请先设置语言、主题和服务器连接。",
   "stepPreferences": "偏好设置",

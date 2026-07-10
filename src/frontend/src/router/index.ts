@@ -37,6 +37,15 @@ router.beforeEach(async (to, _from, next) => {
     return next();
   }
 
+  // If the saved server is unreachable, stay on onboarding so the user can
+  // reconnect instead of landing on a broken home page.
+  if (!conn.isReady) {
+    if (to.path !== "/onboarding") {
+      return next("/onboarding");
+    }
+    return next();
+  }
+
   if (conn.isReady && to.path === "/onboarding") {
     return next("/");
   }

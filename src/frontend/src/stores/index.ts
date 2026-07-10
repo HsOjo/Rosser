@@ -30,37 +30,71 @@ interface BuiltinBackendConfig {
 // Fallback token used in dev mode where the backend is not bundled.
 export const BUILTIN_TOKEN = "dev-token-change-me";
 
+async function pollUntil<T>(
+  fn: () => Promise<T>,
+  predicate: (result: T) => boolean,
+  options: { interval: number; timeout: number }
+): Promise<T> {
+  const start = Date.now();
+  while (true) {
+    const result = await fn();
+    if (predicate(result)) return result;
+    const elapsed = Date.now() - start;
+    if (elapsed >= options.timeout) {
+      throw new Error("Polling timed out");
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(options.interval, options.timeout - elapsed))
+    );
+  }
+}
+
 export const useConnectionStore = defineStore("connection", () => {
   const baseURL = ref("");
   const token = ref("");
   const isReady = ref(false);
   const isBuiltIn = ref(false);
+  const isInitializing = ref(false);
+  const initError = ref("");
 
   async function init() {
+    isInitializing.value = true;
+    initError.value = "";
     try {
       const cfg = await getPlatformConfig();
-      if (cfg.isBuiltIn && isTauri()) {
-        if (import.meta.env.PROD) {
-          // Desktop release builds bundle the backend; start it on demand.
-          const builtin = await invoke<BuiltinBackendConfig>("start_builtin_backend");
-          await connect(`http://127.0.0.1:${builtin.port}`, builtin.token, true);
-        } else if (cfg.baseURL && cfg.token) {
-          // Dev mode uses a fixed backend URL, restore the previous connection.
-          await connect(cfg.baseURL, cfg.token, true);
-        }
-        return;
-      }
-      if (!cfg.baseURL && isTauri() && import.meta.env.PROD) {
+      let url = cfg.baseURL;
+      let t = cfg.token;
+      let builtIn = cfg.isBuiltIn ?? false;
+
+      if (!url && isTauri() && import.meta.env.PROD) {
         // Desktop release builds bundle the backend; start it on demand.
         const builtin = await invoke<BuiltinBackendConfig>("start_builtin_backend");
-        await connect(`http://127.0.0.1:${builtin.port}`, builtin.token, true);
-        return;
+        url = `http://127.0.0.1:${builtin.port}`;
+        t = builtin.token;
+        builtIn = true;
       }
-      if (cfg.baseURL && cfg.token) {
-        await connect(cfg.baseURL, cfg.token, cfg.isBuiltIn ?? false);
+
+      if (builtIn && isTauri() && import.meta.env.PROD) {
+        // Wait for the bundled backend to be ready before the health check.
+        try {
+          await pollUntil(
+            () => invoke<boolean>("is_backend_ready"),
+            (ready) => ready,
+            { interval: 500, timeout: 10000 }
+          );
+        } catch {
+          throw new Error("等待内建后端启动超时");
+        }
       }
-    } catch (e) {
+
+      if (url && t) {
+        await connect(url, t, builtIn);
+      }
+    } catch (e: any) {
       console.error("Failed to initialize connection:", e);
+      initError.value = e.message || "初始化连接失败";
+    } finally {
+      isInitializing.value = false;
     }
   }
 
@@ -68,29 +102,34 @@ export const useConnectionStore = defineStore("connection", () => {
     // Clear stale data from any previous connection.
     resetAllStores();
 
-    // Remote connections must be reachable before we switch to the main page.
-    if (!builtIn) {
-      setBaseURL(url);
-      setAuthToken(t);
-      let healthError: any = null;
-      try {
-        const { error } = await api.GET("/api/health");
-        healthError = error;
-      } catch (e) {
-        healthError = e;
-      }
-      if (healthError) {
-        setBaseURL("");
-        setAuthToken("");
-        throw new Error(`无法连接到服务器: ${url}`);
-      }
+    // Set up the client so the health check can reach the server.
+    setBaseURL(url);
+    setAuthToken(t);
+
+    // All connections must be reachable before we switch to the main page.
+    // Poll the health endpoint with retries for up to 10 seconds.
+    try {
+      await pollUntil(
+        async () => {
+          try {
+            const { error } = await api.GET("/api/health");
+            return error;
+          } catch (e) {
+            return e;
+          }
+        },
+        (error) => !error,
+        { interval: 1000, timeout: 10000 }
+      );
+    } catch {
+      setBaseURL("");
+      setAuthToken("");
+      throw new Error(`无法连接到服务器: ${url}`);
     }
 
     baseURL.value = url;
     token.value = t;
     isBuiltIn.value = builtIn;
-    setBaseURL(url);
-    setAuthToken(t);
     savePlatformConfig({ baseURL: url, token: t, isBuiltIn: builtIn });
     isReady.value = true;
     wsClient.connect(`${url.replace(/^http/, "ws")}/ws`, t);
@@ -108,7 +147,7 @@ export const useConnectionStore = defineStore("connection", () => {
     isBuiltIn.value = false;
   }
 
-  return { baseURL, token, isReady, isBuiltIn, init, connect, disconnect };
+  return { baseURL, token, isReady, isBuiltIn, isInitializing, initError, init, connect, disconnect };
 });
 
 export const useSubscriptionStore = defineStore("subscription", () => {
