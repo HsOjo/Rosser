@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useConnectionStore } from "@/stores";
+import { hasUISettings } from "@/platform";
 
 const routes = [
   {
@@ -26,13 +27,21 @@ router.beforeEach(async (to, _from, next) => {
     initGuarded = true;
     await conn.init();
   }
-  if (!conn.isReady && to.path !== "/onboarding") {
-    next("/onboarding");
-  } else if (conn.isReady && to.path === "/onboarding") {
-    next("/");
-  } else {
-    next();
+
+  // The welcome flow is only required on first launch, when the user has not
+  // yet configured the UI settings (language / theme).
+  if (!hasUISettings()) {
+    if (to.path !== "/onboarding") {
+      return next("/onboarding");
+    }
+    return next();
   }
+
+  if (conn.isReady && to.path === "/onboarding") {
+    return next("/");
+  }
+
+  next();
 });
 
 export default router;

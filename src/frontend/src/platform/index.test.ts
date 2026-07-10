@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { detectTauri, isTauri, getPlatformConfig, savePlatformConfig } from "./index.js";
+import { detectTauri, isTauri, getPlatformConfig, savePlatformConfig, hasUISettings } from "./index.js";
 
 vi.mock("@tauri-apps/api/core", () => {
   throw new Error("not available");
@@ -42,5 +42,14 @@ describe("platform", () => {
     const cfg = await getPlatformConfig();
     expect(cfg).toEqual({ baseURL: "", token: "", isBuiltIn: false });
     expect(localStorage.getItem("rosser_server")).toBe("not-json");
+  });
+
+  it("hasUISettings returns false when rosser_ui is missing", () => {
+    expect(hasUISettings()).toBe(false);
+  });
+
+  it("hasUISettings returns true when rosser_ui is present", () => {
+    localStorage.setItem("rosser_ui", JSON.stringify({ theme: "auto", locale: "zh-CN" }));
+    expect(hasUISettings()).toBe(true);
   });
 });

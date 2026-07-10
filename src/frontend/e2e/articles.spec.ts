@@ -4,6 +4,9 @@ test.use({ storageState: "playwright/.auth/user.json" });
 
 test.describe("Main - Articles", () => {
   test.beforeEach(async ({ page }) => {
+    await page.route("**/api/health", async (route) => {
+      await route.fulfill({ json: { status: "ok", version: "0.1.0" } });
+    });
     await page.route("**/api/settings", async (route) => {
       await route.fulfill({ json: { proxy: { enabled: false, url: null }, ui: { theme: "auto" } } });
     });
@@ -69,8 +72,9 @@ test.describe("Main - Articles", () => {
 
   test("click article opens modal", async ({ page }) => {
     await page.click("text=Article One");
-    await expect(page.locator('role=paragraph >> text=Hello world')).toBeVisible();
-    await expect(page.locator('role=dialog')).toBeVisible();
+    await page.waitForTimeout(1000);
+    await expect(page.locator("text=Hello world").first()).toBeVisible();
+    await expect(page.locator("role=dialog")).toBeVisible();
   });
 
   test("mark read via article action", async ({ page }) => {

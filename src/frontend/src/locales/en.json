@@ -108,5 +108,11 @@
   "proxyUrlPlaceholder": "http://host:port or socks5://host:port",
   "reload": "Reload",
   "developerTools": "Developer Tools",
-  "loadingBackend": "Starting built-in backend..."
+  "loadingBackend": "Starting built-in backend...",
+  "welcomeTitle": "Welcome to Rosser",
+  "welcomeDescription": "Let's set up your language, theme and server connection.",
+  "stepPreferences": "Preferences",
+  "stepConnection": "Server Connection",
+  "next": "Next",
+  "back": "Back"
 }

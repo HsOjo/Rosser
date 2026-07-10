@@ -163,7 +163,8 @@ watch(
         if (full) articleDrawerRef.value?.open(full);
       });
     }
-  }
+  },
+  { immediate: true }
 );
 </script>
 

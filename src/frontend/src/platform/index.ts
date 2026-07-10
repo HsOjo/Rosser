@@ -48,7 +48,7 @@ export function savePlatformConfig(cfg: ServerConfig) {
 
 import { ref, type Ref } from "vue";
 
-const UI_STORAGE_KEY = "rosser_ui";
+export const UI_STORAGE_KEY = "rosser_ui";
 
 type UISettings = {
   theme: string;
@@ -83,6 +83,11 @@ export function getUISettings(): Ref<UISettings> {
 export function saveUISettings(settings: Partial<UISettings>) {
   uiState.value = { ...uiState.value, ...settings };
   localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState.value));
+}
+
+export function hasUISettings(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(UI_STORAGE_KEY) !== null;
 }
 
 export function isMac(): boolean {

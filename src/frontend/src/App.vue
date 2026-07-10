@@ -43,10 +43,14 @@ function applyThemeClass(t: string) {
   document.body.classList.add(`rosser-theme-${resolved}`);
 }
 
-watch(() => ui.value.theme, (t) => {
+applyThemeClass(ui.value.theme);
+
+watch(() => ui.value.theme, (t, oldT) => {
   applyThemeClass(t);
-  saveUISettings({ theme: t });
-}, { immediate: true });
+  if (oldT !== undefined) {
+    saveUISettings({ theme: t });
+  }
+});
 
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 mediaQuery.addEventListener("change", () => {

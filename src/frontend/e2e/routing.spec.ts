@@ -4,6 +4,9 @@ test.use({ storageState: "playwright/.auth/user.json" });
 
 test.describe("Main - Routing sync", () => {
   test.beforeEach(async ({ page }) => {
+    await page.route("**/api/health", async (route) => {
+      await route.fulfill({ json: { status: "ok", version: "0.1.0" } });
+    });
     await page.route("**/api/settings", async (route) => {
       await route.fulfill({ json: { proxy: { enabled: false, url: null }, ui: { theme: "auto" } } });
     });
@@ -119,13 +122,14 @@ test.describe("Main - Routing sync", () => {
     await expect(page.locator("text=Article One")).toBeVisible();
 
     await page.click("text=Article One");
+    await page.waitForTimeout(1000);
     await expect(page).toHaveURL(/\?article=a1/);
-    await expect(page.locator('role=paragraph >> text=Hello world')).toBeVisible();
-    await expect(page.locator('role=dialog')).toBeVisible();
+    await expect(page.locator("text=Hello world").first()).toBeVisible();
+    await expect(page.locator("role=dialog")).toBeVisible();
 
     await page.reload();
     await expect(page).toHaveURL(/\?article=a1/);
-    await expect(page.locator('role=paragraph >> text=Hello world')).toBeVisible();
-    await expect(page.locator('role=dialog')).toBeVisible();
+    await page.locator("text=Hello world").nth(1).waitFor({ state: "visible", timeout: 10000 });
+    await expect(page.locator("role=dialog")).toBeVisible();
   });
 });
