@@ -18,6 +18,7 @@ import { useI18n } from "vue-i18n";
 import { darkTheme, lightTheme } from "naive-ui";
 import { useConnectionStore } from "@/stores";
 import { getUISettings, saveUISettings, detectTauri, setupAppMenu, getEffectiveTheme } from "@/platform";
+import { invoke } from "@tauri-apps/api/core";
 
 const { t } = useI18n();
 const conn = useConnectionStore();
@@ -43,6 +44,14 @@ watch(() => ui.value.theme, (t, oldT) => {
     saveUISettings({ theme: t });
   }
 });
+
+watch(() => ui.value.locale, (locale) => {
+  detectTauri().then((isTauri) => {
+    if (isTauri) {
+      invoke("set_locale", { locale }).catch(console.error);
+    }
+  });
+}, { immediate: true });
 
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 mediaQuery.addEventListener("change", () => {

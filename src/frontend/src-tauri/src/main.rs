@@ -10,6 +10,9 @@ use std::time::Duration;
 use tauri::{Emitter, Manager};
 use tauri_plugin_notification::NotificationExt;
 
+mod i18n;
+use i18n::I18n;
+
 /// Wraps a child process so it is killed when the wrapper is dropped.
 struct KillOnDrop(Child);
 
@@ -139,10 +142,28 @@ fn toggle_devtools(window: tauri::WebviewWindow) {
     }
 }
 
+#[tauri::command]
+fn set_locale(locale: String, i18n: tauri::State<'_, I18n>) {
+    i18n.set_locale(&locale);
+}
+
 fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+            let i18n = app.state::<I18n>();
+            let _ = app
+                .notification()
+                .builder()
+                .title("Rosser")
+                .body(i18n.t("notification_already_running"))
+                .show();
+        }))
         .manage(BackendHandle {
             child: Arc::new(Mutex::new(None)),
             ready: Arc::new(Mutex::new(false)),
@@ -151,6 +172,7 @@ fn main() {
             started: AtomicBool::new(false),
             quitting: AtomicBool::new(false),
         })
+        .manage(I18n::new())
         .setup(|app| {
             #[cfg(target_os = "macos")]
             set_dock_icon();
@@ -192,11 +214,12 @@ fn main() {
                     api.prevent_close();
                     let _ = window.hide();
 
+                    let i18n = app.state::<I18n>();
                     let _ = app
                         .notification()
                         .builder()
                         .title("Rosser")
-                        .body("Rosser 已隐藏到托盘，点击托盘图标可重新打开窗口")
+                        .body(i18n.t("notification_hidden_to_tray"))
                         .show();
 
                     #[cfg(target_os = "macos")]
@@ -210,7 +233,8 @@ fn main() {
             is_backend_ready,
             get_builtin_backend_config,
             start_builtin_backend,
-            toggle_devtools
+            toggle_devtools,
+            set_locale
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
