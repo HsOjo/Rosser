@@ -1,0 +1,47 @@
+# Dependencies / build outputs
+node_modules
+dist
+dist-ssr
+*.local
+
+# Package managers
+package-lock.json
+yarn.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*.$py.class
+.Python
+.venv
+venv/
+.env
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+*.sw?
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Tauri (not needed for web build)
+src/frontend/src-tauri/
+
+# Data / Storage (persistent volumes)
+data/
+storage/
+*.db
+*.db-journal
+
+# Logs
+logs
+*.log
+pnpm-debug.log*

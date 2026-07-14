@@ -1,0 +1,79 @@
+services:
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: rosser-backend
+    ports:
+      - "${ROSSER_PORT:-8000}:8000"
+    environment:
+      - ROSSER_HOST=0.0.0.0
+      - ROSSER_PORT=8000
+      - ROSSER_TOKEN=${ROSSER_TOKEN:-change-me}
+      - ROSSER_CORS_ORIGINS=${ROSSER_CORS_ORIGINS:-http://localhost:8001,http://127.0.0.1:8001,http://localhost:8002,http://127.0.0.1:8002,http://localhost:8003,http://127.0.0.1:8003}
+      - ROSSER_DATA_DIR=/app/data
+      - ROSSER_STORAGE_DIR=/app/storage
+    volumes:
+      - ./data:/app/data
+      - ./storage:/app/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
+    container_name: rosser-frontend
+    ports:
+      - "${ROSSER_FRONTEND_PORT:-8001}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/index.html"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  mobile:
+    build:
+      context: .
+      dockerfile: ./src/mobile/Dockerfile
+    container_name: rosser-mobile
+    ports:
+      - "${ROSSER_MOBILE_PORT:-8002}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/index.html"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  proxy:
+    build:
+      context: .
+      dockerfile: ./src/proxy/Dockerfile
+    container_name: rosser-proxy
+    ports:
+      - "${ROSSER_PROXY_PORT:-8003}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      mobile:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      - NGINX_ENTRYPOINT_QUIET_LOGS=1

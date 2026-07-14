@@ -110,6 +110,7 @@ src/backend/scripts/backend-sidecar.spec
 src/mobile/dist/
 
 # Data / Storage
+data/
 storage/
 *.db
 *.db-journal
