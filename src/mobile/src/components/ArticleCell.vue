@@ -6,7 +6,10 @@
   >
     <!-- Meta row -->
     <div class="flex justify-between items-center text-[10px] font-bold">
-      <span class="uppercase tracking-wider text-brand font-extrabold flex items-center gap-1 truncate">
+      <span
+        v-if="showSource"
+        class="uppercase tracking-wider text-brand font-extrabold flex items-center gap-1 truncate"
+      >
         <img
           v-if="feedIcon"
           :src="feedIcon"
@@ -102,9 +105,15 @@ import type { components } from "@rosser/shared/api";
 type ArticleListItem = components["schemas"]["ArticleListItem"];
 type Tag = components["schemas"]["TagOut"];
 
-const props = defineProps<{
-  art: ArticleListItem;
-}>();
+const props = withDefaults(
+  defineProps<{
+    art: ArticleListItem;
+    showSource?: boolean;
+  }>(),
+  {
+    showSource: true,
+  }
+);
 
 const emit = defineEmits<{
   (e: "open", id: string): void;

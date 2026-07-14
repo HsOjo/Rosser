@@ -171,6 +171,7 @@
         >
           <ArticleCell
             :art="art"
+            :show-source="filter.type !== 'subscription'"
             @open="openArticle"
             @star="toggleStar"
             @hide="toggleHide"
