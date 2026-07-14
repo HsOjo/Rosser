@@ -171,7 +171,8 @@ test.describe("Mobile E2E - Authenticated Flow", () => {
       await expect(articleCells.first()).toBeVisible();
       console.log("Back to home");
 
-      await page.click('[data-testid="settings-btn"]');
+      await page.click('[data-testid="header-menu-btn"]');
+      await page.click('[data-testid="menu-item-settings"]');
       await page.waitForURL(/settings/, { timeout: 10000 });
       await expect(page.locator("text=通用")).toBeVisible({ timeout: 5000 });
       console.log("Settings page loaded");
@@ -211,15 +212,17 @@ test.describe("Mobile E2E - Authenticated Flow", () => {
     await page.waitForTimeout(500);
     await expect(articleCells.first()).toBeVisible({ timeout: 5000 });
 
-    await page.click('[data-testid="search-btn"]');
-    const homeInputs = page.locator('input[type="text"]');
+    await page.click('[data-testid="header-menu-btn"]');
+    await page.waitForTimeout(300);
+    await page.click('[data-testid="menu-item-query-tools"]');
+    const homeInputs = page.locator('[data-testid="query-tools-input"]');
     await homeInputs.first().fill("claude");
     await page.waitForTimeout(800);
     const searchCount = await articleCells.count();
     console.log(`Search results: ${searchCount} articles`);
 
     await homeInputs.first().fill("");
-    await page.waitForTimeout(300);
+    await page.click('button:has-text("关闭")');
     console.log("Filter and search passed");
   });
 
@@ -267,7 +270,9 @@ test.describe("Mobile E2E - Authenticated Flow", () => {
   test("notifications page", async ({ page }) => {
     await login(page);
 
-    await page.click('[data-testid="notifications-btn"]');
+    await page.click('[data-testid="header-menu-btn"]');
+    await page.waitForTimeout(300);
+    await page.click('[data-testid="menu-item-notifications"]');
     await page.waitForURL(/notifications/, { timeout: 10000 });
     await expect(page.locator('[data-testid="notifications-back"]')).toBeVisible();
     console.log("Notifications page loaded");
@@ -276,7 +281,9 @@ test.describe("Mobile E2E - Authenticated Flow", () => {
   test("refresh preserves auth and returns to protected page", async ({ page }) => {
     await login(page);
 
-    await page.click('[data-testid="notifications-btn"]');
+    await page.click('[data-testid="header-menu-btn"]');
+    await page.waitForTimeout(300);
+    await page.click('[data-testid="menu-item-notifications"]');
     await page.waitForURL(/notifications/, { timeout: 10000 });
     await expect(page.locator("text=返回")).toBeVisible();
 

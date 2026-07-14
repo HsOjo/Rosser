@@ -13,7 +13,7 @@
           <component :is="MenuOutline" class="w-4 h-4" />
         </button>
         <button
-          class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0"
+          class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0 flex-1"
           @click="showDrawer = true"
         >
           <img
@@ -36,97 +36,118 @@
             :class="streamIconClass"
           />
           <span
-            class="text-xs font-black text-slate-800 dark:text-zinc-100 truncate max-w-[100px]"
+            class="text-xs font-black text-slate-800 dark:text-zinc-100 truncate max-w-[calc(100%-32px)]"
           >
             {{ streamTitle }}
           </span>
         </button>
       </div>
 
-      <div class="flex items-center gap-1 shrink-0">
+      <div ref="menuRef" class="relative flex items-center gap-1 shrink-0">
         <button
-          v-if="hasUnread"
-          class="p-1.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg flex items-center gap-1 transition-colors"
-          @click="showMarkAllConfirm = true"
-        >
-          <component :is="CheckboxOutline" class="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          class="w-8 h-8 rounded-lg flex items-center justify-center transition-all relative"
           :class="
-            showFilters
-              ? 'bg-brand-light text-brand dark:bg-brand/10'
-              : 'bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800'
-          "
-          @click="showFilters = !showFilters"
-        >
-          <component :is="OptionsOutline" class="w-4 h-4" />
-        </button>
-
-        <button
-          class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-          data-testid="search-btn"
-          :class="
-            showSearch
+            showMenu
               ? 'bg-brand text-white hover:bg-brand-hover'
               : 'bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800'
           "
-          @click="showSearch = !showSearch"
+          data-testid="header-menu-btn"
+          @click="showMenu = !showMenu"
         >
-          <component :is="SearchOutline" class="w-4 h-4" />
-        </button>
-
-        <button
-          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 transition-all"
-          :class="{ 'animate-spin text-brand': artStore.loading && !loadingMore }"
-          @click="refreshAll"
-        >
-          <component :is="RefreshOutline" class="w-4 h-4" />
-        </button>
-
-        <button
-          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 relative"
-          data-testid="notifications-btn"
-          @click="$router.push('/notifications')"
-        >
-          <component :is="NotificationsOutline" class="w-4 h-4" />
+          <component :is="EllipsisVerticalOutline" class="w-4 h-4" />
           <span
             v-if="notifStore.unreadCount > 0"
             class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 border border-white dark:border-zinc-900"
           />
         </button>
 
-        <button
-          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400"
-          data-testid="settings-btn"
-          @click="$router.push('/settings')"
+        <div
+          v-if="showMenu"
+          class="absolute right-0 top-full mt-1.5 min-w-[160px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-xl shadow-lg p-1.5 z-30 flex flex-col gap-0.5"
         >
-          <component :is="SettingsOutline" class="w-4 h-4" />
-        </button>
+          <button
+            v-if="hasUnread"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            data-testid="menu-item-mark-all-read"
+            @click="openMarkAllRead"
+          >
+            <component :is="CheckboxOutline" class="w-4 h-4" />
+            {{ t("markAllRead") }}
+          </button>
+
+          <button
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            data-testid="menu-item-query-tools"
+            @click="openQueryTools"
+          >
+            <component :is="SearchOutline" class="w-4 h-4" />
+            {{ t("queryTools") }}
+          </button>
+
+          <button
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            data-testid="menu-item-refresh"
+            @click="onMenuRefresh"
+          >
+            <component :is="RefreshOutline" class="w-4 h-4" />
+            {{ t("fetchAll") }}
+          </button>
+
+          <button
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            data-testid="menu-item-notifications"
+            @click="onMenuNotifications"
+          >
+            <component :is="NotificationsOutline" class="w-4 h-4" />
+            {{ t("notifications") }}
+          </button>
+
+          <button
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            data-testid="menu-item-settings"
+            @click="onMenuSettings"
+          >
+            <component :is="SettingsOutline" class="w-4 h-4" />
+            {{ t("settings") }}
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Search -->
+    <!-- Query Tools Dialog -->
     <div
-      v-if="showSearch"
-      class="px-4 py-2 bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800 overflow-hidden shrink-0 animate-slideDown"
+      v-if="showQueryTools"
+      data-testid="query-tools-dialog"
+      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      @click.self="showQueryTools = false"
     >
-      <input
-        v-model="searchQuery"
-        type="text"
-        :placeholder="t('search')"
-        class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
-      />
-    </div>
+      <div
+        class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl"
+      >
+        <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
+          {{ t("queryTools") }}
+        </h4>
 
-    <!-- Filters -->
-    <FilterDrawer
-      v-if="showFilters"
-      v-model="order"
-      v-model:page-size="pageSize"
-      class="shrink-0"
-    />
+        <input
+          v-model="searchQuery"
+          type="text"
+          data-testid="query-tools-input"
+          :placeholder="t('search')"
+          class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
+        />
+
+        <FilterDrawer v-model="order" v-model:page-size="pageSize" />
+
+        <div class="flex justify-end pt-1">
+          <button
+            class="px-4 py-2 bg-brand hover:bg-brand-hover text-xs font-bold text-white rounded-xl active:scale-[0.98] transition-all"
+            @click="showQueryTools = false"
+          >
+            {{ t("close") }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Article list -->
     <div ref="listRef" class="flex-1 overflow-y-auto px-4 relative">
@@ -232,7 +253,7 @@ import {
   MailOpenOutline,
   MailUnreadOutline,
   AppsOutline,
-  OptionsOutline,
+  EllipsisVerticalOutline,
   CheckboxOutline,
   CheckmarkOutline,
   FolderOutline,
@@ -267,12 +288,13 @@ const notifStore = useNotificationStore();
 const conn = useConnectionStore();
 
 const showDrawer = ref(false);
-const showSearch = ref(false);
-const showFilters = ref(false);
+const showMenu = ref(false);
+const showQueryTools = ref(false);
 const showMarkAllConfirm = ref(false);
 const searchQuery = ref("");
 const sentinelRef = ref<HTMLDivElement | null>(null);
 const listRef = ref<HTMLDivElement | null>(null);
+const menuRef = ref<HTMLDivElement | null>(null);
 const loadMoreObserver = ref<IntersectionObserver | null>(null);
 type SortOrder = NonNullable<ArticleListQuery["order"]>;
 
@@ -516,6 +538,45 @@ function onSelectFilter(type: FilterType, id: string | null) {
   filter.value = { type, id };
 }
 
+function openQueryTools() {
+  showMenu.value = false;
+  showQueryTools.value = true;
+}
+
+function openMarkAllRead() {
+  showMenu.value = false;
+  showMarkAllConfirm.value = true;
+}
+
+function onMenuRefresh() {
+  showMenu.value = false;
+  refreshAll();
+}
+
+function onMenuNotifications() {
+  showMenu.value = false;
+  router.push("/notifications");
+}
+
+function onMenuSettings() {
+  showMenu.value = false;
+  router.push("/settings");
+}
+
+function closeMenu(e: MouseEvent) {
+  if (menuRef.value && !menuRef.value.contains(e.target as Node)) {
+    showMenu.value = false;
+  }
+}
+
+watch(showMenu, (val) => {
+  if (val) {
+    window.addEventListener("mousedown", closeMenu);
+  } else {
+    window.removeEventListener("mousedown", closeMenu);
+  }
+});
+
 // Sync filter from URL query
 function applyQuery() {
   const q = route.query;
@@ -530,7 +591,7 @@ function applyQuery() {
   }
   if (q.search) {
     searchQuery.value = q.search as string;
-    showSearch.value = true;
+    showQueryTools.value = true;
   }
   if (q.size) {
     pageSize.value = Number(q.size);
@@ -593,5 +654,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   loadMoreObserver.value?.disconnect();
+  window.removeEventListener("mousedown", closeMenu);
 });
 </script>
