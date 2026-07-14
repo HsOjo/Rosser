@@ -122,6 +122,7 @@
 
       <!-- Article body -->
       <ArticleContent
+        ref="articleContentRef"
         :content="article.content"
         :summary="article.summary"
         @update:headings="headings = $event"
@@ -264,6 +265,7 @@ const showMeta = ref(false);
 const copied = ref(false);
 const containerRef = ref<HTMLDivElement | null>(null);
 const scrollRef = ref<HTMLDivElement | null>(null);
+const articleContentRef = ref<InstanceType<typeof ArticleContent> | null>(null);
 
 const articleId = computed(() => route.params.id as string);
 
@@ -374,8 +376,12 @@ function back() {
 }
 
 function handleEsc(e: KeyboardEvent) {
-  // Only close if no image preview is active; ArticleContent handles its own preview
-  if (e.key === "Escape") back();
+  if (e.key !== "Escape") return;
+  if (articleContentRef.value?.isPreviewOpen) {
+    articleContentRef.value.closePreview();
+    return;
+  }
+  back();
 }
 
 onMounted(async () => {

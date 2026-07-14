@@ -1,57 +1,33 @@
 <template>
-  <div ref="contentRef" class="space-y-4" @click="handleClick">
-    <div
+  <div ref="contentRef" class="space-y-4">
+    <component
+      :is="rendererFor(item.type)"
       v-for="(item, idx) in resolvedContent"
       :key="idx"
-      class="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed break-words"
-    >
-      <div
-        v-if="item.type === 'text/html'"
-        class="markdown-body"
-        v-html="item.value"
-      />
-      <pre
-        v-else-if="item.type === 'text/plain'"
-        class="whitespace-pre-wrap break-words font-mono text-[11px] bg-slate-50 dark:bg-zinc-800/40 p-3 rounded-xl border border-slate-100 dark:border-zinc-800"
-      >{{ item.value }}</pre>
-      <div
-        v-else
-        class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[10px] rounded-xl"
-      >
-        {{ t("unsupportedType", { type: item.type }) }}
-      </div>
-    </div>
+      v-bind="propsFor(item, idx)"
+      @update:headings="onHeadings(idx, $event)"
+      @preview="onPreview(idx, $event)"
+    />
 
-    <!-- Image preview overlay -->
-    <div
-      v-if="previewImage"
-      class="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4"
-      @click="previewImage = null"
-    >
-      <button
-        class="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20"
-        @click.stop="previewImage = null"
-      >
-        <component :is="Close" class="w-6 h-6" />
-      </button>
-      <img
-        :src="previewImage"
-        alt="preview"
-        class="max-w-full max-h-full object-contain rounded-xl"
-        referrerpolicy="no-referrer"
-      />
-    </div>
+    <ImagePreviewOverlay
+      v-model="showPreview"
+      :images="previewImages"
+      :initial-index="previewIndex"
+      @update:index="previewIndex = $event"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
-import { useI18n } from "vue-i18n";
-import { Close } from "@vicons/ionicons5";
+import { ref, watch, computed } from "vue";
 import { resolveFilePlaceholders } from "@rosser/shared";
-import DOMPurify from "dompurify";
 import type { components } from "@rosser/shared/api";
 import { useConnectionStore } from "@/stores/connection";
+import HtmlRender from "./render/HtmlRender.vue";
+import PlainTextRender from "./render/PlainTextRender.vue";
+import UnsupportedRender from "./render/UnsupportedRender.vue";
+import ImagePreviewOverlay from "./render/ImagePreviewOverlay.vue";
+import type { HeadingItem } from "./render/HtmlRender.vue";
 
 export interface OutlineItem {
   id: string;
@@ -68,17 +44,34 @@ const emit = defineEmits<{
   (e: "update:headings", headings: OutlineItem[]): void;
 }>();
 
-const { t } = useI18n();
 const conn = useConnectionStore();
-
 const contentRef = ref<HTMLDivElement | null>(null);
 const resolvedContent = ref<{ type: string; value: string }[]>([]);
-const previewImage = ref<string | null>(null);
+const headingMap = ref<Map<number, OutlineItem[]>>(new Map());
+const showPreview = ref(false);
+const previewImages = ref<string[]>([]);
+const previewIndex = ref(0);
 
-let headingCounter = 0;
+const isPreviewOpen = computed(() => showPreview.value);
+
+function rendererFor(type: string) {
+  if (type === "text/html") return HtmlRender;
+  if (type === "text/plain") return PlainTextRender;
+  return UnsupportedRender;
+}
+
+function propsFor(item: { type: string; value: string }, idx: number) {
+  if (item.type === "text/html") {
+    return { html: item.value, blockIndex: idx };
+  }
+  if (item.type === "text/plain") {
+    return { text: item.value };
+  }
+  return { type: item.type };
+}
 
 async function resolveContent() {
-  headingCounter = 0;
+  headingMap.value.clear();
   const items: { type: string; value: string }[] = [];
   const rawContent = props.content;
 
@@ -87,7 +80,11 @@ async function resolveContent() {
       if (item.value) {
         items.push({
           type: item.type || "text/plain",
-          value: await processHtml(item.value),
+          value: await resolveFilePlaceholders(
+            item.value,
+            conn.baseURL,
+            conn.token,
+          ),
         });
       }
     }
@@ -96,99 +93,49 @@ async function resolveContent() {
   if (items.length === 0) {
     items.push({
       type: "text/html",
-      value: await processHtml(props.summary || ""),
+      value: await resolveFilePlaceholders(
+        props.summary || "",
+        conn.baseURL,
+        conn.token,
+      ),
     });
   }
 
   resolvedContent.value = items;
-
-  await nextTick();
-  emit("update:headings", extractHeadings());
 }
 
-async function processHtml(raw: string) {
-  let html = await resolveFilePlaceholders(raw, conn.baseURL, conn.token);
-  html = DOMPurify.sanitize(html, {
-    ADD_ATTR: ["target", "id"],
-  });
-
-  const div = document.createElement("div");
-  div.innerHTML = html;
-
-  // Assign heading ids and styles
-  div.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => {
-    headingCounter++;
-    heading.setAttribute("id", `heading-anchor-${headingCounter}`);
-    heading.classList.add(
-      "scroll-mt-16",
-      "font-bold",
-      "text-slate-800",
-      "dark:text-zinc-100",
-      "mt-5",
-      "mb-2.5"
-    );
-  });
-
-  // Ensure links open externally
-  div.querySelectorAll("a").forEach((a) => {
-    const href = a.getAttribute("href") || "";
-    if (href.startsWith("http") || href.startsWith("mailto") || href.startsWith("tel")) {
-      a.setAttribute("target", "_blank");
-      a.setAttribute("rel", "noopener noreferrer");
-    }
-    a.classList.add(
-      "text-brand",
-      "font-semibold",
-      "underline",
-      "underline-offset-2"
-    );
-  });
-
-  // Style images
-  div.querySelectorAll("img").forEach((img) => {
-    img.classList.add(
-      "rounded-2xl",
-      "shadow-md",
-      "my-4",
-      "max-w-full",
-      "h-auto",
-      "cursor-zoom-in",
-      "hover:scale-[1.01]",
-      "transition-transform"
-    );
-    img.setAttribute("referrerpolicy", "no-referrer");
-  });
-
-  return div.innerHTML;
-}
-
-function extractHeadings(): OutlineItem[] {
-  const headings: OutlineItem[] = [];
-  if (!contentRef.value) return headings;
-
-  contentRef.value.querySelectorAll("h1, h2, h3").forEach((heading) => {
-    const id = heading.getAttribute("id");
-    if (!id) return;
-    headings.push({
-      id,
-      text: heading.textContent || "Untitled Heading",
-      level: parseInt(heading.tagName.substring(1)),
-    });
-  });
-  return headings;
-}
-
-function handleClick(e: MouseEvent) {
-  const target = e.target as HTMLElement;
-  if (target.tagName === "IMG") {
-    const src = target.getAttribute("src");
-    if (src) previewImage.value = src;
+function onHeadings(idx: number, headings: HeadingItem[]) {
+  headingMap.value.set(idx, headings as OutlineItem[]);
+  const merged: OutlineItem[] = [];
+  const keys = Array.from(headingMap.value.keys()).sort((a, b) => a - b);
+  for (const key of keys) {
+    const list = headingMap.value.get(key);
+    if (list) merged.push(...list);
   }
+  emit("update:headings", merged);
+}
+
+function onPreview(
+  _idx: number,
+  payload: { images: string[]; index: number },
+) {
+  previewImages.value = payload.images;
+  previewIndex.value = payload.index;
+  showPreview.value = true;
+}
+
+function closePreview() {
+  showPreview.value = false;
 }
 
 watch(
   () => [props.content, props.summary],
   () => resolveContent(),
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 );
+
+defineExpose({
+  isPreviewOpen,
+  closePreview,
+});
 </script>
