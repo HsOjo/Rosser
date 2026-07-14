@@ -53,7 +53,7 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.rosser_cors_origins.split(",")]
 
     class Config:
-        env_file = ".env"
+        env_file = str(Path(__file__).resolve().parent.parent.parent / ".env")
         env_prefix = ""
         case_sensitive = False
 

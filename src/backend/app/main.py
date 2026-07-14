@@ -167,6 +167,17 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 # Export openapi.json for frontend generation
-if __name__ == "__main__":
+def run_server() -> None:
     import uvicorn
-    uvicorn.run(app, host=settings.rosser_host, port=settings.rosser_port)
+
+    reload = os.environ.get("ROSSER_RELOAD", "") in ("1", "true", "yes")
+    uvicorn.run(
+        "app.main:app" if reload else app,
+        host=settings.rosser_host,
+        port=settings.rosser_port,
+        reload=reload,
+    )
+
+
+if __name__ == "__main__":
+    run_server()

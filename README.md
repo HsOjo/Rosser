@@ -45,7 +45,7 @@ pnpm dev
 
 ```bash
 cd src/backend
-uv run uvicorn app.main:app --reload
+uv run python -m app.main
 ```
 
 API docs available at `http://127.0.0.1:8000/docs`.
@@ -82,6 +82,7 @@ Set `ROSSER_TOKEN` and optionally `ROSSER_CORS_ORIGINS` in environment or `.env`
 | `ROSSER_PORT` | `8000` | Listen port |
 | `ROSSER_DATA_DIR` | `~/.rosser/data` | SQLite database directory |
 | `ROSSER_STORAGE_DIR` | `~/.rosser/storage` | File storage directory |
+| `ROSSER_RELOAD` | `0` | Set to `1`/`true` to enable auto-reload (development only) |
 | `ROSSER_CORS_ORIGINS` | `http://localhost,...` | Allowed CORS origins |
 
 ## License

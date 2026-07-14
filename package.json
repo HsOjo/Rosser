@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "gen:api": "pnpm --filter @rosser/shared gen:api",
-    "dev:backend": "cd src/backend && uv run uvicorn app.main:app --reload",
+    "dev:backend": "cd src/backend && cross-env ROSSER_RELOAD=1 uv run python -m app.main",
     "dev:frontend": "pnpm --filter @rosser/frontend dev",
     "dev:mobile": "pnpm --filter @rosser/mobile dev",
     "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\" \"pnpm dev:mobile\"",
