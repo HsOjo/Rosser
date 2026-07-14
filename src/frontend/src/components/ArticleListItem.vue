@@ -12,8 +12,10 @@
         </n-ellipsis>
       </template>
       <template #avatar>
-        <n-tag v-if="!article.is_read" type="success" size="small">{{ t('new') }}</n-tag>
-        <n-tag v-if="article.is_star" type="warning" size="small">{{ t('star') }}</n-tag>
+        <n-space :size="4">
+          <n-tag v-if="!article.is_read" type="success" size="small">{{ t('new') }}</n-tag>
+          <n-tag v-if="article.is_star" type="warning" size="small">{{ t('star') }}</n-tag>
+        </n-space>
       </template>
       <template #action>
         <n-space>
