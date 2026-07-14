@@ -5,7 +5,7 @@ const TOKEN = process.env.ROSSER_TOKEN || "dev-token-change-me";
 
 async function clearStorage(page: import("@playwright/test").Page) {
   await page.evaluate(() => {
-    localStorage.removeItem("rosser_config");
+    localStorage.removeItem("rosser_server");
     localStorage.removeItem("rosser_ui");
   });
 }

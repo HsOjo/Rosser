@@ -75,6 +75,7 @@ import { useMessage } from "naive-ui";
 import { invoke } from "@tauri-apps/api/core";
 import { useConnectionStore, BUILTIN_TOKEN } from "@/stores";
 import { detectTauri, getPlatformConfig, getUISettings, saveUISettings, hasUISettings } from "@/platform";
+import { getDefaultServerURL } from "@rosser/shared";
 
 const router = useRouter();
 const message = useMessage();
@@ -131,8 +132,8 @@ onMounted(async () => {
 });
 
 const mode = ref("remote");
-const url = ref("http://127.0.0.1:8000");
-const tokenInput = ref("dev-token-change-me");
+const url = ref(getDefaultServerURL());
+const tokenInput = ref("");
 const connecting = ref(false);
 
 async function handleConnect() {

@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 import { api, normalizeBaseURL, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
+import { getPlatformConfig, savePlatformConfig } from "@/platform";
 import { registerWebSocketHandlers } from "./ws";
 import { resetAllStores } from "./reset";
 
@@ -15,9 +16,7 @@ export const useConnectionStore = defineStore("connection", () => {
     isInitializing.value = true;
     initError.value = "";
     try {
-      const raw = localStorage.getItem("rosser_config");
-      if (!raw) return;
-      const cfg = JSON.parse(raw);
+      const cfg = getPlatformConfig();
       if (cfg.baseURL && cfg.token) {
         await connect(cfg.baseURL, cfg.token);
       }
@@ -46,7 +45,7 @@ export const useConnectionStore = defineStore("connection", () => {
 
     baseURL.value = normalized;
     token.value = t;
-    localStorage.setItem("rosser_config", JSON.stringify({ baseURL: normalized, token: t }));
+    savePlatformConfig({ baseURL: normalized, token: t });
     isReady.value = true;
     wsClient.connect(`${normalized.replace(/^http/, "ws")}/ws`, t);
     registerWebSocketHandlers();

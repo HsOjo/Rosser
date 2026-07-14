@@ -136,6 +136,8 @@ import {
   uiSettings,
   type Theme,
 } from "@/settings/local";
+import { getPlatformConfig } from "@/platform";
+import { getDefaultServerURL } from "@rosser/shared";
 
 
 const { t, locale } = useI18n();
@@ -150,7 +152,7 @@ const error = ref("");
 const form = reactive({
   locale: uiSettings.value.locale,
   theme: uiSettings.value.theme,
-  baseURL: "",
+  baseURL: getDefaultServerURL(),
   token: "",
 });
 
@@ -188,16 +190,9 @@ onMounted(() => {
   if (hasUISettings()) {
     step.value = 2;
   }
-  const saved = localStorage.getItem("rosser_config");
-  if (saved) {
-    try {
-      const cfg = JSON.parse(saved);
-      form.baseURL = cfg.baseURL || "";
-      form.token = cfg.token || "";
-    } catch {
-      // ignore
-    }
-  }
+  const cfg = getPlatformConfig();
+  form.baseURL = cfg.baseURL || form.baseURL;
+  form.token = cfg.token || "";
 });
 
 async function next() {

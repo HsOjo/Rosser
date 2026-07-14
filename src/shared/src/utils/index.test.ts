@@ -8,6 +8,7 @@ import {
   relativeTime,
   normalizeBaseURL,
   buildFileUrl,
+  getDefaultServerURL,
 } from "./index.js";
 
 describe("utils", () => {
@@ -64,6 +65,44 @@ describe("utils", () => {
 
     it("leaves URL without slash unchanged", () => {
       expect(normalizeBaseURL("http://localhost:8000")).toBe("http://localhost:8000");
+    });
+  });
+
+  describe("getDefaultServerURL", () => {
+    it("returns window.location.origin in browser", () => {
+      const originalWindow = globalThis.window;
+      try {
+        Object.defineProperty(globalThis, "window", {
+          value: { location: { origin: "http://localhost:5173" } },
+          configurable: true,
+          writable: true,
+        });
+        expect(getDefaultServerURL()).toBe("http://localhost:5173");
+      } finally {
+        Object.defineProperty(globalThis, "window", {
+          value: originalWindow,
+          configurable: true,
+          writable: true,
+        });
+      }
+    });
+
+    it("returns empty string when window is undefined", () => {
+      const originalWindow = globalThis.window;
+      try {
+        Object.defineProperty(globalThis, "window", {
+          value: undefined,
+          configurable: true,
+          writable: true,
+        });
+        expect(getDefaultServerURL()).toBe("");
+      } finally {
+        Object.defineProperty(globalThis, "window", {
+          value: originalWindow,
+          configurable: true,
+          writable: true,
+        });
+      }
     });
   });
 

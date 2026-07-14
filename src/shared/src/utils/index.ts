@@ -4,6 +4,11 @@ export function normalizeBaseURL(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+export function getDefaultServerURL(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.origin;
+}
+
 export async function signFileUrl(fileId: string, exp: number, secret: string): Promise<string> {
   const msg = `${fileId}|${exp}`;
   return sha256.hmac(secret, msg).slice(0, 32);
