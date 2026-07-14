@@ -101,7 +101,9 @@
             v-model:value="selectedKey"
             :options="menuOptions"
             :node-props="getMenuNodeProps"
+            :expanded-keys="expandedKeys"
             @update:value="onMenuSelect"
+            @update:expanded-keys="onUpdateExpandedKeys"
           />
         </n-scrollbar>
       </n-layout-sider>
@@ -292,6 +294,7 @@ const message = useMessage();
 const ui = getUISettings();
 
 const selectedKey = ref("all");
+const expandedKeys = ref<string[]>([]);
 const selectedSubscription = ref<string | undefined>(undefined);
 const selectedCategory = ref<string | undefined>(undefined);
 const selectedSite = ref<string | undefined>(undefined);
@@ -512,6 +515,25 @@ function renderIcon(icon: any) {
   return () => h(NIcon, { size: 16 }, { default: () => h(icon) });
 }
 
+function renderCategoryLabel(cat: any, hasChildren: boolean) {
+  return () =>
+    h(
+      "span",
+      {
+        style: { display: "inline-flex", alignItems: "center", width: "100%" },
+        onClick: hasChildren
+          ? (e: MouseEvent) => {
+              e.stopPropagation();
+              const key = `cat-${cat.id}`;
+              selectedKey.value = key;
+              onMenuSelect(key);
+            }
+          : undefined,
+      },
+      cat.title
+    );
+}
+
 function faviconImgRender(url: string) {
   return () =>
     h("img", {
@@ -612,11 +634,12 @@ const menuOptions = computed(() => {
         icon: subFaviconRender(s),
         contextMenu: { type: "sub", data: s },
       }));
+    const hasChildren = subs.length > 0;
     items.push({
       key: `cat-${cat.id}`,
-      label: cat.title,
+      label: renderCategoryLabel(cat, hasChildren),
       icon: renderIcon(FolderOutline),
-      children: subs.length > 0 ? subs : undefined,
+      children: hasChildren ? subs : undefined,
       contextMenu: { type: "cat", data: cat },
     });
   }
@@ -806,6 +829,10 @@ function onContextMenuSelect(key: string) {
       },
     });
   }
+}
+
+function onUpdateExpandedKeys(keys: string[]) {
+  expandedKeys.value = keys;
 }
 
 function onMenuSelect(key: string) {

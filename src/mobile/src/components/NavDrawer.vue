@@ -57,24 +57,34 @@
         <!-- Categories -->
         <template v-if="activeSection === 'categories'">
           <div v-for="cat in catStore.categories" :key="cat.id" class="space-y-1">
-            <button
-              class="w-full flex items-center justify-between py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/20 rounded-xl text-left transition-colors"
-              @click="toggleCat(cat.id)"
+            <div
+              class="group w-full flex items-center justify-between py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/20 rounded-xl text-left transition-colors"
+              :class="
+                activeFilter === 'category' && activeFilterId === cat.id
+                  ? 'bg-brand-light dark:bg-brand/10'
+                  : ''
+              "
             >
-              <div class="flex items-center gap-1.5 min-w-0 flex-1">
+              <button
+                class="flex items-center gap-1.5 min-w-0 flex-1 text-left"
+                @click="select('category', cat.id)"
+              >
                 <component :is="FolderOutline" class="w-4 h-4 text-brand shrink-0" />
                 <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">
                   {{ cat.title }}
                 </span>
-              </div>
-              <div class="flex items-center gap-2 shrink-0">
+              </button>
+              <button
+                class="shrink-0 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700/50 transition-colors"
+                @click.stop="toggleCat(cat.id)"
+              >
                 <component
                   :is="ChevronForwardOutline"
                   class="w-4 h-4 text-slate-400 transition-transform duration-200"
                   :class="expandedCats[cat.id] ? 'rotate-90' : ''"
                 />
-              </div>
-            </button>
+              </button>
+            </div>
 
             <div
               v-if="expandedCats[cat.id]"
@@ -104,22 +114,29 @@
 
           <!-- Uncategorized -->
           <div v-if="uncategorizedFeeds.length > 0" class="space-y-1">
-            <button
-              class="w-full flex items-center justify-between py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/20 rounded-xl text-left transition-colors"
-              @click="toggleCat('uncategorized')"
+            <div
+              class="group w-full flex items-center justify-between py-2 px-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/20 rounded-xl text-left transition-colors"
             >
-              <div class="flex items-center gap-1.5 min-w-0 flex-1">
+              <button
+                class="flex items-center gap-1.5 min-w-0 flex-1 text-left"
+                @click="toggleCat('uncategorized')"
+              >
                 <component :is="FolderOpenOutline" class="w-4 h-4 text-slate-400 shrink-0" />
                 <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">
                   {{ t("uncategorized") }}
                 </span>
-              </div>
-              <component
-                :is="ChevronForwardOutline"
-                class="w-4 h-4 text-slate-400 transition-transform duration-200"
-                :class="expandedCats['uncategorized'] ? 'rotate-90' : ''"
-              />
-            </button>
+              </button>
+              <button
+                class="shrink-0 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700/50 transition-colors"
+                @click.stop="toggleCat('uncategorized')"
+              >
+                <component
+                  :is="ChevronForwardOutline"
+                  class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                  :class="expandedCats['uncategorized'] ? 'rotate-90' : ''"
+                />
+              </button>
+            </div>
 
             <div
               v-if="expandedCats['uncategorized']"
