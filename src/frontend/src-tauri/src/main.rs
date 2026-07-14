@@ -256,6 +256,7 @@ fn main() {
                     .quitting
                     .store(true, Ordering::Relaxed);
             }
+            #[cfg(target_os = "macos")]
             tauri::RunEvent::Reopen { .. } => {
                 show_and_focus_main_window(app_handle);
                 show_notification(app_handle, "notification_already_running");
