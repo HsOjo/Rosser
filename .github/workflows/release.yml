@@ -19,11 +19,11 @@ jobs:
         include:
           - platform: macos
             arch: arm64
-            runner: macos-14
+            runner: macos-15
             rust_target: aarch64-apple-darwin
           - platform: macos
             arch: amd64
-            runner: macos-13
+            runner: macos-15-intel
             rust_target: x86_64-apple-darwin
           - platform: windows
             arch: amd64
