@@ -1,364 +1,597 @@
 <template>
-  <div>
-    <var-app-bar :title="$t('manage')" title-position="center">
-      <template #left>
-        <var-button text type="primary" @click="$router.back()">{{ $t('back') }}</var-button>
-      </template>
-    </var-app-bar>
+  <div class="h-full flex flex-col bg-white dark:bg-zinc-900">
+    <header
+      class="px-3.5 py-2 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/40 shrink-0"
+    >
+      <div class="flex items-center gap-2">
+        <button
+          class="p-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors"
+          @click="$router.back()"
+        >
+          <component :is="ArrowBack" class="w-5 h-5" />
+        </button>
+        <span class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ t("manage") }}</span>
+      </div>
 
-    <var-tabs v-model:active="activeTab">
-      <var-tab>{{ $t('categories') }}</var-tab>
-      <var-tab>{{ $t('subscriptions') }}</var-tab>
-      <var-tab>{{ $t('tags') }}</var-tab>
-    </var-tabs>
+      <button
+        class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+        @click="fetchAll"
+      >
+        <component
+          :is="Refresh"
+          class="w-4 h-4"
+          :class="{ 'animate-spin text-brand': fetchingAll }"
+        />
+      </button>
+    </header>
 
-    <var-tabs-items v-model:active="activeTab">
-      <!-- Categories -->
-      <var-tab-item>
-        <var-space direction="column" size="large" style="padding: 16px;">
-          <var-space>
-            <var-input v-model="newCatTitle" :placeholder="$t('title')" variant="outlined" />
-            <var-input v-model="newCatDesc" :placeholder="$t('description')" variant="outlined" />
-            <var-button type="primary" :loading="addingCat" @click="addCategory">{{ $t('add') }}</var-button>
-          </var-space>
+    <!-- Tabs -->
+    <div class="px-4 pt-3">
+      <div class="flex bg-slate-50 dark:bg-zinc-800/40 p-1 rounded-xl gap-1 text-[10px] font-bold">
+        <button
+          v-for="tab in tabs"
+          :key="tab"
+          class="flex-1 py-1.5 rounded-lg text-center transition-all"
+          :class="
+            activeTab === tab
+              ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm font-bold'
+              : 'text-slate-400 hover:text-slate-600'
+          "
+          @click="activeTab = tab"
+        >
+          {{ t(tab) }}
+        </button>
+      </div>
+    </div>
 
-          <var-cell
-            v-for="cat in catStore.categories"
-            :key="cat.id"
-            :title="cat.title"
-            :description="cat.description"
-          >
-            <template #extra>
-              <var-space>
-                <var-button text type="primary" size="mini" @click="openEditCat(cat)">{{ $t('edit') }}</var-button>
-                <var-button text type="danger" size="mini" @click="deleteCat(cat.id)">{{ $t('delete') }}</var-button>
-              </var-space>
-            </template>
-          </var-cell>
-        </var-space>
-      </var-tab-item>
-
+    <div class="flex-1 overflow-y-auto px-4 py-4">
       <!-- Subscriptions -->
-      <var-tab-item>
-        <var-space direction="column" size="large" style="padding: 16px;">
-          <var-space>
-            <var-input v-model="newSubUrl" :placeholder="$t('rssURL')" variant="outlined" />
-            <var-button :loading="previewLoading" @click="preview">{{ $t('preview') }}</var-button>
-          </var-space>
-
-          <template v-if="previewResult">
-            <var-input v-model="newSubTitle" :placeholder="previewResult.title || $t('title')" variant="outlined" />
-            <var-input v-model="newSubDesc" :placeholder="$t('description')" variant="outlined" />
-            <var-select v-model="newSubCategory" :placeholder="$t('category')" clearable variant="outlined">
-              <var-option
+      <div v-if="activeTab === 'subscriptions'" class="space-y-4">
+        <!-- Add subscription -->
+        <div class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-zinc-200">
+            <component :is="Add" class="w-4 h-4 text-brand" />
+            <span>{{ t("addSubscription") }}</span>
+          </div>
+          <input
+            v-model="newUrl"
+            type="text"
+            :placeholder="t('rssURL')"
+            class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:border-brand outline-none"
+            @keydown.enter="previewAndAdd"
+          />
+          <div v-if="previewData" class="space-y-2">
+            <input
+              v-model="previewData.title"
+              type="text"
+              class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:border-brand outline-none"
+            />
+            <select
+              v-model="newCategoryId"
+              class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:border-brand outline-none"
+            >
+              <option :value="null">{{ t("uncategorized") }}</option>
+              <option
                 v-for="cat in catStore.categories"
                 :key="cat.id"
-                :label="cat.title"
                 :value="cat.id"
-              />
-            </var-select>
-            <var-button type="primary" :loading="addingSub" @click="addSubscription">{{ $t('addSubscription') }}</var-button>
-          </template>
-
-          <var-divider />
-
-          <var-cell
-            v-for="sub in subStore.subscriptions"
-            :key="sub.id"
-            :title="sub.title"
-            :description="sub.url"
+              >
+                {{ cat.title }}
+              </option>
+            </select>
+          </div>
+          <button
+            class="w-full py-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl transition-colors"
+            :disabled="adding"
+            @click="previewAndAdd"
           >
-            <template #extra>
-              <var-space>
-                <var-button text type="primary" size="mini" @click="openEditSub(sub)">{{ $t('edit') }}</var-button>
-                <var-button text type="danger" size="mini" @click="deleteSub(sub.id)">{{ $t('delete') }}</var-button>
-              </var-space>
-            </template>
-          </var-cell>
-        </var-space>
-      </var-tab-item>
+            <span v-if="adding">
+              <div
+                class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block align-middle mr-1"
+              />
+              {{ t("loading") }}
+            </span>
+            <span v-else-if="previewData">{{ t("add") }}</span>
+            <span v-else>{{ t("preview") }}</span>
+          </button>
+        </div>
 
-      <!-- Tags -->
-      <var-tab-item>
-        <var-space direction="column" size="large" style="padding: 16px;">
-          <var-space>
-            <var-input v-model="newTagTitle" :placeholder="$t('tagTitle')" variant="outlined" />
-            <var-input v-model="newTagColor" :placeholder="$t('tagColor')" variant="outlined" style="width: 80px;" />
-            <var-button type="primary" :loading="addingTag" @click="addTag">{{ $t('add') }}</var-button>
-          </var-space>
+        <!-- Subscriptions by category -->
+        <div class="space-y-4">
+          <div v-for="cat in catStore.categories" :key="cat.id" class="space-y-2">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-0.5">
+              {{ cat.title }}
+            </div>
+            <div class="space-y-2">
+              <div
+                v-for="sub in subscriptionsByCategory(cat.id)"
+                :key="sub.id"
+                class="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl"
+              >
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <img
+                    v-if="sub.site_id && siteFavicons[sub.site_id]"
+                    :src="siteFavicons[sub.site_id]"
+                    alt=""
+                    class="w-5 h-5 rounded object-contain shrink-0"
+                    referrerpolicy="no-referrer"
+                    @error="siteFavicons[sub.site_id] = ''"
+                  />
+                  <component v-else :is="Newspaper" class="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate">
+                      {{ sub.title }}
+                    </div>
+                    <div class="text-[10px] text-slate-400 dark:text-zinc-500 truncate">
+                      {{ sub.url }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                    :disabled="fetchingId === sub.id"
+                    @click="fetchOne(sub.id)"
+                  >
+                    <component
+                      :is="Refresh"
+                      class="w-3.5 h-3.5"
+                      :class="{ 'animate-spin text-brand': fetchingId === sub.id }"
+                    />
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                    @click="editSubscription(sub)"
+                  >
+                    <component :is="Pencil" class="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                    @click="deleteSubscription(sub.id)"
+                  >
+                    <component :is="Trash" class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <var-space wrap :size="[8, 8]">
-            <var-chip
-              v-for="tag in tagStore.tags"
-              :key="tag.id"
-              closable
-              :color="tag.color"
-              @close="removeTag(tag.id)"
-              @click="startEditTag(tag)"
+          <!-- Uncategorized -->
+          <div v-if="uncategorizedSubscriptions.length > 0" class="space-y-2">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-0.5">
+              {{ t("uncategorized") }}
+            </div>
+            <div class="space-y-2">
+              <div
+                v-for="sub in uncategorizedSubscriptions"
+                :key="sub.id"
+                class="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl"
+              >
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <img
+                    v-if="sub.site_id && siteFavicons[sub.site_id]"
+                    :src="siteFavicons[sub.site_id]"
+                    alt=""
+                    class="w-5 h-5 rounded object-contain shrink-0"
+                    referrerpolicy="no-referrer"
+                    @error="siteFavicons[sub.site_id] = ''"
+                  />
+                  <component v-else :is="Newspaper" class="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate">
+                      {{ sub.title }}
+                    </div>
+                    <div class="text-[10px] text-slate-400 dark:text-zinc-500 truncate">
+                      {{ sub.url }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                    :disabled="fetchingId === sub.id"
+                    @click="fetchOne(sub.id)"
+                  >
+                    <component
+                      :is="Refresh"
+                      class="w-3.5 h-3.5"
+                      :class="{ 'animate-spin text-brand': fetchingId === sub.id }"
+                    />
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                    @click="editSubscription(sub)"
+                  >
+                    <component :is="Pencil" class="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                    @click="deleteSubscription(sub.id)"
+                  >
+                    <component :is="Trash" class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div v-else-if="activeTab === 'categories'" class="space-y-3">
+        <div class="flex gap-2">
+          <input
+            v-model="newCategoryName"
+            type="text"
+            :placeholder="t('addCategory')"
+            class="flex-1 text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:border-brand outline-none"
+            @keydown.enter="addCategory"
+          />
+          <button
+            class="px-3 py-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl"
+            data-testid="add-category-btn"
+            @click="addCategory"
+          >
+            <component :is="Add" class="w-4 h-4" />
+          </button>
+        </div>
+
+        <div
+          v-for="cat in catStore.categories"
+          :key="cat.id"
+          class="flex items-center justify-between p-3 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800"
+        >
+          <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">{{ cat.title }}</span>
+          <div class="flex items-center gap-1">
+            <button
+              class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400"
+              @click="editCategory(cat)"
             >
-              {{ tag.title }}
-            </var-chip>
-          </var-space>
-        </var-space>
-      </var-tab-item>
-    </var-tabs-items>
+              <component :is="Pencil" class="w-3.5 h-3.5" />
+            </button>
+            <button
+              class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+              @click="deleteCategory(cat.id)"
+            >
+              <component :is="Trash" class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-    <var-dialog v-model:show="showEditCat" :title="$t('editCategory')">
-      <var-space direction="column" size="small">
-        <var-input v-model="editCatTitle" :placeholder="$t('title')" variant="outlined" />
-        <var-input v-model="editCatDesc" :placeholder="$t('description')" variant="outlined" />
-      </var-space>
-      <template #actions>
-        <var-space>
-          <var-button type="primary" @click="saveEditCat">{{ $t('save') }}</var-button>
-          <var-button @click="showEditCat = false">{{ $t('close') }}</var-button>
-        </var-space>
-      </template>
-    </var-dialog>
+      <!-- Sites -->
+      <div v-else-if="activeTab === 'sites'" class="space-y-3">
+        <div
+          v-for="site in siteStore.sites"
+          :key="site.id"
+          class="p-3 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 min-w-0">
+              <img
+                v-if="site.favicon_id"
+                :src="siteFavicons[site.id]"
+                alt=""
+                class="w-5 h-5 rounded object-contain"
+                referrerpolicy="no-referrer"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold text-slate-700 dark:text-zinc-200 truncate">
+                  {{ site.title || site.url }}
+                </div>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 truncate">
+                  {{ site.url }}
+                </div>
+              </div>
+            </div>
+            <button
+              class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400"
+              :disabled="refreshingSiteId === site.id"
+              @click="refreshSiteFavicon(site.id)"
+            >
+              <component
+                :is="Refresh"
+                class="w-3.5 h-3.5"
+                :class="{ 'animate-spin text-brand': refreshingSiteId === site.id }"
+              />
+            </button>
+          </div>
 
-    <var-dialog v-model:show="showEditSub" :title="$t('editSubscription')">
-      <var-space direction="column" size="small">
-        <var-input v-model="editSubTitle" :placeholder="$t('title')" variant="outlined" />
-        <var-input v-model="editSubDesc" :placeholder="$t('description')" variant="outlined" />
-        <var-select v-model="editSubCategory" :placeholder="$t('category')" clearable variant="outlined">
-          <var-option v-for="cat in catStore.categories" :key="cat.id" :label="cat.title" :value="cat.id" />
-        </var-select>
-      </var-space>
-      <template #actions>
-        <var-space>
-          <var-button type="primary" @click="saveEditSub">{{ $t('save') }}</var-button>
-          <var-button :loading="fetchingSub" @click="fetchSubscription">{{ $t('fetchNow') }}</var-button>
-          <var-button type="danger" @click="deleteSub(editingSub?.id)">{{ $t('delete') }}</var-button>
-          <var-button @click="showEditSub = false">{{ $t('close') }}</var-button>
-        </var-space>
-      </template>
-    </var-dialog>
+          <div class="flex gap-2">
+            <input
+              v-model="siteEdits[site.id].title"
+              type="text"
+              :placeholder="t('title')"
+              class="flex-1 text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:border-brand outline-none"
+            />
+            <input
+              v-model.number="siteEdits[site.id].concurrency_limit"
+              type="number"
+              min="1"
+              class="w-20 text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:border-brand outline-none"
+            />
+          </div>
 
-    <var-dialog v-model:show="showEditTag" :title="$t('editTag')">
-      <var-space direction="column" size="small">
-        <var-input v-model="editTagTitle" :placeholder="$t('tagTitle')" variant="outlined" />
-        <var-input v-model="editTagColor" :placeholder="$t('tagColor')" variant="outlined" />
-      </var-space>
-      <template #actions>
-        <var-space>
-          <var-button type="primary" @click="saveEditTag">{{ $t('save') }}</var-button>
-          <var-button @click="showEditTag = false">{{ $t('close') }}</var-button>
-        </var-space>
-      </template>
-    </var-dialog>
+          <button
+            class="w-full py-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl transition-colors"
+            @click="saveSite(site.id)"
+          >
+            {{ t("save") }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit subscription dialog -->
+    <div
+      v-if="editingSub"
+      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      @click.self="editingSub = null"
+    >
+      <div class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
+        <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
+          {{ t("editSubscription") }}
+        </h4>
+        <div class="space-y-3">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">{{ t("title") }}</label>
+            <input
+              v-model="editingSub.title"
+              type="text"
+              class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
+            />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">{{ t("category") }}</label>
+            <select
+              v-model="editingSub.category_id"
+              class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
+            >
+              <option :value="null">{{ t("uncategorized") }}</option>
+              <option
+                v-for="cat in catStore.categories"
+                :key="cat.id"
+                :value="cat.id"
+              >
+                {{ cat.title }}
+              </option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">{{ t("refreshInterval") }}</label>
+            <input
+              v-model.number="editingSub.refresh_interval"
+              type="number"
+              min="1"
+              class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
+            />
+          </div>
+        </div>
+        <div class="flex gap-2 justify-end pt-2">
+          <button
+            class="px-3.5 py-2 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 text-xs font-semibold text-slate-600 dark:text-zinc-300 rounded-lg"
+            @click="editingSub = null"
+          >
+            {{ t("cancel") }}
+          </button>
+          <button
+            class="px-3.5 py-2 bg-brand hover:bg-brand-hover text-xs font-bold text-white rounded-lg"
+            @click="saveSubscription"
+          >
+            {{ t("save") }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { Snackbar } from "@varlet/ui";
-import { useCategoryStore, useSubscriptionStore, useTagStore } from "@/stores";
-import { api } from "@rosser/shared";
+import { ref, reactive, onMounted, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import {
+  ArrowBack,
+  Add,
+  Refresh,
+  Pencil,
+  Trash,
+  Newspaper,
+} from "@vicons/ionicons5";
+import { buildFileUrl } from "@rosser/shared";
+import {
+  useSubscriptionStore,
+  useCategoryStore,
+  useSiteStore,
+} from "@/stores";
+import { useConnectionStore } from "@/stores/connection";
+import type { components } from "@rosser/shared/api";
 
-const catStore = useCategoryStore();
+const { t } = useI18n();
 const subStore = useSubscriptionStore();
-const tagStore = useTagStore();
+const catStore = useCategoryStore();
+const siteStore = useSiteStore();
+const conn = useConnectionStore();
 
-const activeTab = ref(0);
+const activeTab = ref("subscriptions");
+const tabs = ["subscriptions", "categories", "sites"];
 
-const newCatTitle = ref("");
-const newCatDesc = ref("");
-const addingCat = ref(false);
-const showEditCat = ref(false);
-const editingCat = ref<any>(null);
-const editCatTitle = ref("");
-const editCatDesc = ref("");
+const newUrl = ref("");
+const newCategoryId = ref<string | null>(null);
+const previewData = ref<Partial<components["schemas"]["SubscriptionCreate"]> | null>(
+  null
+);
+const adding = ref(false);
+const fetchingAll = ref(false);
+const fetchingId = ref<string | null>(null);
+const refreshingSiteId = ref<string | null>(null);
 
-const newSubUrl = ref("");
-const newSubTitle = ref("");
-const newSubDesc = ref("");
-const newSubCategory = ref<string | null>(null);
-const previewLoading = ref(false);
-const previewResult = ref<any>(null);
-const addingSub = ref(false);
-const showEditSub = ref(false);
-const editingSub = ref<any>(null);
-const editSubTitle = ref("");
-const editSubDesc = ref("");
-const editSubCategory = ref<string | null>(null);
-const fetchingSub = ref(false);
+const newCategoryName = ref("");
 
-const newTagTitle = ref("");
-const newTagColor = ref(randomColor());
-const addingTag = ref(false);
-const showEditTag = ref(false);
-const editingTag = ref<any>(null);
-const editTagTitle = ref("");
-const editTagColor = ref("");
+const editingSub = ref<components["schemas"]["SubscriptionOut"] | null>(null);
 
-function randomColor() {
-  return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
-}
+const subscriptionsByCategory = (catId: string) =>
+  subStore.subscriptions.filter((s) => s.category_id === catId);
 
-onMounted(() => {
-  catStore.fetchAll();
-  subStore.fetchAll();
-  tagStore.fetchAll();
+const uncategorizedSubscriptions = computed(() =>
+  subStore.subscriptions.filter((s) => !s.category_id)
+);
+
+const siteEdits = reactive<Record<string, { title: string; concurrency_limit: number }>>({});
+const siteFavicons = reactive<Record<string, string>>({});
+
+onMounted(async () => {
+  await Promise.all([
+    subStore.fetchAll(),
+    catStore.fetchAll(),
+    siteStore.fetchAll(),
+  ]);
+  initSiteEdits();
+  await initSiteFavicons();
 });
 
-async function addCategory() {
-  if (!newCatTitle.value.trim()) return;
-  addingCat.value = true;
-  try {
-    await catStore.create({ title: newCatTitle.value, description: newCatDesc.value });
-    newCatTitle.value = "";
-    newCatDesc.value = "";
-    Snackbar.success("已保存");
-  } finally {
-    addingCat.value = false;
-  }
-}
-
-function openEditCat(cat: any) {
-  editingCat.value = cat;
-  editCatTitle.value = cat.title;
-  editCatDesc.value = cat.description || "";
-  showEditCat.value = true;
-}
-
-async function saveEditCat() {
-  if (!editingCat.value) return;
-  await catStore.update(editingCat.value.id, {
-    title: editCatTitle.value,
-    description: editCatDesc.value,
-  });
-  showEditCat.value = false;
-  editingCat.value = null;
-  Snackbar.success("已保存");
-}
-
-async function deleteCat(id: string) {
-  try {
-    await catStore.remove(id);
-    Snackbar.success("已删除");
-  } catch {
-    Snackbar.error("删除失败");
-  }
-}
-
-async function preview() {
-  if (!newSubUrl.value.trim()) return;
-  previewLoading.value = true;
-  try {
-    const { data } = await api.POST("/api/subscriptions/preview", { body: { url: newSubUrl.value } });
-    previewResult.value = data;
-    if (data?.title) newSubTitle.value = data.title;
-    if (data?.description) newSubDesc.value = data.description;
-  } finally {
-    previewLoading.value = false;
-  }
-}
-
-async function addSubscription() {
-  if (!newSubUrl.value.trim()) return;
-  addingSub.value = true;
-  try {
-    const sub = await subStore.create({
-      url: newSubUrl.value,
-      title: newSubTitle.value || previewResult.value?.title || newSubUrl.value,
-      description: newSubDesc.value,
-      category_id: newSubCategory.value,
-    });
-    newSubUrl.value = "";
-    newSubTitle.value = "";
-    newSubDesc.value = "";
-    newSubCategory.value = null;
-    previewResult.value = null;
-    Snackbar.success("已保存");
-    if (sub?.id) {
-      await api.POST("/api/subscriptions/fetch", { body: { ids: [sub.id] } });
+async function initSiteFavicons() {
+  for (const site of siteStore.sites) {
+    if (site.favicon_id) {
+      try {
+        siteFavicons[site.id] = await buildFileUrl(site.favicon_id, conn.baseURL, conn.token);
+      } catch {
+        siteFavicons[site.id] = "";
+      }
     }
-  } finally {
-    addingSub.value = false;
   }
 }
 
-function openEditSub(sub: any) {
-  editingSub.value = sub;
-  editSubTitle.value = sub.title;
-  editSubDesc.value = sub.description || "";
-  editSubCategory.value = sub.category_id || null;
-  showEditSub.value = true;
+function initSiteEdits() {
+  for (const site of siteStore.sites) {
+    if (!siteEdits[site.id]) {
+      siteEdits[site.id] = {
+        title: site.title || "",
+        concurrency_limit: site.concurrency_limit,
+      };
+    }
+  }
 }
 
-async function saveEditSub() {
+async function previewAndAdd() {
+  if (!newUrl.value) return;
+  if (!previewData.value) {
+    adding.value = true;
+    try {
+      const data = await subStore.preview(newUrl.value);
+      previewData.value = {
+        title: data?.title || newUrl.value,
+        description: data?.description || "",
+        url: newUrl.value,
+        refresh_interval: 60,
+        category_id: newCategoryId.value,
+      };
+    } finally {
+      adding.value = false;
+    }
+    return;
+  }
+
+  adding.value = true;
+  try {
+    const created = await subStore.create({
+      title: previewData.value.title || newUrl.value,
+      description: previewData.value.description,
+      url: newUrl.value,
+      refresh_interval: previewData.value.refresh_interval ?? 60,
+      category_id: newCategoryId.value,
+    });
+    if (created) {
+      await subStore.fetchNow([created.id]);
+    }
+    newUrl.value = "";
+    previewData.value = null;
+    newCategoryId.value = null;
+  } finally {
+    adding.value = false;
+  }
+}
+
+async function fetchOne(id: string) {
+  fetchingId.value = id;
+  try {
+    await subStore.fetchNow([id]);
+  } finally {
+    fetchingId.value = null;
+  }
+}
+
+async function fetchAll() {
+  fetchingAll.value = true;
+  try {
+    await subStore.fetchAllNow();
+  } finally {
+    fetchingAll.value = false;
+  }
+}
+
+function editSubscription(sub: components["schemas"]["SubscriptionOut"]) {
+  editingSub.value = { ...sub };
+}
+
+async function saveSubscription() {
   if (!editingSub.value) return;
   await subStore.update(editingSub.value.id, {
-    title: editSubTitle.value,
-    description: editSubDesc.value,
-    category_id: editSubCategory.value,
+    title: editingSub.value.title,
+    category_id: editingSub.value.category_id,
+    refresh_interval: editingSub.value.refresh_interval,
   });
-  await subStore.fetchAll();
-  showEditSub.value = false;
   editingSub.value = null;
-  Snackbar.success("已保存");
 }
 
-async function fetchSubscription() {
-  if (!editingSub.value || fetchingSub.value) return;
-  fetchingSub.value = true;
+async function deleteSubscription(id: string) {
+  if (!confirm(t("deleteConfirm"))) return;
+  await subStore.remove(id);
+}
+
+async function addCategory() {
+  const name = newCategoryName.value.trim();
+  if (!name) return;
+  await catStore.create({ title: name });
+  newCategoryName.value = "";
+}
+
+function editCategory(cat: components["schemas"]["CategoryOut"]) {
+  const name = prompt(t("editCategory"), cat.title);
+  if (name && name.trim()) {
+    catStore.update(cat.id, { title: name.trim() });
+  }
+}
+
+async function deleteCategory(id: string) {
+  if (!confirm(t("deleteConfirm"))) return;
+  await catStore.remove(id);
+}
+
+async function refreshSiteFavicon(id: string) {
+  refreshingSiteId.value = id;
   try {
-    await api.POST("/api/subscriptions/fetch", { body: { ids: [editingSub.value.id] } });
-    Snackbar.success("抓取完成");
-  } catch {
-    Snackbar.error("抓取失败");
+    const site = await siteStore.refreshFavicon(id);
+    if (site?.favicon_id) {
+      siteFavicons[id] = await buildFileUrl(site.favicon_id, conn.baseURL, conn.token);
+    }
   } finally {
-    fetchingSub.value = false;
+    refreshingSiteId.value = null;
   }
 }
 
-async function deleteSub(id: string) {
-  try {
-    await subStore.remove(id);
-    showEditSub.value = false;
-    Snackbar.success("已删除");
-  } catch {
-    Snackbar.error("删除失败");
-  }
-}
-
-async function addTag() {
-  if (!newTagTitle.value.trim()) return;
-  addingTag.value = true;
-  try {
-    await tagStore.create({ title: newTagTitle.value.trim(), color: newTagColor.value });
-    newTagTitle.value = "";
-    newTagColor.value = randomColor();
-    Snackbar.success("已保存");
-  } finally {
-    addingTag.value = false;
-  }
-}
-
-function startEditTag(tag: any) {
-  editingTag.value = tag;
-  editTagTitle.value = tag.title;
-  editTagColor.value = tag.color;
-  showEditTag.value = true;
-}
-
-async function saveEditTag() {
-  if (!editingTag.value || !editTagTitle.value.trim()) return;
-  await tagStore.update(editingTag.value.id, {
-    title: editTagTitle.value.trim(),
-    color: editTagColor.value,
+async function saveSite(id: string) {
+  const edit = siteEdits[id];
+  if (!edit) return;
+  await siteStore.update(id, {
+    title: edit.title || null,
+    concurrency_limit: edit.concurrency_limit,
   });
-  showEditTag.value = false;
-  editingTag.value = null;
-  Snackbar.success("已保存");
 }
 
-async function removeTag(id: string) {
-  try {
-    await tagStore.remove(id);
-    Snackbar.success("已删除");
-  } catch {
-    Snackbar.error("删除失败");
-  }
-}
+// Re-init site edits when sites change
+const sitesWatcher = computed(() => siteStore.sites.length);
+watch(sitesWatcher, () => {
+  initSiteEdits();
+  initSiteFavicons();
+});
 </script>

@@ -1,7 +1,7 @@
 import createClient from "openapi-fetch";
-import type { paths } from "./types.js";
+import type { paths, components } from "./types.js";
 
-export type { paths };
+export type { paths, components };
 
 let _baseURL = "";
 let _authToken = "";

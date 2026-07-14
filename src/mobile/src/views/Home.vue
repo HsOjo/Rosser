@@ -1,316 +1,515 @@
 <template>
-  <div>
-    <var-app-bar :title="$t('appName')">
-      <template #left>
-        <var-button text type="primary" @click="showDrawer = true">
-          <var-icon name="menu" />
-        </var-button>
-      </template>
-      <template #right>
-        <var-badge type="danger" :value="notifStore.unreadCount" :hidden="notifStore.unreadCount === 0" dot>
-          <var-button text type="primary" @click="$router.push('/notifications')">
-            <var-icon name="bell-outline" />
-          </var-button>
-        </var-badge>
-        <var-button text type="primary" @click="$router.push('/settings')">
-          <var-icon name="cog-outline" />
-        </var-button>
-      </template>
-    </var-app-bar>
+  <div class="h-full flex flex-col bg-white dark:bg-zinc-900">
+    <!-- Header -->
+    <header
+      class="px-3.5 py-2 flex justify-between items-center bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800/40 shrink-0 z-20 select-none"
+    >
+      <div class="flex items-center gap-1.5 min-w-0 flex-1">
+        <button
+          class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0"
+          data-testid="menu-btn"
+          @click="showDrawer = true"
+        >
+          <component :is="Menu" class="w-4 h-4" />
+        </button>
+        <button
+          class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0"
+          @click="showDrawer = true"
+        >
+          <span
+            class="text-xs font-black text-slate-800 dark:text-zinc-100 truncate max-w-[100px]"
+          >
+            {{ streamTitle }}
+          </span>
+          <span
+            class="bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 text-[9px] font-bold font-mono px-1 py-0.5 rounded"
+          >
+            {{ artStore.total }}
+          </span>
+        </button>
+      </div>
 
-    <div style="padding: 8px 16px;">
-      <var-input v-model="searchInput" :placeholder="$t('search')" clearable size="small" variant="outlined">
-        <template #prepend-icon>
-          <var-icon name="magnify" />
-        </template>
-      </var-input>
+      <div class="flex items-center gap-1 shrink-0">
+        <button
+          v-if="hasUnread"
+          class="p-1.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg flex items-center gap-1 transition-colors"
+          @click="showMarkAllConfirm = true"
+        >
+          <component :is="Checkbox" class="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          :class="
+            showFilters
+              ? 'bg-brand-light text-brand dark:bg-brand/10'
+              : 'bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800'
+          "
+          @click="showFilters = !showFilters"
+        >
+          <component :is="Options" class="w-4 h-4" />
+        </button>
+
+        <button
+          class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          data-testid="search-btn"
+          :class="
+            showSearch
+              ? 'bg-brand text-white hover:bg-brand-hover'
+              : 'bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800'
+          "
+          @click="showSearch = !showSearch"
+        >
+          <component :is="Search" class="w-4 h-4" />
+        </button>
+
+        <button
+          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 transition-all"
+          :class="{ 'animate-spin text-brand': artStore.loading && !loadingMore }"
+          @click="refreshAll"
+        >
+          <component :is="Refresh" class="w-4 h-4" />
+        </button>
+
+        <button
+          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 relative"
+          data-testid="notifications-btn"
+          @click="$router.push('/notifications')"
+        >
+          <component :is="Notifications" class="w-4 h-4" />
+          <span
+            v-if="notifStore.unreadCount > 0"
+            class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 border border-white dark:border-zinc-900"
+          />
+        </button>
+
+        <button
+          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400"
+          data-testid="manage-btn"
+          @click="$router.push('/manage')"
+        >
+          <component :is="Layers" class="w-4 h-4" />
+        </button>
+
+        <button
+          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400"
+          data-testid="settings-btn"
+          @click="$router.push('/settings')"
+        >
+          <component :is="Settings" class="w-4 h-4" />
+        </button>
+      </div>
+    </header>
+
+    <!-- Search -->
+    <div
+      v-if="showSearch"
+      class="px-4 py-2 bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800 overflow-hidden shrink-0 animate-slideDown"
+    >
+      <input
+        v-model="searchQuery"
+        type="text"
+        :placeholder="t('search')"
+        class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
+      />
     </div>
 
-    <var-pull-refresh v-model="refreshing" @refresh="onRefresh">
-      <var-list
-        :loading="artStore.loading"
-        loading-text=""
-        :finished="finished"
-        :finished-text="$t('noData')"
-        @load="loadMore"
-      >
-        <var-cell
+    <!-- Filters -->
+    <FilterDrawer
+      v-if="showFilters"
+      v-model="order"
+      v-model:page-size="pageSize"
+      class="shrink-0"
+    />
+
+    <!-- Article list -->
+    <div ref="listRef" class="flex-1 overflow-y-auto px-4 relative">
+      <div v-if="artStore.loading && artStore.articles.length === 0" class="py-12 text-center">
+        <div
+          class="w-8 h-8 border-2 border-slate-200 dark:border-zinc-700 border-t-brand rounded-full animate-spin mx-auto"
+        />
+      </div>
+
+      <div v-else-if="artStore.articles.length === 0" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+        <component :is="Book" class="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-700 mb-2" />
+        <p class="text-xs max-w-[200px] mx-auto leading-relaxed">{{ t("noData") }}</p>
+      </div>
+
+      <div v-else class="divide-y divide-slate-100 dark:divide-zinc-800/40">
+        <SwipeCell
           v-for="art in artStore.articles"
           :key="art.id"
-          :title="art.title"
-          @click="openArticle(art)"
+          :actions="swipeActions(art)"
+          @action="(key) => handleSwipeAction(art.id, key)"
         >
-          <template #description>
-            <span style="font-size: 12px; color: #999;">{{ relativeTime(art.publish_time) }}</span>
-            <var-chip v-if="!art.is_read" type="primary" size="mini">{{ $t('new') }}</var-chip>
-            <var-chip v-if="art.is_star" type="warning" size="mini">{{ $t('star') }}</var-chip>
-          </template>
-          <template #extra>
-            <var-icon v-if="!art.is_read" name="circle-medium" style="color: var(--color-primary);" />
-          </template>
-        </var-cell>
-      </var-list>
-    </var-pull-refresh>
+          <ArticleCell
+            :art="art"
+            @open="openArticle"
+            @star="toggleStar"
+            @hide="toggleHide"
+          />
+        </SwipeCell>
 
-    <div v-if="filterLabel" style="padding: 8px 16px; display: flex; align-items: center; gap: 8px;">
-      <var-chip size="small" type="primary">{{ filterLabel }}</var-chip>
-      <var-button text type="primary" size="mini" @click="clearFilter">{{ $t('clearFilter') }}</var-button>
-    </div>
-
-    <var-popup position="left" v-model:show="showDrawer" style="width: 280px; height: 100%;">
-      <div style="padding: 16px;">
-        <div style="font-weight: bold; font-size: 18px; margin-bottom: 16px;">{{ $t('appName') }}</div>
-
-        <var-space direction="column" size="small">
-          <var-button text block :type="activeFilter === 'all' ? 'primary' : 'default'" @click="setFilter('all')">
-            {{ $t('all') }}
-          </var-button>
-          <var-button text block :type="activeFilter === 'unread' ? 'primary' : 'default'" @click="setFilter('unread')">
-            {{ $t('unread') }}
-          </var-button>
-          <var-button text block :type="activeFilter === 'starred' ? 'primary' : 'default'" @click="setFilter('starred')">
-            {{ $t('starred') }}
-          </var-button>
-          <var-button text block :type="activeFilter === 'hidden' ? 'primary' : 'default'" @click="setFilter('hidden')">
-            {{ $t('hidden') }}
-          </var-button>
-        </var-space>
-
-        <div style="margin-top: 16px; font-weight: bold;">{{ $t('tags') }}</div>
-        <var-space style="margin-top: 8px;" wrap :size="[4, 4]">
-          <var-chip
-            v-for="tag in tagStore.tags"
-            :key="tag.id"
-            size="mini"
-            :type="activeTag === tag.id ? 'primary' : 'default'"
-            @click="setTagFilter(tag.id)"
-          >
-            {{ tag.title }}
-          </var-chip>
-        </var-space>
-
-        <div style="margin-top: 16px; font-weight: bold;">{{ $t('categories') }}</div>
-        <div v-for="cat in catStore.categories" :key="cat.id" style="margin-top: 8px;">
-          <div style="font-size: 14px; color: #666; margin-bottom: 4px;">{{ cat.title }}</div>
-          <var-space direction="column" size="small">
-            <var-button
-              v-for="sub in subsByCat(cat.id)"
-              :key="sub.id"
-              text
-              block
-              size="mini"
-              :type="activeSub === sub.id ? 'primary' : 'default'"
-              @click="setSubFilter(sub.id)"
-            >
-              {{ sub.title }}
-            </var-button>
-          </var-space>
-        </div>
-        <div v-if="uncategorizedSubs.length > 0" style="margin-top: 8px;">
-          <div style="font-size: 14px; color: #666; margin-bottom: 4px;">{{ $t('uncategorized') }}</div>
-          <var-space direction="column" size="small">
-            <var-button
-              v-for="sub in uncategorizedSubs"
-              :key="sub.id"
-              text
-              block
-              size="mini"
-              :type="activeSub === sub.id ? 'primary' : 'default'"
-              @click="setSubFilter(sub.id)"
-            >
-              {{ sub.title }}
-            </var-button>
-          </var-space>
+        <div ref="sentinelRef" class="py-4 flex items-center justify-center">
+          <div
+            v-if="loadingMore"
+            class="w-5 h-5 border-2 border-slate-200 dark:border-zinc-700 border-t-brand rounded-full animate-spin"
+          />
         </div>
       </div>
-    </var-popup>
-
-    <div style="position: fixed; bottom: 16px; right: 16px; z-index: 10;">
-      <var-fab type="primary" @click="showFabMenu = true">
-        <var-icon name="plus" />
-      </var-fab>
     </div>
 
-    <var-action-sheet
-      :actions="fabActions"
-      v-model:show="showFabMenu"
-      @select="onFabSelect"
+    <!-- Nav drawer -->
+    <NavDrawer
+      v-if="showDrawer"
+      :active-filter="filter.type"
+      :active-filter-id="filter.id"
+      @close="showDrawer = false"
+      @add-feed="$router.push('/manage')"
+      @select="onSelectFilter"
     />
+
+    <!-- Mark all read confirm -->
+    <div
+      v-if="showMarkAllConfirm"
+      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      @click.self="showMarkAllConfirm = false"
+    >
+      <div class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
+        <div class="flex items-center gap-2 text-brand">
+          <component :is="Checkbox" class="w-5 h-5 shrink-0" />
+          <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
+            {{ t("markAllRead") }}
+          </h4>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+          {{ t("markAllReadConfirm") }}
+        </p>
+        <div class="flex gap-2 justify-end pt-1">
+          <button
+            class="px-4 py-2 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700/50 text-xs font-semibold text-slate-600 dark:text-zinc-300 rounded-xl transition-colors"
+            @click="showMarkAllConfirm = false"
+          >
+            {{ t("cancel") }}
+          </button>
+          <button
+            class="px-4 py-2 bg-brand hover:bg-brand-hover text-xs font-bold text-white rounded-xl flex items-center gap-1.5 shadow-md shadow-brand/10 active:scale-[0.98] transition-all"
+            @click="markAllRead"
+          >
+            <component :is="Checkmark" class="w-3.5 h-3.5" />
+            {{ t("confirm") }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
-import { Snackbar } from "@varlet/ui";
-import { useArticleStore, useSubscriptionStore, useCategoryStore, useTagStore, useNotificationStore } from "@/stores";
-import { relativeTime } from "@rosser/shared";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+} from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
+import {
+  Menu,
+  Search,
+  Refresh,
+  Notifications,
+  Settings,
+  Layers,
+  Star,
+  EyeOff,
+  MailOpen,
+  Book,
+  Options,
+  Checkbox,
+  Checkmark,
+} from "@vicons/ionicons5";
+import {
+  useArticleStore,
+  useSubscriptionStore,
+  useCategoryStore,
+  useSiteStore,
+  useTagStore,
+  useNotificationStore,
+} from "@/stores";
+import type { ArticleListQuery } from "@/stores/article";
+import ArticleCell from "@/components/ArticleCell.vue";
+import SwipeCell from "@/components/SwipeCell.vue";
+import FilterDrawer from "@/components/FilterDrawer.vue";
+import NavDrawer, { type FilterType } from "@/components/NavDrawer.vue";
+import { api } from "@rosser/shared";
 
+const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 const artStore = useArticleStore();
 const subStore = useSubscriptionStore();
 const catStore = useCategoryStore();
+const siteStore = useSiteStore();
 const tagStore = useTagStore();
 const notifStore = useNotificationStore();
 
 const showDrawer = ref(false);
-const showFabMenu = ref(false);
-const refreshing = ref(false);
-const finished = ref(false);
-const searchInput = ref("");
-const activeFilter = ref("all");
-const activeSub = ref<string | null>(null);
-const activeTag = ref<string | null>(null);
-const activeCat = ref<string | null>(null);
+const showSearch = ref(false);
+const showFilters = ref(false);
+const showMarkAllConfirm = ref(false);
+const searchQuery = ref("");
+const sentinelRef = ref<HTMLDivElement | null>(null);
+const listRef = ref<HTMLDivElement | null>(null);
+const loadMoreObserver = ref<IntersectionObserver | null>(null);
+type SortOrder = NonNullable<ArticleListQuery["order"]>;
 
-const fabActions = [
-  { name: "markAllRead", icon: "check-all" },
-  { name: "fetchAll", icon: "refresh" },
-  { name: "manage", icon: "cog-outline" },
-];
+const order = ref<SortOrder>("publish_time desc");
+const pageSize = ref(20);
+const loadingMore = ref(false);
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null;
+const filter = ref<{ type: FilterType; id: string | null }>({ type: "unread", id: null });
 
-const filterLabel = computed(() => {
-  if (activeSub.value) {
-    const sub = subStore.subscriptions.find((s) => s.id === activeSub.value);
-    return sub?.title;
+const streamTitle = computed(() => {
+  switch (filter.value.type) {
+    case "unread":
+      return t("unread");
+    case "starred":
+      return t("starred");
+    case "hidden":
+      return t("hidden");
+    case "subscription": {
+      const sub = subStore.subscriptions.find((s) => s.id === filter.value.id);
+      return sub?.title || t("subscriptions");
+    }
+    case "category": {
+      const cat = catStore.categories.find((c) => c.id === filter.value.id);
+      return cat?.title || t("categories");
+    }
+    case "site": {
+      const site = siteStore.sites.find((s) => s.id === filter.value.id);
+      return site?.title || site?.url || t("sites");
+    }
+    case "tag": {
+      const tag = tagStore.tags.find((t) => t.id === filter.value.id);
+      return tag?.title || t("tags");
+    }
+    default:
+      return t("all");
   }
-  if (activeTag.value) {
-    const tag = tagStore.tags.find((t) => t.id === activeTag.value);
-    return tag?.title;
-  }
-  if (activeCat.value) {
-    const cat = catStore.categories.find((c) => c.id === activeCat.value);
-    return cat?.title;
-  }
-  if (activeFilter.value === "unread") return "未读";
-  if (activeFilter.value === "starred") return "星标";
-  if (activeFilter.value === "hidden") return "隐藏";
-  return null;
 });
 
-function subsByCat(catId: string) {
-  return subStore.subscriptions.filter((s) => s.category_id === catId);
-}
+const queryParams = computed<ArticleListQuery>(() => {
+  const params: ArticleListQuery = {
+    order: order.value,
+    search: searchQuery.value || undefined,
+  };
+  switch (filter.value.type) {
+    case "unread":
+      params.is_read = false;
+      params.is_hide = false;
+      break;
+    case "starred":
+      params.is_star = true;
+      params.is_hide = false;
+      break;
+    case "hidden":
+      params.is_hide = true;
+      break;
+    case "subscription":
+      if (filter.value.id) params.subscription_id = filter.value.id;
+      break;
+    case "category":
+      if (filter.value.id) params.category_id = filter.value.id;
+      break;
+    case "site":
+      if (filter.value.id) params.site_id = filter.value.id;
+      break;
+    case "tag":
+      if (filter.value.id) params.tag = filter.value.id;
+      break;
+    default:
+      params.is_hide = false;
+  }
+  return params;
+});
 
-const uncategorizedSubs = computed(() =>
-  subStore.subscriptions.filter((s) => !s.category_id)
+const hasUnread = computed(() =>
+  artStore.articles.some((a) => !a.is_read)
 );
 
-function buildParams(): Record<string, any> {
-  const params: Record<string, any> = {};
-  if (activeSub.value) params.subscription_id = activeSub.value;
-  if (activeCat.value) params.category_id = activeCat.value;
-  if (activeTag.value) params.tag = filterLabel.value;
-  if (activeFilter.value === "unread") params.is_read = false;
-  if (activeFilter.value === "starred") params.is_star = true;
-  if (activeFilter.value === "hidden") params.is_hide = true;
-  if (searchInput.value.trim()) params.search = searchInput.value.trim();
-  return params;
+const hasMore = computed(() => {
+  if (artStore.loading) return false;
+  return artStore.articles.length < artStore.total;
+});
+
+async function loadArticles() {
+  artStore.size = pageSize.value;
+  await artStore.fetchList(queryParams.value);
 }
 
-async function load(reset = false) {
-  if (reset) {
-    artStore.page = 1;
-    finished.value = false;
+async function loadMore() {
+  loadingMore.value = true;
+  try {
+    await artStore.loadMore();
+  } finally {
+    loadingMore.value = false;
   }
-  await artStore.fetchList(buildParams(), !reset);
-  finished.value = artStore.articles.length >= artStore.total;
 }
 
-function loadMore() {
-  artStore.page += 1;
-  load();
-}
-
-async function onRefresh() {
-  await load(true);
-  refreshing.value = false;
-}
-
-function openArticle(art: any) {
-  router.push(`/article/${art.id}`);
-}
-
-function setFilter(key: string) {
-  activeFilter.value = key;
-  activeSub.value = null;
-  activeTag.value = null;
-  activeCat.value = null;
-  showDrawer.value = false;
-  load(true);
-}
-
-function setSubFilter(subId: string) {
-  activeSub.value = subId;
-  activeFilter.value = "all";
-  activeTag.value = null;
-  activeCat.value = null;
-  showDrawer.value = false;
-  load(true);
-}
-
-function setTagFilter(tagId: string) {
-  activeTag.value = tagId;
-  activeFilter.value = "all";
-  activeSub.value = null;
-  activeCat.value = null;
-  showDrawer.value = false;
-  load(true);
-}
-
-function clearFilter() {
-  activeFilter.value = "all";
-  activeSub.value = null;
-  activeTag.value = null;
-  activeCat.value = null;
-  searchInput.value = "";
-  load(true);
-}
-
-function onFabSelect(action: any) {
-  if (action.name === "markAllRead") {
-    markAllRead();
-  } else if (action.name === "fetchAll") {
-    fetchAllSubs();
-  } else if (action.name === "manage") {
-    router.push("/manage");
-  }
+async function refreshAll() {
+  await subStore.fetchAllNow();
+  await loadArticles();
+  await notifStore.fetchUnreadCount();
 }
 
 async function markAllRead() {
-  try {
-    await artStore.markRead(artStore.articles.map((a) => a.id));
-    Snackbar.success("已全部标记为已读");
-    load(true);
-  } catch {
-    Snackbar.error("操作失败");
+  await api.POST("/api/articles/read-before-days", {
+    params: { query: { days: 0 } },
+  });
+  await loadArticles();
+  showMarkAllConfirm.value = false;
+}
+
+function openArticle(id: string) {
+  router.push(`/article/${id}`);
+}
+
+async function toggleStar(id: string) {
+  await artStore.markStar([id]);
+}
+
+async function toggleHide(id: string) {
+  const art = artStore.articles.find((a) => a.id === id);
+  if (!art) return;
+  if (art.is_hide) {
+    await artStore.markUnhide([id]);
+  } else {
+    await artStore.markHide([id]);
+  }
+  await loadArticles();
+}
+
+async function handleSwipeAction(id: string, key: string) {
+  if (key === "read") {
+    const art = artStore.articles.find((a) => a.id === id);
+    if (art?.is_read) {
+      await artStore.markUnread([id]);
+    } else {
+      await artStore.markRead([id]);
+    }
+  } else if (key === "star") {
+    await toggleStar(id);
+  } else if (key === "hide") {
+    await toggleHide(id);
   }
 }
 
-async function fetchAllSubs() {
-  try {
-    Snackbar.loading("正在抓取...");
-    await artStore.refresh();
-    Snackbar.success("抓取完成");
-  } catch {
-    Snackbar.error("抓取失败");
+function swipeActions(art: (typeof artStore.articles)[0]) {
+  return [
+    {
+      key: "read",
+      icon: art.is_read ? MailOpen : Checkbox,
+      class: art.is_read
+        ? "bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300"
+        : "bg-brand text-white",
+    },
+    {
+      key: "star",
+      icon: Star,
+      class: art.is_star
+        ? "bg-amber-500 text-white"
+        : "bg-amber-100 dark:bg-amber-900/30 text-amber-500",
+    },
+    {
+      key: "hide",
+      icon: EyeOff,
+      class: "bg-red-100 dark:bg-red-900/30 text-red-500",
+    },
+  ];
+}
+
+function onSelectFilter(type: FilterType, id: string | null) {
+  filter.value = { type, id };
+}
+
+// Sync filter from URL query
+function applyQuery() {
+  const q = route.query;
+  if (q.filter) {
+    filter.value.type = q.filter as FilterType;
+  }
+  if (q.id) {
+    filter.value.id = q.id as string;
+  }
+  if (q.order) {
+    order.value = (q.order as SortOrder) || "publish_time desc";
+  }
+  if (q.search) {
+    searchQuery.value = q.search as string;
+    showSearch.value = true;
+  }
+  if (q.size) {
+    pageSize.value = Number(q.size);
   }
 }
 
-watch(searchInput, (val) => {
+function syncQuery() {
+  const q: Record<string, string> = {};
+  if (filter.value.type !== "unread") q.filter = filter.value.type;
+  if (filter.value.id) q.id = filter.value.id;
+  if (order.value) q.order = order.value;
+  if (searchQuery.value) q.search = searchQuery.value;
+  if (pageSize.value !== 20) q.size = String(pageSize.value);
+  router.replace({ query: Object.keys(q).length ? q : {} });
+}
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+watch(searchQuery, () => {
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
-    load(true);
+    syncQuery();
+    loadArticles();
   }, 300);
 });
 
-onMounted(() => {
-  load(true);
-  subStore.fetchAll();
-  catStore.fetchAll();
-  tagStore.fetchAll();
-  notifStore.fetchUnreadCount();
+watch([() => filter.value.type, () => filter.value.id, order, pageSize], () => {
+  syncQuery();
+  loadArticles();
+});
+
+onMounted(async () => {
+  applyQuery();
+  await Promise.all([
+    subStore.fetchAll(),
+    catStore.fetchAll(),
+    siteStore.fetchAll(),
+    tagStore.fetchAll(),
+    notifStore.fetchUnreadCount(),
+  ]);
+  await loadArticles();
+
+  if (sentinelRef.value && listRef.value) {
+    loadMoreObserver.value = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (
+          entry.isIntersecting &&
+          hasMore.value &&
+          !loadingMore.value &&
+          listRef.value!.scrollHeight > listRef.value!.clientHeight
+        ) {
+          loadMore();
+        }
+      },
+      { root: listRef.value, threshold: 0 }
+    );
+    loadMoreObserver.value.observe(sentinelRef.value);
+  }
+});
+
+onUnmounted(() => {
+  loadMoreObserver.value?.disconnect();
 });
 </script>

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "gen:api": "pnpm --filter @rosser/shared gen:api",
-    "dev:backend": "cd src/backend && uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+    "dev:backend": "cd src/backend && uv run uvicorn app.main:app --reload",
     "dev:frontend": "pnpm --filter @rosser/frontend dev",
     "dev:mobile": "pnpm --filter @rosser/mobile dev",
     "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\" \"pnpm dev:mobile\"",
