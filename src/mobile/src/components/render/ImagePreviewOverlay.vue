@@ -19,7 +19,7 @@
       aria-label="close"
       @click.stop="close"
     >
-      <component :is="Close" class="w-6 h-6" />
+      <component :is="CloseOutline" class="w-6 h-6" />
     </button>
 
     <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
@@ -42,7 +42,7 @@
       :disabled="currentIndex <= 0"
       @click.stop="prev"
     >
-      <component :is="ChevronBack" class="w-6 h-6" />
+      <component :is="ChevronBackOutline" class="w-6 h-6" />
     </button>
     <button
       v-if="images.length > 1"
@@ -51,14 +51,14 @@
       :disabled="currentIndex >= images.length - 1"
       @click.stop="next"
     >
-      <component :is="ChevronForward" class="w-6 h-6" />
+      <component :is="ChevronForwardOutline" class="w-6 h-6" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { Close, ChevronBack, ChevronForward } from "@vicons/ionicons5";
+import { CloseOutline, ChevronBackOutline, ChevronForwardOutline } from "@vicons/ionicons5";
 
 const props = defineProps<{
   modelValue: boolean;

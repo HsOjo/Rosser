@@ -24,7 +24,7 @@
         {{ tag.title }}
         <component
           v-if="selectedIds.includes(tag.id)"
-          :is="Checkmark"
+          :is="CheckmarkOutline"
           class="w-3 h-3"
         />
       </button>
@@ -50,13 +50,13 @@
           class="p-1 rounded-lg bg-brand text-white hover:bg-brand-hover"
           @click="createAndSelect"
         >
-          <component :is="Checkmark" class="w-3 h-3" />
+          <component :is="CheckmarkOutline" class="w-3 h-3" />
         </button>
         <button
           class="p-1 rounded-lg bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-zinc-300"
           @click="showNew = false"
         >
-          <component :is="Close" class="w-3 h-3" />
+          <component :is="CloseOutline" class="w-3 h-3" />
         </button>
       </div>
     </div>
@@ -68,8 +68,8 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   PricetagOutline,
-  Checkmark,
-  Close,
+  CheckmarkOutline,
+  CloseOutline,
 } from "@vicons/ionicons5";
 import { useTagStore } from "@/stores";
 import { colors } from "@/utils/colors";

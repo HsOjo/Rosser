@@ -10,7 +10,7 @@
           data-testid="notifications-back"
           @click="$router.back()"
         >
-          <component :is="ArrowBack" class="w-5 h-5" />
+          <component :is="ArrowBackOutline" class="w-5 h-5" />
           <span class="sr-only">{{ t("back") }}</span>
         </button>
         <span class="text-sm font-black text-slate-800 dark:text-zinc-100">
@@ -42,7 +42,7 @@
         v-else-if="notifStore.notifications.length === 0"
         class="py-12 text-center text-slate-400 dark:text-zinc-500"
       >
-        <component :is="Notifications" class="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-700 mb-2" />
+        <component :is="NotificationsOutline" class="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-700 mb-2" />
         <p class="text-xs">{{ t("noData") }}</p>
       </div>
 
@@ -78,7 +78,7 @@
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { ArrowBack, Notifications } from "@vicons/ionicons5";
+import { ArrowBackOutline, NotificationsOutline } from "@vicons/ionicons5";
 import { renderNotification, relativeTime } from "@rosser/shared";
 import { useNotificationStore } from "@/stores";
 import type { NotificationOut } from "@/stores/notification";

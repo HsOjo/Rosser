@@ -26,7 +26,7 @@
           @click="toggle(entry.key)"
         >
           <component
-            :is="expanded[entry.key] ? ChevronDown : ChevronForward"
+            :is="expanded[entry.key] ? ChevronDownOutline : ChevronForwardOutline"
             class="w-3 h-3 shrink-0"
           />
           <span class="font-mono">{{ entry.summary }}</span>
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ChevronForward, ChevronDown } from "@vicons/ionicons5";
+import { ChevronForwardOutline, ChevronDownOutline } from "@vicons/ionicons5";
 
 type TreeValue = unknown;
 

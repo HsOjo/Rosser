@@ -8,7 +8,7 @@
           class="p-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors"
           @click="$router.back()"
         >
-          <component :is="ArrowBack" class="w-5 h-5" />
+          <component :is="ArrowBackOutline" class="w-5 h-5" />
         </button>
         <span class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ t("manage") }}</span>
       </div>
@@ -18,7 +18,7 @@
         @click="fetchAll"
       >
         <component
-          :is="Refresh"
+          :is="RefreshOutline"
           class="w-4 h-4"
           :class="{ 'animate-spin text-brand': fetchingAll }"
         />
@@ -50,7 +50,7 @@
         <!-- Add subscription -->
         <div class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3">
           <div class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-zinc-200">
-            <component :is="Add" class="w-4 h-4 text-brand" />
+            <component :is="AddOutline" class="w-4 h-4 text-brand" />
             <span>{{ t("addSubscription") }}</span>
           </div>
           <input
@@ -117,7 +117,7 @@
                     referrerpolicy="no-referrer"
                     @error="siteFavicons[sub.site_id] = ''"
                   />
-                  <component v-else :is="Newspaper" class="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <component v-else :is="NewspaperOutline" class="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <div class="flex-1 min-w-0">
                     <div class="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate">
                       {{ sub.title }}
@@ -134,7 +134,7 @@
                     @click="fetchOne(sub.id)"
                   >
                     <component
-                      :is="Refresh"
+                      :is="RefreshOutline"
                       class="w-3.5 h-3.5"
                       :class="{ 'animate-spin text-brand': fetchingId === sub.id }"
                     />
@@ -143,13 +143,13 @@
                     class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
                     @click="editSubscription(sub)"
                   >
-                    <component :is="Pencil" class="w-3.5 h-3.5" />
+                    <component :is="PencilOutline" class="w-3.5 h-3.5" />
                   </button>
                   <button
                     class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
                     @click="deleteSubscription(sub.id)"
                   >
-                    <component :is="Trash" class="w-3.5 h-3.5" />
+                    <component :is="TrashOutline" class="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -176,7 +176,7 @@
                     referrerpolicy="no-referrer"
                     @error="siteFavicons[sub.site_id] = ''"
                   />
-                  <component v-else :is="Newspaper" class="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <component v-else :is="NewspaperOutline" class="w-5 h-5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <div class="flex-1 min-w-0">
                     <div class="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate">
                       {{ sub.title }}
@@ -193,7 +193,7 @@
                     @click="fetchOne(sub.id)"
                   >
                     <component
-                      :is="Refresh"
+                      :is="RefreshOutline"
                       class="w-3.5 h-3.5"
                       :class="{ 'animate-spin text-brand': fetchingId === sub.id }"
                     />
@@ -202,13 +202,13 @@
                     class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
                     @click="editSubscription(sub)"
                   >
-                    <component :is="Pencil" class="w-3.5 h-3.5" />
+                    <component :is="PencilOutline" class="w-3.5 h-3.5" />
                   </button>
                   <button
                     class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
                     @click="deleteSubscription(sub.id)"
                   >
-                    <component :is="Trash" class="w-3.5 h-3.5" />
+                    <component :is="TrashOutline" class="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -232,7 +232,7 @@
             data-testid="add-category-btn"
             @click="addCategory"
           >
-            <component :is="Add" class="w-4 h-4" />
+            <component :is="AddOutline" class="w-4 h-4" />
           </button>
         </div>
 
@@ -247,13 +247,13 @@
               class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400"
               @click="editCategory(cat)"
             >
-              <component :is="Pencil" class="w-3.5 h-3.5" />
+              <component :is="PencilOutline" class="w-3.5 h-3.5" />
             </button>
             <button
               class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
               @click="deleteCategory(cat.id)"
             >
-              <component :is="Trash" class="w-3.5 h-3.5" />
+              <component :is="TrashOutline" class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -290,7 +290,7 @@
               @click="refreshSiteFavicon(site.id)"
             >
               <component
-                :is="Refresh"
+                :is="RefreshOutline"
                 class="w-3.5 h-3.5"
                 :class="{ 'animate-spin text-brand': refreshingSiteId === site.id }"
               />
@@ -390,12 +390,12 @@
 import { ref, reactive, onMounted, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-  ArrowBack,
-  Add,
-  Refresh,
-  Pencil,
-  Trash,
-  Newspaper,
+  ArrowBackOutline,
+  AddOutline,
+  RefreshOutline,
+  PencilOutline,
+  TrashOutline,
+  NewspaperOutline,
 } from "@vicons/ionicons5";
 import { buildFileUrl } from "@rosser/shared";
 import {

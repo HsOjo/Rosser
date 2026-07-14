@@ -10,7 +10,7 @@
           data-testid="menu-btn"
           @click="showDrawer = true"
         >
-          <component :is="Menu" class="w-4 h-4" />
+          <component :is="MenuOutline" class="w-4 h-4" />
         </button>
         <button
           class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0"
@@ -49,7 +49,7 @@
           class="p-1.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg flex items-center gap-1 transition-colors"
           @click="showMarkAllConfirm = true"
         >
-          <component :is="Checkbox" class="w-3.5 h-3.5" />
+          <component :is="CheckboxOutline" class="w-3.5 h-3.5" />
         </button>
 
         <button
@@ -61,7 +61,7 @@
           "
           @click="showFilters = !showFilters"
         >
-          <component :is="Options" class="w-4 h-4" />
+          <component :is="OptionsOutline" class="w-4 h-4" />
         </button>
 
         <button
@@ -74,7 +74,7 @@
           "
           @click="showSearch = !showSearch"
         >
-          <component :is="Search" class="w-4 h-4" />
+          <component :is="SearchOutline" class="w-4 h-4" />
         </button>
 
         <button
@@ -82,7 +82,7 @@
           :class="{ 'animate-spin text-brand': artStore.loading && !loadingMore }"
           @click="refreshAll"
         >
-          <component :is="Refresh" class="w-4 h-4" />
+          <component :is="RefreshOutline" class="w-4 h-4" />
         </button>
 
         <button
@@ -90,7 +90,7 @@
           data-testid="notifications-btn"
           @click="$router.push('/notifications')"
         >
-          <component :is="Notifications" class="w-4 h-4" />
+          <component :is="NotificationsOutline" class="w-4 h-4" />
           <span
             v-if="notifStore.unreadCount > 0"
             class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 border border-white dark:border-zinc-900"
@@ -102,7 +102,7 @@
           data-testid="manage-btn"
           @click="$router.push('/manage')"
         >
-          <component :is="Layers" class="w-4 h-4" />
+          <component :is="LayersOutline" class="w-4 h-4" />
         </button>
 
         <button
@@ -110,7 +110,7 @@
           data-testid="settings-btn"
           @click="$router.push('/settings')"
         >
-          <component :is="Settings" class="w-4 h-4" />
+          <component :is="SettingsOutline" class="w-4 h-4" />
         </button>
       </div>
     </header>
@@ -145,7 +145,7 @@
       </div>
 
       <div v-else-if="artStore.articles.length === 0" class="py-12 text-center text-slate-400 dark:text-zinc-500">
-        <component :is="Book" class="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-700 mb-2" />
+        <component :is="AppsOutline" class="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-700 mb-2" />
         <p class="text-xs max-w-[200px] mx-auto leading-relaxed">{{ t("noData") }}</p>
       </div>
 
@@ -191,7 +191,7 @@
     >
       <div class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
         <div class="flex items-center gap-2 text-brand">
-          <component :is="Checkbox" class="w-5 h-5 shrink-0" />
+          <component :is="CheckboxOutline" class="w-5 h-5 shrink-0" />
           <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
             {{ t("markAllRead") }}
           </h4>
@@ -210,7 +210,7 @@
             class="px-4 py-2 bg-brand hover:bg-brand-hover text-xs font-bold text-white rounded-xl flex items-center gap-1.5 shadow-md shadow-brand/10 active:scale-[0.98] transition-all"
             @click="markAllRead"
           >
-            <component :is="Checkmark" class="w-3.5 h-3.5" />
+            <component :is="CheckmarkOutline" class="w-3.5 h-3.5" />
             {{ t("confirm") }}
           </button>
         </div>
@@ -230,22 +230,23 @@ import {
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
-  Menu,
-  Search,
-  Refresh,
-  Notifications,
-  Settings,
-  Layers,
-  Star,
-  EyeOff,
-  MailOpen,
-  Book,
-  Options,
-  Checkbox,
-  Checkmark,
-  Folder,
-  Globe,
-  Newspaper,
+  MenuOutline,
+  SearchOutline,
+  RefreshOutline,
+  NotificationsOutline,
+  SettingsOutline,
+  LayersOutline,
+  StarOutline,
+  EyeOffOutline,
+  MailOpenOutline,
+  MailUnreadOutline,
+  AppsOutline,
+  OptionsOutline,
+  CheckboxOutline,
+  CheckmarkOutline,
+  FolderOutline,
+  GlobeOutline,
+  NewspaperOutline,
 } from "@vicons/ionicons5";
 import {
   useArticleStore,
@@ -322,21 +323,21 @@ const streamTitle = computed(() => {
 const streamIcon = computed(() => {
   switch (filter.value.type) {
     case "unread":
-      return MailOpen;
+      return MailUnreadOutline;
     case "starred":
-      return Star;
+      return StarOutline;
     case "hidden":
-      return EyeOff;
+      return EyeOffOutline;
     case "category":
-      return Folder;
+      return FolderOutline;
     case "site":
-      return streamIconUrl.value ? null : Globe;
+      return streamIconUrl.value ? null : GlobeOutline;
     case "subscription":
-      return streamIconUrl.value ? null : Newspaper;
+      return streamIconUrl.value ? null : NewspaperOutline;
     case "tag":
       return null;
     default:
-      return Book;
+      return AppsOutline;
   }
 });
 
@@ -500,21 +501,21 @@ function swipeActions(art: (typeof artStore.articles)[0]) {
   return [
     {
       key: "read",
-      icon: art.is_read ? MailOpen : Checkbox,
+      icon: art.is_read ? MailOpenOutline : CheckboxOutline,
       class: art.is_read
         ? "bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300"
         : "bg-brand text-white",
     },
     {
       key: "star",
-      icon: Star,
+      icon: StarOutline,
       class: art.is_star
         ? "bg-amber-500 text-white"
         : "bg-amber-100 dark:bg-amber-900/30 text-amber-500",
     },
     {
       key: "hide",
-      icon: EyeOff,
+      icon: EyeOffOutline,
       class: "bg-red-100 dark:bg-red-900/30 text-red-500",
     },
   ];

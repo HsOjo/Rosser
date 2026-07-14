@@ -8,7 +8,7 @@
         class="p-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors"
         @click="$router.back()"
       >
-        <component :is="ArrowBack" class="w-5 h-5" />
+        <component :is="ArrowBackOutline" class="w-5 h-5" />
       </button>
       <span class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ t("settings") }}</span>
     </header>
@@ -101,7 +101,7 @@
           class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3"
         >
           <div class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-zinc-200">
-            <component :is="ArrowUp" class="w-4 h-4 text-brand" />
+            <component :is="ArrowUpOutline" class="w-4 h-4 text-brand" />
             <span>{{ t("opmlImport") }}</span>
           </div>
           <input
@@ -114,7 +114,7 @@
 
         <div class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3">
           <div class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-zinc-200">
-            <component :is="Download" class="w-4 h-4 text-brand" />
+            <component :is="DownloadOutline" class="w-4 h-4 text-brand" />
             <span>{{ t("opmlExport") }}</span>
           </div>
           <button
@@ -189,13 +189,13 @@
               class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400"
               @click="editTag(tag)"
             >
-              <component :is="Pencil" class="w-3.5 h-3.5" />
+              <component :is="PencilOutline" class="w-3.5 h-3.5" />
             </button>
             <button
               class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
               @click="deleteTag(tag.id)"
             >
-              <component :is="Trash" class="w-3.5 h-3.5" />
+              <component :is="TrashOutline" class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -205,7 +205,7 @@
           data-testid="add-tag-btn"
           @click="addTag"
         >
-          <component :is="Add" class="w-4 h-4" />
+          <component :is="AddOutline" class="w-4 h-4" />
           {{ t("addTag") }}
         </button>
       </div>
@@ -268,15 +268,15 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
-  ArrowBack,
-  Sunny,
-  Moon,
-  Contrast,
-  Download,
-  ArrowUp,
-  Pencil,
-  Trash,
-  Add,
+  ArrowBackOutline,
+  SunnyOutline,
+  MoonOutline,
+  ContrastOutline,
+  DownloadOutline,
+  ArrowUpOutline,
+  PencilOutline,
+  TrashOutline,
+  AddOutline,
 } from "@vicons/ionicons5";
 import { api } from "@rosser/shared";
 import { useConnectionStore } from "@/stores/connection";
@@ -305,9 +305,9 @@ const languages = [
 ];
 
 const themes = computed(() => [
-  { value: "light" as Theme, label: t("themeLight"), icon: Sunny },
-  { value: "dark" as Theme, label: t("themeDark"), icon: Moon },
-  { value: "auto" as Theme, label: t("themeAuto"), icon: Contrast },
+  { value: "light" as Theme, label: t("themeLight"), icon: SunnyOutline },
+  { value: "dark" as Theme, label: t("themeDark"), icon: MoonOutline },
+  { value: "auto" as Theme, label: t("themeAuto"), icon: ContrastOutline },
 ]);
 
 const maskedToken = computed(() => {

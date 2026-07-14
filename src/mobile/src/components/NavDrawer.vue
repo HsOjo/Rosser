@@ -12,7 +12,7 @@
           class="p-1 rounded-full bg-slate-50 dark:bg-zinc-800 text-slate-500 hover:scale-105 active:scale-95 transition-all"
           @click="$emit('close')"
         >
-          <component :is="Close" class="w-4 h-4" />
+          <component :is="CloseOutline" class="w-4 h-4" />
         </button>
       </div>
 
@@ -62,14 +62,14 @@
               @click="toggleCat(cat.id)"
             >
               <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                <component :is="Folder" class="w-4 h-4 text-brand shrink-0" />
+                <component :is="FolderOutline" class="w-4 h-4 text-brand shrink-0" />
                 <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">
                   {{ cat.title }}
                 </span>
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <component
-                  :is="ChevronForward"
+                  :is="ChevronForwardOutline"
                   class="w-4 h-4 text-slate-400 transition-transform duration-200"
                   :class="expandedCats[cat.id] ? 'rotate-90' : ''"
                 />
@@ -95,7 +95,7 @@
                     referrerpolicy="no-referrer"
                     @error="faviconUrls[feed.site_id] = ''"
                   />
-                  <component v-else :is="Newspaper" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <component v-else :is="NewspaperOutline" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <span class="truncate">{{ feed.title }}</span>
                 </span>
               </button>
@@ -109,13 +109,13 @@
               @click="toggleCat('uncategorized')"
             >
               <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                <component :is="Folder" class="w-4 h-4 text-slate-400 shrink-0" />
+                <component :is="FolderOpenOutline" class="w-4 h-4 text-slate-400 shrink-0" />
                 <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">
                   {{ t("uncategorized") }}
                 </span>
               </div>
               <component
-                :is="ChevronForward"
+                :is="ChevronForwardOutline"
                 class="w-4 h-4 text-slate-400 transition-transform duration-200"
                 :class="expandedCats['uncategorized'] ? 'rotate-90' : ''"
               />
@@ -140,7 +140,7 @@
                     referrerpolicy="no-referrer"
                     @error="faviconUrls[feed.site_id] = ''"
                   />
-                  <component v-else :is="Newspaper" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <component v-else :is="NewspaperOutline" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <span class="truncate">{{ feed.title }}</span>
                 </span>
               </button>
@@ -164,14 +164,14 @@
                   referrerpolicy="no-referrer"
                   @error="faviconUrls[site.id] = ''"
                 />
-                <component v-else :is="Globe" class="w-4 h-4 text-brand shrink-0" />
+                <component v-else :is="GlobeOutline" class="w-4 h-4 text-brand shrink-0" />
                 <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">
                   {{ site.title || site.url }}
                 </span>
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <component
-                  :is="ChevronForward"
+                  :is="ChevronForwardOutline"
                   class="w-4 h-4 text-slate-400 transition-transform duration-200"
                   :class="expandedSites[site.id] ? 'rotate-90' : ''"
                 />
@@ -197,7 +197,7 @@
                     referrerpolicy="no-referrer"
                     @error="faviconUrls[feed.site_id] = ''"
                   />
-                  <component v-else :is="Newspaper" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
+                  <component v-else :is="NewspaperOutline" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <span class="truncate">{{ feed.title }}</span>
                 </span>
               </button>
@@ -230,7 +230,7 @@
           class="w-full py-2.5 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
           @click="$emit('addFeed')"
         >
-          <component :is="Add" class="w-4 h-4" />
+          <component :is="AddOutline" class="w-4 h-4" />
           {{ t("addSubscription") }}
         </button>
       </div>
@@ -242,16 +242,17 @@
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-  Book,
-  MailOpen,
-  Star,
-  EyeOff,
-  Folder,
-  Globe,
-  Newspaper,
-  ChevronForward,
-  Close,
-  Add,
+  AppsOutline,
+  MailUnreadOutline,
+  StarOutline,
+  EyeOffOutline,
+  FolderOutline,
+  FolderOpenOutline,
+  GlobeOutline,
+  NewspaperOutline,
+  ChevronForwardOutline,
+  CloseOutline,
+  AddOutline,
 } from "@vicons/ionicons5";
 import { buildFileUrl } from "@rosser/shared";
 import {
@@ -329,28 +330,28 @@ const fixedItems = computed(() => [
     key: "all",
     filter: "all" as FilterType,
     label: t("all"),
-    icon: Book,
+    icon: AppsOutline,
     iconClass: "text-slate-500 dark:text-zinc-400",
   },
   {
     key: "unread",
     filter: "unread" as FilterType,
     label: t("unread"),
-    icon: MailOpen,
+    icon: MailUnreadOutline,
     iconClass: "text-blue-500 dark:text-blue-400",
   },
   {
     key: "starred",
     filter: "starred" as FilterType,
     label: t("starred"),
-    icon: Star,
+    icon: StarOutline,
     iconClass: "text-amber-500",
   },
   {
     key: "hidden",
     filter: "hidden" as FilterType,
     label: t("hidden"),
-    icon: EyeOff,
+    icon: EyeOffOutline,
     iconClass: "text-slate-400 dark:text-zinc-500",
   },
 ]);

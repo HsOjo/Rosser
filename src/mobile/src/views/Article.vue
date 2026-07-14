@@ -16,7 +16,7 @@
           data-testid="article-back"
           @click="back"
         >
-          <component :is="ArrowBack" class="w-5 h-5" />
+          <component :is="ArrowBackOutline" class="w-5 h-5" />
           <span class="sr-only">{{ t("back") }}</span>
         </button>
         <div
@@ -50,7 +50,7 @@
           "
           @click="toggleStar"
         >
-          <component :is="Star" class="w-5 h-5 fill-current" />
+          <component :is="StarOutline" class="w-5 h-5 fill-current" />
         </button>
         <button
           class="p-1.5 rounded-lg transition-colors"
@@ -61,7 +61,7 @@
           "
           @click="toggleHide"
         >
-          <component :is="EyeOff" class="w-5 h-5" />
+          <component :is="EyeOffOutline" class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -96,11 +96,11 @@
           @click="showOutline = !showOutline"
         >
           <div class="flex items-center gap-1.5">
-            <component :is="List" class="w-4 h-4 text-brand" />
+            <component :is="ListOutline" class="w-4 h-4 text-brand" />
             <span>{{ t("outline") }}</span>
           </div>
           <component
-            :is="ChevronDown"
+            :is="ChevronDownOutline"
             class="w-4 h-4 transition-transform duration-200"
             :class="showOutline ? '' : '-rotate-90'"
           />
@@ -114,7 +114,7 @@
             :style="{ paddingLeft: `${(heading.level - 1) * 8}px` }"
             @click="scrollToHeading(heading.id)"
           >
-            <component :is="ChevronForward" class="w-3 h-3 text-brand/80 shrink-0" />
+            <component :is="ChevronForwardOutline" class="w-3 h-3 text-brand/80 shrink-0" />
             <span class="truncate">{{ heading.text }}</span>
           </button>
         </div>
@@ -142,11 +142,11 @@
           @click="showMeta = !showMeta"
         >
           <div class="flex items-center gap-1.5">
-            <component :is="Server" class="w-4 h-4 text-brand" />
+            <component :is="ServerOutline" class="w-4 h-4 text-brand" />
             <span>{{ t("metaViewer") }}</span>
           </div>
           <component
-            :is="ChevronDown"
+            :is="ChevronDownOutline"
             class="w-4 h-4 transition-transform duration-200"
             :class="showMeta ? '' : '-rotate-90'"
           />
@@ -160,14 +160,14 @@
             v-if="copied"
             class="absolute top-2 right-2 p-1 px-2 bg-brand text-white rounded-md text-[8px] font-bold flex items-center gap-1"
           >
-            <component :is="Checkmark" class="w-2.5 h-2.5" />
+            <component :is="CheckmarkOutline" class="w-2.5 h-2.5" />
             {{ t("copied") }}
           </div>
           <div
             class="flex items-center justify-between text-[8px] text-zinc-500 uppercase pb-1.5 border-b border-zinc-900 mb-1"
           >
             <span>{{ t("doubleClickCopy") }}</span>
-            <component :is="Copy" class="w-2.5 h-2.5" />
+            <component :is="CopyOutline" class="w-2.5 h-2.5" />
           </div>
           <MetaTree :data="article.meta" @copy="copy" />
         </div>
@@ -181,7 +181,7 @@
         rel="noopener noreferrer"
         class="w-full py-3 bg-slate-900 hover:bg-slate-950 dark:bg-zinc-100 dark:hover:bg-zinc-50 dark:text-zinc-900 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
       >
-        <component :is="Open" class="w-4 h-4" />
+        <component :is="OpenOutline" class="w-4 h-4" />
         {{ t("openOriginal") }}
       </a>
 
@@ -221,16 +221,16 @@ import {
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
-  ArrowBack,
-  Star,
-  EyeOff,
-  List,
-  ChevronDown,
-  ChevronForward,
-  Server,
-  Checkmark,
-  Copy,
-  Open,
+  ArrowBackOutline,
+  StarOutline,
+  EyeOffOutline,
+  ListOutline,
+  ChevronDownOutline,
+  ChevronForwardOutline,
+  ServerOutline,
+  CheckmarkOutline,
+  CopyOutline,
+  OpenOutline,
 } from "@vicons/ionicons5";
 import { buildFileUrl } from "@rosser/shared";
 import {

@@ -73,7 +73,7 @@
           @click.stop="$emit('star', art.id)"
         >
           <component
-            :is="Star"
+            :is="StarOutline"
             class="w-3.5 h-3.5"
             :class="art.is_star ? 'fill-current' : ''"
           />
@@ -82,7 +82,7 @@
           class="p-1 rounded hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-300 dark:text-zinc-600 hover:text-red-400 transition-colors"
           @click.stop="$emit('hide', art.id)"
         >
-          <component :is="EyeOff" class="w-3.5 h-3.5" />
+          <component :is="EyeOffOutline" class="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -92,7 +92,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { Star, EyeOff } from "@vicons/ionicons5";
+import { StarOutline, EyeOffOutline } from "@vicons/ionicons5";
 import { relativeTime, buildFileUrl } from "@rosser/shared";
 import { useSubscriptionStore } from "@/stores/subscription";
 import { useSiteStore } from "@/stores/site";

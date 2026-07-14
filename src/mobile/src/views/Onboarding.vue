@@ -127,7 +127,7 @@
 import { computed, ref, reactive, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { Sunny, Moon, Contrast } from "@vicons/ionicons5";
+import { SunnyOutline, MoonOutline, ContrastOutline } from "@vicons/ionicons5";
 import { useConnectionStore } from "@/stores";
 import {
   saveUISettings,
@@ -160,9 +160,9 @@ const languages = [
 ];
 
 const themes = computed(() => [
-  { value: "light" as Theme, label: t("themeLight"), icon: Sunny },
-  { value: "dark" as Theme, label: t("themeDark"), icon: Moon },
-  { value: "auto" as Theme, label: t("themeAuto"), icon: Contrast },
+  { value: "light" as Theme, label: t("themeLight"), icon: SunnyOutline },
+  { value: "dark" as Theme, label: t("themeDark"), icon: MoonOutline },
+  { value: "auto" as Theme, label: t("themeAuto"), icon: ContrastOutline },
 ]);
 
 watch(
