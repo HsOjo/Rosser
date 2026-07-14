@@ -6,9 +6,10 @@ import httpx
 import pytest
 import pytest_asyncio
 from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
+from app.core.database import create_engine
 
 TEST_TOKEN = "test-token-123"
 
@@ -43,7 +44,7 @@ async def setup_db():
 
     # Replace the engine with test engine
     original_engine = database.engine
-    test_engine = create_async_engine(test_settings.db_url, echo=False)
+    test_engine = create_engine(test_settings.db_url, echo=False)
     database.engine = test_engine
     database.async_session = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 

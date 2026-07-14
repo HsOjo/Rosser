@@ -49,6 +49,33 @@ class TestSubscriptions:
         resp = await client.get(f"/api/subscriptions/{sub_id}", headers=auth_headers)
         assert resp.status_code == 404
 
+    async def test_delete_subscription_cascade_deletes_articles(self, client, auth_headers):
+        import hashlib
+        from sqlalchemy import select
+        from app.core.database import async_session
+        from app.models import Article
+
+        create_resp = await client.post("/api/subscriptions", headers=auth_headers, json={
+            "title": "Cascade Feed", "url": "http://cascade.com/feed.xml"
+        })
+        sub_id = create_resp.json()["id"]
+
+        async with async_session() as session:
+            article = Article(
+                subscription_id=sub_id,
+                hash=hashlib.md5(b"cascade").hexdigest(),
+                title="Cascade Article",
+            )
+            session.add(article)
+            await session.commit()
+
+        resp = await client.delete(f"/api/subscriptions/{sub_id}", headers=auth_headers)
+        assert resp.status_code == 204
+
+        async with async_session() as session:
+            result = await session.execute(select(Article).where(Article.subscription_id == sub_id))
+            assert result.scalars().first() is None
+
     async def test_preview_subscription(self, client, auth_headers):
         with patch("app.api.FetchService.preview") as mock_preview:
             mock_preview.return_value = {"title": "Preview Title", "description": "Desc"}

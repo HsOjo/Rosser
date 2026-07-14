@@ -51,7 +51,7 @@ class Subscription(Base):
     category: Mapped[Optional["Category"]] = relationship(back_populates="subscriptions")
     site: Mapped[Optional["Site"]] = relationship(back_populates="subscriptions")
     articles: Mapped[list["Article"]] = relationship(
-        back_populates="subscription", cascade="all, delete-orphan"
+        back_populates="subscription", cascade="all, delete-orphan", passive_deletes=True
     )
 
 

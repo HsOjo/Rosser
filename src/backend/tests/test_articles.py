@@ -129,3 +129,35 @@ class TestArticles:
         data = resp.json()
         assert data["total"] == 1
         assert data["items"][0]["is_hide"] is False
+
+    async def test_cleanup_orphan_articles(self, client, auth_headers):
+        import uuid
+
+        import aiosqlite
+        from sqlalchemy import select
+        from app.core.database import async_session, cleanup_orphan_articles, engine
+        from app.models import Article
+
+        sub_id = await self._create_subscription(client, auth_headers)
+        art_id = await self._create_article(client, auth_headers, sub_id, "Normal Article")
+
+        # Inject an orphan article directly, bypassing FK enforcement.
+        orphan_id = str(uuid.uuid4())
+        async with aiosqlite.connect(engine.url.database) as db:
+            await db.execute("PRAGMA foreign_keys=OFF")
+            await db.execute(
+                "INSERT INTO article (id, subscription_id, hash, title) VALUES (?, ?, ?, ?)",
+                (orphan_id, "00000000-0000-0000-0000-000000000000", "orphanhash", "Orphan Article"),
+            )
+            await db.commit()
+
+        async with async_session() as session:
+            deleted = await cleanup_orphan_articles(session)
+            await session.commit()
+            assert deleted == 1
+
+        async with async_session() as session:
+            normal = (await session.execute(select(Article).where(Article.id == art_id))).scalars().first()
+            assert normal is not None
+            orphan = (await session.execute(select(Article).where(Article.id == orphan_id))).scalars().first()
+            assert orphan is None

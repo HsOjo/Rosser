@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import platform
 from contextlib import asynccontextmanager
@@ -9,9 +10,18 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+logger = logging.getLogger(__name__)
+
 from app.api import router
 from app.core.config import settings
-from app.core.database import engine
+from app.core.database import (
+    async_session,
+    cleanup_orphan_articles,
+    cleanup_orphan_article_states,
+    cleanup_orphan_notifications,
+    cleanup_orphan_subscription_tags,
+    engine,
+)
 from app.core.http import load_proxy_from_db
 from app.core.security import get_current_token
 from app.models import Base
@@ -92,6 +102,23 @@ async def lifespan(app: FastAPI):
             pass
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    async with async_session() as session:
+        cleaned = 0
+        for cleanup in (
+            cleanup_orphan_articles,
+            cleanup_orphan_article_states,
+            cleanup_orphan_notifications,
+            cleanup_orphan_subscription_tags,
+        ):
+            count = await cleanup(session)
+            cleaned += count
+            if count:
+                logger.warning("Cleaned up %d orphan %s", count, cleanup.__name__)
+        await session.commit()
+        if cleaned:
+            logger.warning("Total orphan records cleaned: %d", cleaned)
+
     await load_proxy_from_db()
     await init_scheduler()
     yield
