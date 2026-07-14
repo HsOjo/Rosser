@@ -193,7 +193,7 @@
             </button>
             <button
               class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-              @click="deleteTag(tag.id)"
+              @click="openDeleteTagConfirm(tag.id)"
             >
               <component :is="TrashOutline" class="w-3.5 h-3.5" />
             </button>
@@ -261,6 +261,18 @@
       </div>
     </div>
   </div>
+
+  <!-- Tag delete confirm dialog -->
+  <ConfirmDialog
+    v-model:visible="showDeleteTagConfirm"
+    :title="t('delete')"
+    :message="t('deleteConfirm')"
+    @confirm="deleteTag"
+  >
+    <template #icon>
+      <component :is="TrashOutline" class="w-5 h-5 shrink-0 text-red-500" />
+    </template>
+  </ConfirmDialog>
 </template>
 
 <script setup lang="ts">
@@ -288,6 +300,7 @@ import {
   type Theme,
 } from "@/settings/local";
 import { colors } from "@/utils/colors";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import type { components } from "@rosser/shared/api";
 
 const router = useRouter();
@@ -321,6 +334,8 @@ const savingProxy = ref(false);
 
 type TagOut = components["schemas"]["TagOut"];
 const editingTag = ref<Partial<TagOut> | null>(null);
+const tagToDelete = ref<string | null>(null);
+const showDeleteTagConfirm = ref(false);
 
 onMounted(async () => {
   await settingsStore.fetch();
@@ -405,8 +420,14 @@ async function saveTag() {
   editingTag.value = null;
 }
 
-async function deleteTag(id: string) {
-  if (!confirm(t("deleteConfirm"))) return;
-  await tagStore.remove(id);
+function openDeleteTagConfirm(id: string) {
+  tagToDelete.value = id;
+  showDeleteTagConfirm.value = true;
+}
+
+async function deleteTag() {
+  if (!tagToDelete.value) return;
+  await tagStore.remove(tagToDelete.value);
+  tagToDelete.value = null;
 }
 </script>
