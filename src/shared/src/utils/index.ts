@@ -1,5 +1,9 @@
 import { sha256 } from "js-sha256";
 
+export function normalizeBaseURL(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
 export async function signFileUrl(fileId: string, exp: number, secret: string): Promise<string> {
   const msg = `${fileId}|${exp}`;
   return sha256.hmac(secret, msg).slice(0, 32);
@@ -8,7 +12,7 @@ export async function signFileUrl(fileId: string, exp: number, secret: string): 
 export async function buildFileUrl(fileId: string, baseURL: string, token: string): Promise<string> {
   const exp = Math.floor(Date.now() / 1000) + 3600;
   const sig = await signFileUrl(fileId, exp, token);
-  return `${baseURL}/api/files/${fileId}/download?exp=${exp}&sig=${sig}`;
+  return `${normalizeBaseURL(baseURL)}/api/files/${fileId}/download?exp=${exp}&sig=${sig}`;
 }
 
 export async function resolveFilePlaceholders(
@@ -17,20 +21,21 @@ export async function resolveFilePlaceholders(
   token: string
 ): Promise<string> {
   if (!html) return "";
+  const base = normalizeBaseURL(baseURL);
   const matches = Array.from(html.matchAll(/\$file@([a-f0-9-]+)/g));
   let result = html;
   for (const match of matches) {
     const fileId = match[1];
     const exp = Math.floor(Date.now() / 1000) + 3600;
     const sig = await signFileUrl(fileId, exp, token);
-    const url = `${baseURL}/api/files/${fileId}/download?exp=${exp}&sig=${sig}`;
+    const url = `${base}/api/files/${fileId}/download?exp=${exp}&sig=${sig}`;
     result = result.replace(match[0], url);
   }
   return result;
 }
 
 export function encodeCredentials(baseURL: string, token: string): string {
-  const payload = JSON.stringify({ b: baseURL, t: token });
+  const payload = JSON.stringify({ b: normalizeBaseURL(baseURL), t: token });
   return btoa(payload);
 }
 

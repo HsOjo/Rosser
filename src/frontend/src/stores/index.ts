@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { api, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
+import { api, normalizeBaseURL, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
 import { getPlatformConfig, savePlatformConfig, isTauri } from "@/platform";
 
 let wsHandlersRegistered = false;
@@ -100,8 +100,10 @@ export const useConnectionStore = defineStore("connection", () => {
     // Clear stale data from any previous connection.
     resetAllStores();
 
+    const normalized = normalizeBaseURL(url);
+
     // Set up the client so the health check can reach the server.
-    setBaseURL(url);
+    setBaseURL(normalized);
     setAuthToken(t);
 
     // All connections must be reachable before we switch to the main page.
@@ -125,12 +127,12 @@ export const useConnectionStore = defineStore("connection", () => {
       throw new Error(`无法连接到服务器: ${url}`);
     }
 
-    baseURL.value = url;
+    baseURL.value = normalized;
     token.value = t;
     isBuiltIn.value = builtIn;
-    savePlatformConfig({ baseURL: url, token: t, isBuiltIn: builtIn });
+    savePlatformConfig({ baseURL: normalized, token: t, isBuiltIn: builtIn });
     isReady.value = true;
-    wsClient.connect(`${url.replace(/^http/, "ws")}/ws`, t);
+    wsClient.connect(`${normalized.replace(/^http/, "ws")}/ws`, t);
     registerWebSocketHandlers();
   }
 

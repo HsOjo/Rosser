@@ -20,6 +20,7 @@ vi.mock("@rosser/shared", () => ({
   },
   setBaseURL: vi.fn(),
   setAuthToken: vi.fn(),
+  normalizeBaseURL: (url: string) => url.replace(/\/+$/, ""),
   wsClient: {
     connect: vi.fn(),
     disconnect: vi.fn(),

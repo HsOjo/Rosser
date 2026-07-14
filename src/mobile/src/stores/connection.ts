@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import { api, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
+import { api, normalizeBaseURL, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
 import { registerWebSocketHandlers } from "./ws";
 import { resetAllStores } from "./reset";
 
@@ -31,7 +31,8 @@ export const useConnectionStore = defineStore("connection", () => {
 
   async function connect(url: string, t: string) {
     resetAllStores();
-    setBaseURL(url);
+    const normalized = normalizeBaseURL(url);
+    setBaseURL(normalized);
     setAuthToken(t);
 
     try {
@@ -43,11 +44,11 @@ export const useConnectionStore = defineStore("connection", () => {
       throw new Error(`无法连接到服务器: ${url}`);
     }
 
-    baseURL.value = url;
+    baseURL.value = normalized;
     token.value = t;
-    localStorage.setItem("rosser_config", JSON.stringify({ baseURL: url, token: t }));
+    localStorage.setItem("rosser_config", JSON.stringify({ baseURL: normalized, token: t }));
     isReady.value = true;
-    wsClient.connect(`${url.replace(/^http/, "ws")}/ws`, t);
+    wsClient.connect(`${normalized.replace(/^http/, "ws")}/ws`, t);
     registerWebSocketHandlers();
   }
 

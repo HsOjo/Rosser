@@ -6,6 +6,8 @@ import {
   decodeCredentials,
   formatTime,
   relativeTime,
+  normalizeBaseURL,
+  buildFileUrl,
 } from "./index.js";
 
 describe("utils", () => {
@@ -32,6 +34,13 @@ describe("utils", () => {
       expect(result).toContain("&sig=");
     });
 
+    it("strips trailing slashes from baseURL", async () => {
+      const html = '<img src="$file@abc123">';
+      const result = await resolveFilePlaceholders(html, "http://localhost:8000/", "token");
+      expect(result).not.toContain("//api/files");
+      expect(result).toContain("http://localhost:8000/api/files/abc123/download");
+    });
+
     it("returns empty string for null/undefined", async () => {
       expect(await resolveFilePlaceholders(null, "http://x", "t")).toBe("");
       expect(await resolveFilePlaceholders(undefined, "http://x", "t")).toBe("");
@@ -41,6 +50,28 @@ describe("utils", () => {
       const html = "<p>hello</p>";
       const result = await resolveFilePlaceholders(html, "http://x", "t");
       expect(result).toBe(html);
+    });
+  });
+
+  describe("normalizeBaseURL", () => {
+    it("removes single trailing slash", () => {
+      expect(normalizeBaseURL("http://localhost:8000/")).toBe("http://localhost:8000");
+    });
+
+    it("removes multiple trailing slashes", () => {
+      expect(normalizeBaseURL("http://localhost:8000///")).toBe("http://localhost:8000");
+    });
+
+    it("leaves URL without slash unchanged", () => {
+      expect(normalizeBaseURL("http://localhost:8000")).toBe("http://localhost:8000");
+    });
+  });
+
+  describe("buildFileUrl", () => {
+    it("strips trailing slash from baseURL", async () => {
+      const result = await buildFileUrl("abc123", "http://localhost:8000/", "token");
+      expect(result).not.toContain("//api/files");
+      expect(result).toContain("http://localhost:8000/api/files/abc123/download");
     });
   });
 
