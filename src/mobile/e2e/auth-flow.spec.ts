@@ -228,7 +228,9 @@ test.describe("Mobile E2E - Authenticated Flow", () => {
     try {
       await login(page);
 
-      await page.click('[data-testid="manage-btn"]');
+      await page.click('[data-testid="menu-btn"]');
+      await page.waitForTimeout(300);
+      await page.click('[data-testid="manage-nav-btn"]');
       await page.waitForURL(/manage/, { timeout: 10000 });
       await expect(page.locator("text=分类")).toBeVisible({ timeout: 5000 });
 

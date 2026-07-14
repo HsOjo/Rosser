@@ -228,10 +228,11 @@
       <div class="pt-3 border-t border-slate-100 dark:border-zinc-800 shrink-0">
         <button
           class="w-full py-2.5 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
+          data-testid="manage-nav-btn"
           @click="$emit('addFeed')"
         >
-          <component :is="AddOutline" class="w-4 h-4" />
-          {{ t("addSubscription") }}
+          <component :is="LayersOutline" class="w-4 h-4" />
+          {{ t("subscriptionManagement") }}
         </button>
       </div>
     </div>
@@ -252,7 +253,7 @@ import {
   NewspaperOutline,
   ChevronForwardOutline,
   CloseOutline,
-  AddOutline,
+  LayersOutline,
 } from "@vicons/ionicons5";
 import { buildFileUrl } from "@rosser/shared";
 import {

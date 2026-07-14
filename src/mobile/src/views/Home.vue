@@ -99,14 +99,6 @@
 
         <button
           class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400"
-          data-testid="manage-btn"
-          @click="$router.push('/manage')"
-        >
-          <component :is="LayersOutline" class="w-4 h-4" />
-        </button>
-
-        <button
-          class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400"
           data-testid="settings-btn"
           @click="$router.push('/settings')"
         >
@@ -235,7 +227,6 @@ import {
   RefreshOutline,
   NotificationsOutline,
   SettingsOutline,
-  LayersOutline,
   StarOutline,
   EyeOffOutline,
   MailOpenOutline,
