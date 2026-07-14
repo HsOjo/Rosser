@@ -10,7 +10,7 @@
     "active": true,
     "category": "Productivity",
     "copyright": "",
-    "targets": ["app", "dmg"],
+    "targets": ["dmg", "nsis", "msi", "deb", "appimage"],
     "externalBin": [],
     "resources": {
       "binaries/backend-dist": "backend"
@@ -29,7 +29,7 @@
     }
   },
   "productName": "Rosser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.hsojo.rosser",
   "mainBinaryName": "Rosser",
   "plugins": {},

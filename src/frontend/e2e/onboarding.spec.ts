@@ -21,7 +21,7 @@ test.describe("Onboarding", () => {
 
   test("connects with remote mode", async ({ page }) => {
     await page.route("**/api/health", async (route) => {
-      await route.fulfill({ json: { status: "ok", version: "0.1.0" } });
+      await route.fulfill({ json: { status: "ok", version: "0.2.0" } });
     });
 
     await page.getByRole("button", { name: /下一步|Next/ }).click();

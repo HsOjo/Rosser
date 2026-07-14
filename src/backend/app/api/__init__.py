@@ -760,4 +760,4 @@ async def export_opml(token: str = Depends(get_current_token)):
 
 @router.get("/health", response_model=HealthOut)
 async def health():
-    return HealthOut(status="ok", version="0.1.0")
+    return HealthOut(status="ok", version="0.2.0")
