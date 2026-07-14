@@ -8,7 +8,7 @@ Rosser is an RSS reader rebuilt with modern technologies.
 
 - **Backend**: FastAPI + SQLAlchemy(async) + SQLite + Alembic + APScheduler
 - **Desktop**: Tauri + Vue3 + Vite + Naive UI
-- **Mobile**: Vue3 + Vite + Varlet (H5, remote only)
+- **Mobile**: Vue3 + Vite + Tailwind CSS + Pinia + Vue Router + Vue I18n (H5, remote only)
 - **Shared**: TypeScript monorepo package with OpenAPI-generated types
 
 ## Development
@@ -59,7 +59,14 @@ pnpm --filter @rosser/frontend dev:vite
 ### Mobile
 
 ```bash
+# Development server
 pnpm --filter @rosser/mobile dev
+
+# Unit tests
+pnpm --filter @rosser/mobile test
+
+# E2E tests
+pnpm --filter @rosser/mobile test:e2e
 ```
 
 ## Deployment
