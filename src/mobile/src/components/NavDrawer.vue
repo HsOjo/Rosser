@@ -18,28 +18,20 @@
 
       <!-- Fixed shortcuts -->
       <div class="space-y-1 mb-4">
-          <button
-            v-for="item in fixedItems"
-            :key="item.key"
-            class="w-full py-2 px-3 rounded-xl text-xs font-bold text-left flex items-center justify-between transition-colors"
-            :data-testid="item.key === 'unread' ? 'nav-unread' : undefined"
-            :class="
-              activeFilter === item.filter && activeFilterId === null
-                ? 'bg-brand-light dark:bg-brand/10 text-brand font-black'
-                : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/40'
-            "
-            @click="select(item.filter, null)"
-          >
-          <span class="flex items-center gap-2">
-            <component :is="item.icon" class="w-3.5 h-3.5 shrink-0" :class="item.iconClass" />
-            <span>{{ item.label }}</span>
-          </span>
-          <span
-            class="text-[9px] px-1.5 py-0.5 rounded-full font-mono"
-            :class="item.badgeClass"
-          >
-            {{ item.count }}
-          </span>
+        <button
+          v-for="item in fixedItems"
+          :key="item.key"
+          class="w-full py-2 px-3 rounded-xl text-xs font-bold text-left flex items-center gap-2 transition-colors"
+          :data-testid="item.key === 'unread' ? 'nav-unread' : undefined"
+          :class="
+            activeFilter === item.filter && activeFilterId === null
+              ? 'bg-brand-light dark:bg-brand/10 text-brand font-black'
+              : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/40'
+          "
+          @click="select(item.filter, null)"
+        >
+          <component :is="item.icon" class="w-3.5 h-3.5 shrink-0" :class="item.iconClass" />
+          <span>{{ item.label }}</span>
         </button>
       </div>
 
@@ -76,12 +68,6 @@
                 </span>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <span
-                  v-if="unreadByCategory(cat.id) > 0"
-                  class="text-[9px] bg-brand-light text-brand px-2 py-0.5 rounded-full font-mono font-bold"
-                >
-                  {{ unreadByCategory(cat.id) }}
-                </span>
                 <component
                   :is="ChevronForward"
                   class="w-4 h-4 text-slate-400 transition-transform duration-200"
@@ -111,12 +97,6 @@
                   />
                   <component v-else :is="Newspaper" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <span class="truncate">{{ feed.title }}</span>
-                </span>
-                <span
-                  v-if="unreadBySubscription(feed.id) > 0"
-                  class="text-[8px] font-bold text-slate-400 shrink-0 font-mono"
-                >
-                  {{ unreadBySubscription(feed.id) }}
                 </span>
               </button>
             </div>
@@ -163,12 +143,6 @@
                   <component v-else :is="Newspaper" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <span class="truncate">{{ feed.title }}</span>
                 </span>
-                <span
-                  v-if="unreadBySubscription(feed.id) > 0"
-                  class="text-[8px] font-bold text-slate-400 shrink-0 font-mono"
-                >
-                  {{ unreadBySubscription(feed.id) }}
-                </span>
               </button>
             </div>
           </div>
@@ -196,12 +170,6 @@
                 </span>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <span
-                  v-if="unreadBySite(site.id) > 0"
-                  class="text-[9px] bg-brand-light text-brand px-2 py-0.5 rounded-full font-mono font-bold"
-                >
-                  {{ unreadBySite(site.id) }}
-                </span>
                 <component
                   :is="ChevronForward"
                   class="w-4 h-4 text-slate-400 transition-transform duration-200"
@@ -222,21 +190,15 @@
               >
                 <span class="truncate flex items-center gap-1.5">
                   <img
-                    v-if="faviconUrls[site.id]"
-                    :src="faviconUrls[site.id]"
+                    v-if="feed.site_id && faviconUrls[feed.site_id]"
+                    :src="faviconUrls[feed.site_id]"
                     alt=""
                     class="w-4 h-4 rounded object-contain shrink-0"
                     referrerpolicy="no-referrer"
-                    @error="faviconUrls[site.id] = ''"
+                    @error="faviconUrls[feed.site_id] = ''"
                   />
                   <component v-else :is="Newspaper" class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                   <span class="truncate">{{ feed.title }}</span>
-                </span>
-                <span
-                  v-if="unreadBySubscription(feed.id) > 0"
-                  class="text-[8px] font-bold text-slate-400 shrink-0 font-mono"
-                >
-                  {{ unreadBySubscription(feed.id) }}
                 </span>
               </button>
             </div>
@@ -258,12 +220,6 @@
               />
               <span class="truncate">{{ tag.title }}</span>
             </div>
-            <span
-              v-if="unreadByTag(tag.id) > 0"
-              class="text-[8px] bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full font-mono font-bold"
-            >
-              {{ unreadByTag(tag.id) }}
-            </span>
           </button>
         </div>
       </div>
@@ -293,7 +249,6 @@ import {
   Folder,
   Globe,
   Newspaper,
-  PricetagOutline,
   ChevronForward,
   Close,
   Add,
@@ -304,7 +259,6 @@ import {
   useSubscriptionStore,
   useSiteStore,
   useTagStore,
-  useArticleStore,
   useConnectionStore,
 } from "@/stores";
 
@@ -334,7 +288,6 @@ const catStore = useCategoryStore();
 const subStore = useSubscriptionStore();
 const siteStore = useSiteStore();
 const tagStore = useTagStore();
-const artStore = useArticleStore();
 const conn = useConnectionStore();
 
 const activeSection = ref<"categories" | "sites" | "tags">("categories");
@@ -371,16 +324,6 @@ watch(
   { immediate: true }
 );
 
-const allArticles = computed(() => artStore.articles);
-
-const totalUnread = computed(() =>
-  allArticles.value.filter((a) => !a.is_read && !a.is_hide).length
-);
-const totalStarred = computed(() =>
-  allArticles.value.filter((a) => a.is_star && !a.is_hide).length
-);
-const totalHidden = computed(() => allArticles.value.filter((a) => a.is_hide).length);
-
 const fixedItems = computed(() => [
   {
     key: "all",
@@ -388,8 +331,6 @@ const fixedItems = computed(() => [
     label: t("all"),
     icon: Book,
     iconClass: "text-slate-500 dark:text-zinc-400",
-    count: allArticles.value.filter((a) => !a.is_hide).length,
-    badgeClass: "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400",
   },
   {
     key: "unread",
@@ -397,8 +338,6 @@ const fixedItems = computed(() => [
     label: t("unread"),
     icon: MailOpen,
     iconClass: "text-blue-500 dark:text-blue-400",
-    count: totalUnread.value,
-    badgeClass: "bg-brand text-white",
   },
   {
     key: "starred",
@@ -406,8 +345,6 @@ const fixedItems = computed(() => [
     label: t("starred"),
     icon: Star,
     iconClass: "text-amber-500",
-    count: totalStarred.value,
-    badgeClass: "bg-amber-500 text-white",
   },
   {
     key: "hidden",
@@ -415,8 +352,6 @@ const fixedItems = computed(() => [
     label: t("hidden"),
     icon: EyeOff,
     iconClass: "text-slate-400 dark:text-zinc-500",
-    count: totalHidden.value,
-    badgeClass: "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400",
   },
 ]);
 
@@ -429,22 +364,6 @@ const uncategorizedFeeds = computed(() =>
 
 const feedsBySite = (siteId: string) =>
   subStore.subscriptions.filter((s) => s.site_id === siteId);
-
-function unread(predicate: (a: (typeof allArticles.value)[0]) => boolean) {
-  return allArticles.value.filter((a) => !a.is_read && !a.is_hide && predicate(a)).length;
-}
-
-const unreadBySubscription = (subId: string) =>
-  unread((a) => a.subscription_id === subId);
-
-const unreadByCategory = (catId: string) =>
-  unread((a) => feedsByCategory(catId).some((s) => s.id === a.subscription_id));
-
-const unreadBySite = (siteId: string) =>
-  unread((a) => feedsBySite(siteId).some((s) => s.id === a.subscription_id));
-
-const unreadByTag = (tagId: string) =>
-  unread((a) => a.tags.some((t) => t.id === tagId));
 
 function toggleCat(id: string) {
   expandedCats.value[id] = !expandedCats.value[id];

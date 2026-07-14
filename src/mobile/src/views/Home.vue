@@ -16,15 +16,29 @@
           class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0"
           @click="showDrawer = true"
         >
+          <img
+            v-if="streamIconUrl"
+            :src="streamIconUrl"
+            alt=""
+            class="w-4 h-4 rounded object-contain shrink-0"
+            referrerpolicy="no-referrer"
+            @error="streamIconUrl = ''"
+          />
+          <span
+            v-else-if="streamTagColor"
+            class="w-3 h-3 rounded-full shrink-0"
+            :style="{ backgroundColor: streamTagColor }"
+          />
+          <component
+            v-else-if="streamIcon"
+            :is="streamIcon"
+            class="w-3.5 h-3.5 shrink-0"
+            :class="streamIconClass"
+          />
           <span
             class="text-xs font-black text-slate-800 dark:text-zinc-100 truncate max-w-[100px]"
           >
             {{ streamTitle }}
-          </span>
-          <span
-            class="bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 text-[9px] font-bold font-mono px-1 py-0.5 rounded"
-          >
-            {{ artStore.total }}
           </span>
         </button>
       </div>
@@ -229,6 +243,9 @@ import {
   Options,
   Checkbox,
   Checkmark,
+  Folder,
+  Globe,
+  Newspaper,
 } from "@vicons/ionicons5";
 import {
   useArticleStore,
@@ -237,13 +254,14 @@ import {
   useSiteStore,
   useTagStore,
   useNotificationStore,
+  useConnectionStore,
 } from "@/stores";
 import type { ArticleListQuery } from "@/stores/article";
 import ArticleCell from "@/components/ArticleCell.vue";
 import SwipeCell from "@/components/SwipeCell.vue";
 import FilterDrawer from "@/components/FilterDrawer.vue";
 import NavDrawer, { type FilterType } from "@/components/NavDrawer.vue";
-import { api } from "@rosser/shared";
+import { api, buildFileUrl } from "@rosser/shared";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -254,6 +272,7 @@ const catStore = useCategoryStore();
 const siteStore = useSiteStore();
 const tagStore = useTagStore();
 const notifStore = useNotificationStore();
+const conn = useConnectionStore();
 
 const showDrawer = ref(false);
 const showSearch = ref(false);
@@ -299,6 +318,77 @@ const streamTitle = computed(() => {
       return t("all");
   }
 });
+
+const streamIcon = computed(() => {
+  switch (filter.value.type) {
+    case "unread":
+      return MailOpen;
+    case "starred":
+      return Star;
+    case "hidden":
+      return EyeOff;
+    case "category":
+      return Folder;
+    case "site":
+      return streamIconUrl.value ? null : Globe;
+    case "subscription":
+      return streamIconUrl.value ? null : Newspaper;
+    case "tag":
+      return null;
+    default:
+      return Book;
+  }
+});
+
+const streamIconClass = computed(() => {
+  switch (filter.value.type) {
+    case "starred":
+      return "text-amber-500";
+    case "unread":
+      return "text-blue-500 dark:text-blue-400";
+    default:
+      return "text-slate-500 dark:text-zinc-400";
+  }
+});
+
+const streamTagColor = computed(() => {
+  if (filter.value.type !== "tag") return null;
+  const tag = tagStore.tags.find((t) => t.id === filter.value.id);
+  return tag?.color || "#9ca3af";
+});
+
+const streamIconUrl = ref("");
+
+async function resolveStreamIcon() {
+  streamIconUrl.value = "";
+  if (!conn.baseURL || !conn.token) return;
+  if (filter.value.type === "site") {
+    const site = siteStore.sites.find((s) => s.id === filter.value.id);
+    if (site?.favicon_id) {
+      try {
+        streamIconUrl.value = await buildFileUrl(site.favicon_id, conn.baseURL, conn.token);
+      } catch {
+        // ignore favicon resolution failure
+      }
+    }
+  } else if (filter.value.type === "subscription") {
+    const sub = subStore.subscriptions.find((s) => s.id === filter.value.id);
+    const site = sub?.site_id ? siteStore.sites.find((s) => s.id === sub.site_id) : undefined;
+    if (site?.favicon_id) {
+      try {
+        streamIconUrl.value = await buildFileUrl(site.favicon_id, conn.baseURL, conn.token);
+      } catch {
+        // ignore favicon resolution failure
+      }
+    }
+  }
+}
+
+watch(
+  () => [filter.value.type, filter.value.id, siteStore.sites.length, conn.baseURL, conn.token],
+  () => resolveStreamIcon(),
+  { immediate: true }
+);
 
 const queryParams = computed<ArticleListQuery>(() => {
   const params: ArticleListQuery = {
