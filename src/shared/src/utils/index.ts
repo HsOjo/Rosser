@@ -1,18 +1,8 @@
+import { sha256 } from "js-sha256";
+
 export async function signFileUrl(fileId: string, exp: number, secret: string): Promise<string> {
   const msg = `${fileId}|${exp}`;
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(msg));
-  return Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-    .slice(0, 32);
+  return sha256.hmac(secret, msg).slice(0, 32);
 }
 
 export async function buildFileUrl(fileId: string, baseURL: string, token: string): Promise<string> {
