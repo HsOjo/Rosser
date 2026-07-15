@@ -247,6 +247,7 @@ import {
   onUnmounted,
   onActivated,
   onDeactivated,
+  nextTick,
 } from "vue";
 import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -312,7 +313,7 @@ function saveScrollTop() {
 }
 
 function restoreScrollTop() {
-  requestAnimationFrame(() => {
+  nextTick(() => {
     if (listRef.value) {
       listRef.value.scrollTop = savedScrollTop.value;
     }

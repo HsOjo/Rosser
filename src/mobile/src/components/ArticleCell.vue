@@ -136,17 +136,24 @@ const { motionEnabled } = useMotionSafe();
 const cellRef = ref<HTMLDivElement | null>(null);
 const feedIcon = ref("");
 
+// Home 被 keep-alive 缓存。cell 首次进入时播放一次动效，之后被缓存再切回时
+// 不应再次播放，否则会出现“一闪”的重新入场效果。
+const hasAnimated = ref(false);
+
 const motion = useMotion(
   cellRef,
   computed(() =>
-    presets.slideUp({ enabled: motionEnabled.value, delay: props.index * 0.02 })
+    presets.slideUp({
+      enabled: motionEnabled.value && !hasAnimated.value,
+      delay: props.index * 0.02,
+    })
   )
 );
 
-// Home 被 keep-alive 缓存，切走时若 cell 动效还没播完会被暂停在中间，
-// 切回来后就会残留“卡动画”。deactivate 时直接落到最终态。
+// 切走前把当前动效落到最终态，并标记已播放过，避免再次激活时重新入场。
 onDeactivated(() => {
   motion?.set("enter");
+  hasAnimated.value = true;
 });
 
 const feed = computed(() =>
