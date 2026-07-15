@@ -1,5 +1,11 @@
 <template>
-  <div class="h-full flex flex-col bg-white dark:bg-zinc-900">
+  <div
+    class="h-full flex flex-col bg-white dark:bg-zinc-900"
+    @touchstart="onDrawerTouchStart"
+    @touchmove="onDrawerTouchMove"
+    @touchend="onDrawerTouchEnd"
+    @touchcancel="onDrawerTouchEnd"
+  >
     <!-- Header -->
     <header
       class="px-3.5 py-2 flex justify-between items-center bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800/40 shrink-0 z-20 select-none"
@@ -14,7 +20,7 @@
         </button>
         <button
           class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0 flex-1"
-          @click="showDrawer = true"
+          @click="scrollToTop"
         >
           <img
             v-if="streamIconUrl"
@@ -306,6 +312,9 @@ const sentinelRef = ref<HTMLDivElement | null>(null);
 const listRef = ref<HTMLDivElement | null>(null);
 const menuRef = ref<HTMLDivElement | null>(null);
 const savedScrollTop = ref(0);
+const drawerSwipeStartX = ref(0);
+const drawerSwipeStartY = ref(0);
+const isDrawerSwipeFromEdge = ref(false);
 
 function saveScrollTop() {
   savedScrollTop.value = listRef.value?.scrollTop || 0;
@@ -317,6 +326,45 @@ function restoreScrollTop() {
       listRef.value.scrollTop = savedScrollTop.value;
     }
   });
+}
+
+function scrollToTop() {
+  if (listRef.value) {
+    listRef.value.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+const EDGE_SWIPE_THRESHOLD = 40;
+const EDGE_SWIPE_MIN_DISTANCE = 60;
+
+function onDrawerTouchStart(e: TouchEvent) {
+  const touch = e.touches[0];
+  drawerSwipeStartX.value = touch.clientX;
+  drawerSwipeStartY.value = touch.clientY;
+  isDrawerSwipeFromEdge.value = touch.clientX < EDGE_SWIPE_THRESHOLD;
+}
+
+function onDrawerTouchMove(e: TouchEvent) {
+  if (!isDrawerSwipeFromEdge.value) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - drawerSwipeStartX.value;
+  const dy = touch.clientY - drawerSwipeStartY.value;
+
+  if (dx > 0 && Math.abs(dx) > Math.abs(dy)) {
+    e.preventDefault();
+  }
+}
+
+function onDrawerTouchEnd(e: TouchEvent) {
+  if (!isDrawerSwipeFromEdge.value) return;
+  const touch = e.changedTouches[0];
+  const dx = touch.clientX - drawerSwipeStartX.value;
+  const dy = touch.clientY - drawerSwipeStartY.value;
+
+  if (dx > EDGE_SWIPE_MIN_DISTANCE && dx > Math.abs(dy)) {
+    showDrawer.value = true;
+  }
+  isDrawerSwipeFromEdge.value = false;
 }
 
 const loadMoreObserver = ref<IntersectionObserver | null>(null);
