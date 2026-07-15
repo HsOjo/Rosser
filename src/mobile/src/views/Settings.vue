@@ -290,7 +290,7 @@ import {
   TrashOutline,
   AddOutline,
 } from "@vicons/ionicons5";
-import { api } from "@rosser/shared";
+import { api, maskToken } from "@rosser/shared";
 import { useConnectionStore } from "@/stores/connection";
 import { useSettingsStore, useTagStore } from "@/stores";
 import {
@@ -324,8 +324,7 @@ const themes = computed(() => [
 ]);
 
 const maskedToken = computed(() => {
-  if (!conn.token) return "";
-  return conn.token.slice(0, 8) + "***";
+  return maskToken(conn.token);
 });
 
 const proxyEnabled = ref(false);

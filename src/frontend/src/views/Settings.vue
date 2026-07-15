@@ -27,7 +27,7 @@
             <n-space vertical>
               <n-descriptions :column="1" label-placement="top">
                 <n-descriptions-item :label="t('baseURL')">{{ conn.baseURL }}</n-descriptions-item>
-                <n-descriptions-item :label="t('token')">{{ conn.token.slice(0, 8) }}...</n-descriptions-item>
+                <n-descriptions-item :label="t('token')">{{ maskToken(conn.token) }}</n-descriptions-item>
                 <n-descriptions-item :label="t('connection')">{{ conn.isBuiltIn ? t('builtIn') : t('remote') }}</n-descriptions-item>
               </n-descriptions>
 
@@ -130,7 +130,7 @@ import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
 import { useConnectionStore, useSettingsStore, useTagStore } from "@/stores";
 import { getUISettings, saveUISettings, isTauri } from "@/platform";
-import { api } from "@rosser/shared";
+import { api, maskToken } from "@rosser/shared";
 
 const router = useRouter();
 const { t, locale } = useI18n();

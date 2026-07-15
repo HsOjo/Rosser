@@ -9,6 +9,7 @@ import {
   normalizeBaseURL,
   buildFileUrl,
   getDefaultServerURL,
+  maskToken,
 } from "./index.js";
 
 describe("utils", () => {
@@ -124,6 +125,22 @@ describe("utils", () => {
     it("returns null for invalid input", () => {
       expect(decodeCredentials("not-valid-base64!!!")).toBeNull();
       expect(decodeCredentials(btoa("not-json"))).toBeNull();
+    });
+  });
+
+  describe("maskToken", () => {
+    it("returns empty string for empty token", () => {
+      expect(maskToken("")).toBe("");
+    });
+
+    it("returns token unchanged when length is 4 or less", () => {
+      expect(maskToken("ab")).toBe("ab");
+      expect(maskToken("abcd")).toBe("abcd");
+    });
+
+    it("masks middle part and keeps first and last 2 characters", () => {
+      expect(maskToken("abcdef")).toBe("ab***ef");
+      expect(maskToken("my-token")).toBe("my***en");
     });
   });
 

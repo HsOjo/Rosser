@@ -54,6 +54,12 @@ export function decodeCredentials(encoded: string): { baseURL: string; token: st
   }
 }
 
+export function maskToken(token: string): string {
+  if (!token) return "";
+  if (token.length <= 4) return token;
+  return token.slice(0, 2) + "***" + token.slice(-2);
+}
+
 export function formatTime(iso: string | null | undefined, locale = "zh-CN"): string {
   if (!iso) return "";
   const d = new Date(iso);
