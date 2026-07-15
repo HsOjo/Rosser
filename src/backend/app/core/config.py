@@ -49,6 +49,7 @@ class Settings(BaseSettings):
                 "http://127.0.0.1:1420",
                 "http://127.0.0.1:5173",
                 "tauri://localhost",
+                "https://tauri.localhost",
             ]
         return [o.strip() for o in self.rosser_cors_origins.split(",")]
 

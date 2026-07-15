@@ -34,14 +34,25 @@ def is_process_alive(pid: int) -> bool:
     """Check whether a process with the given PID is still running."""
     if platform.system() == "Windows":
         import ctypes
+        from ctypes import wintypes
 
         kernel32 = ctypes.windll.kernel32
         SYNCHRONIZE = 0x00100000
-        handle = kernel32.OpenProcess(SYNCHRONIZE, False, pid)
+        PROCESS_QUERY_INFORMATION = 0x00000400
+        STILL_ACTIVE = 259
+
+        handle = kernel32.OpenProcess(
+            SYNCHRONIZE | PROCESS_QUERY_INFORMATION, False, pid
+        )
         if not handle:
             return False
-        kernel32.CloseHandle(handle)
-        return True
+        try:
+            exit_code = wintypes.DWORD()
+            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
+                return False
+            return exit_code.value == STILL_ACTIVE
+        finally:
+            kernel32.CloseHandle(handle)
     else:
         try:
             os.kill(pid, 0)

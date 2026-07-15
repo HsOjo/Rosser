@@ -3,10 +3,13 @@
 
 use rand::Rng;
 use std::net::TcpListener;
+use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 use tauri::{Emitter, Manager};
 use tauri_plugin_notification::NotificationExt;
 
@@ -15,6 +18,12 @@ use i18n::I18n;
 
 /// Wraps a child process so it is killed when the wrapper is dropped.
 struct KillOnDrop(Child);
+
+impl KillOnDrop {
+    fn kill(&mut self) -> std::io::Result<()> {
+        self.0.kill()
+    }
+}
 
 impl Drop for KillOnDrop {
     fn drop(&mut self) {
@@ -105,13 +114,32 @@ async fn start_builtin_backend(
     state.port.store(port, Ordering::Relaxed);
     *state.token.lock().unwrap() = token.clone();
 
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let data_dir: PathBuf = app_data_dir.join("data");
+    let storage_dir: PathBuf = app_data_dir.join("storage");
+    std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&storage_dir).map_err(|e| e.to_string())?;
+
     let parent_pid = std::process::id();
-    let child = Command::new(&backend_path)
-        .env("ROSSER_PORT", port.to_string())
+    let mut cmd = Command::new(&backend_path);
+    cmd.env("ROSSER_PORT", port.to_string())
         .env("ROSSER_PARENT_PID", parent_pid.to_string())
         .env("ROSSER_TOKEN", &token)
-        .spawn()
-        .map_err(|e| e.to_string())?;
+        .env("ROSSER_DATA_DIR", &data_dir)
+        .env("ROSSER_STORAGE_DIR", &storage_dir)
+        .env(
+            "ROSSER_CORS_ORIGINS",
+            "https://tauri.localhost,tauri://localhost,http://localhost:1420,http://127.0.0.1:1420,http://localhost:5173,http://127.0.0.1:5173",
+        );
+    #[cfg(windows)]
+    {
+        // CREATE_NO_WINDOW: do not allocate a console for the backend process.
+        cmd.creation_flags(0x08000000);
+    }
+    let child = cmd.spawn().map_err(|e| e.to_string())?;
 
     state.child.lock().unwrap().replace(KillOnDrop(child));
 
@@ -251,10 +279,12 @@ fn main() {
     app.run(|app_handle, event| {
         match event {
             tauri::RunEvent::ExitRequested { .. } => {
-                app_handle
-                    .state::<BackendHandle>()
-                    .quitting
-                    .store(true, Ordering::Relaxed);
+                let state = app_handle.state::<BackendHandle>();
+                state.quitting.store(true, Ordering::Relaxed);
+                let child_opt = state.child.lock().unwrap().take();
+                if let Some(mut child) = child_opt {
+                    let _ = child.kill();
+                }
             }
             #[cfg(target_os = "macos")]
             tauri::RunEvent::Reopen { .. } => {
