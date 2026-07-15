@@ -83,5 +83,7 @@
   "welcomeTitle": "欢迎来到 Rosser",
   "welcomeDescription": "RSS 阅读器移动端已就绪，简单配置即可开始阅读。",
   "serverInfo": "服务器信息",
-  "proxyEnabled": "启用代理"
+  "proxyEnabled": "启用代理",
+  "animations": "动画",
+  "disableAnimations": "禁用动画"
 }

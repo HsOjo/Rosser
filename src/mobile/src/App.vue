@@ -1,9 +1,14 @@
 <template>
   <div class="h-full w-full flex flex-col bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
     <router-view v-slot="{ Component }">
-      <keep-alive include="Home">
-        <component :is="Component" />
-      </keep-alive>
+      <transition
+        :name="transitionName"
+        mode="out-in"
+      >
+        <keep-alive include="Home">
+          <component :is="Component" />
+        </keep-alive>
+      </transition>
     </router-view>
 
     <!-- Global backend initializing overlay -->
@@ -22,13 +27,27 @@
 </template>
 
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useConnectionStore } from "@/stores";
 import { uiSettings, applyUISettings, getEffectiveTheme, type Theme } from "@/settings/local";
+import { useMotionSafe } from "@/composables/useMotionSafe";
 
 const { locale, t } = useI18n();
 const conn = useConnectionStore();
+const router = useRouter();
+
+// Initialize animation accessibility state
+useMotionSafe();
+
+const transitionName = ref("page-slide-forward");
+
+router.beforeEach((to, from) => {
+  const toDepth = typeof to.meta.depth === "number" ? to.meta.depth : 0;
+  const fromDepth = typeof from.meta.depth === "number" ? from.meta.depth : 0;
+  transitionName.value = toDepth < fromDepth ? "page-slide-backward" : "page-slide-forward";
+});
 
 onMounted(() => {
   locale.value = uiSettings.value.locale;

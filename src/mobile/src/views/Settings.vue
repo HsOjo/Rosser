@@ -1,5 +1,6 @@
 <template>
-  <div class="h-full flex flex-col bg-white dark:bg-zinc-900">
+  <div class="h-full">
+    <div class="h-full flex flex-col bg-white dark:bg-zinc-900">
     <!-- Header -->
     <header
       class="px-3.5 py-2 flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/40 shrink-0"
@@ -34,8 +35,9 @@
 
     <!-- Tab content -->
     <div class="flex-1 overflow-y-auto px-4 py-4">
-      <!-- General -->
-      <div v-if="activeTab === 'general'" class="space-y-5">
+      <Transition name="fade" mode="out-in">
+        <!-- General -->
+        <div v-if="activeTab === 'general'" key="general" class="space-y-5">
         <div class="space-y-2">
           <label class="text-[10px] font-bold text-slate-400 uppercase">{{ t("language") }}</label>
           <div class="grid grid-cols-2 gap-2">
@@ -75,6 +77,23 @@
           </div>
         </div>
 
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase">{{ t("animations") }}</label>
+          <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800">
+            <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">{{ t("disableAnimations") }}</span>
+            <button
+              class="w-11 h-6 rounded-full transition-colors relative"
+              :class="uiSettings.disableAnimations ? 'bg-brand' : 'bg-slate-300 dark:bg-zinc-600'"
+              @click="toggleAnimations"
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform"
+                :class="uiSettings.disableAnimations ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+          </div>
+        </div>
+
         <div class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-2">
           <div class="text-[10px] font-bold text-slate-400 uppercase">
             {{ t("serverInfo") }}
@@ -96,7 +115,7 @@
       </div>
 
       <!-- Data Management -->
-      <div v-else-if="activeTab === 'dataManagement'" class="space-y-4">
+      <div v-else-if="activeTab === 'dataManagement'" key="dataManagement" class="space-y-4">
         <div
           class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3"
         >
@@ -127,7 +146,7 @@
       </div>
 
       <!-- Connection -->
-      <div v-else-if="activeTab === 'connection'" class="space-y-4">
+      <div v-else-if="activeTab === 'connection'" key="connection" class="space-y-4">
         <div
           class="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-3">
           <div class="flex items-center justify-between">
@@ -171,7 +190,7 @@
       </div>
 
       <!-- Tags -->
-      <div v-else-if="activeTab === 'tags'" class="space-y-3">
+      <div v-else-if="activeTab === 'tags'" key="tags" class="space-y-3">
         <div
           v-for="tag in tagStore.tags"
           :key="tag.id"
@@ -209,16 +228,18 @@
           {{ t("addTag") }}
         </button>
       </div>
+      </Transition>
     </div>
   </div>
 
   <!-- Tag edit dialog -->
-  <div
-    v-if="editingTag"
-    class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-    @click.self="editingTag = null"
-  >
-    <div class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
+  <Transition name="modal" appear>
+    <div
+      v-if="editingTag"
+      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      @click.self="editingTag = null"
+    >
+      <div class="modal-panel w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
       <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
         {{ editingTag.id ? t("editTag") : t("addTag") }}
       </h4>
@@ -259,8 +280,9 @@
           {{ t("save") }}
         </button>
       </div>
+      </div>
     </div>
-  </div>
+  </Transition>
 
   <!-- Tag delete confirm dialog -->
   <ConfirmDialog
@@ -273,6 +295,7 @@
       <component :is="TrashOutline" class="w-5 h-5 shrink-0 text-red-500" />
     </template>
   </ConfirmDialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -353,6 +376,10 @@ function saveLocale(val: string) {
 function saveTheme(val: Theme) {
   saveUISettings({ theme: val });
   applyUISettings();
+}
+
+function toggleAnimations() {
+  saveUISettings({ disableAnimations: !uiSettings.value.disableAnimations });
 }
 
 async function disconnect() {

@@ -83,5 +83,7 @@
   "welcomeTitle": "Welcome to Rosser",
   "welcomeDescription": "Rosser mobile reader is ready. Configure to start reading.",
   "serverInfo": "Server Info",
-  "proxyEnabled": "Enable Proxy"
+  "proxyEnabled": "Enable Proxy",
+  "animations": "Animations",
+  "disableAnimations": "Disable animations"
 }

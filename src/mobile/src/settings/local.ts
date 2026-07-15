@@ -7,11 +7,13 @@ export type Theme = "light" | "dark" | "auto";
 export interface UISettings {
   theme: Theme;
   locale: string;
+  disableAnimations: boolean;
 }
 
 const defaults: UISettings = {
   theme: "auto",
   locale: "zh-CN",
+  disableAnimations: false,
 };
 
 export function parseUISettings(raw: string | null): UISettings {
@@ -23,6 +25,9 @@ export function parseUISettings(raw: string | null): UISettings {
         ? parsed.theme
         : defaults.theme,
       locale: parsed.locale || defaults.locale,
+      disableAnimations: typeof parsed.disableAnimations === "boolean"
+        ? parsed.disableAnimations
+        : defaults.disableAnimations,
     };
   } catch {
     return { ...defaults };

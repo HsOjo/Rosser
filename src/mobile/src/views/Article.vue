@@ -1,11 +1,12 @@
 <template>
-  <div
-    v-if="article"
-    ref="containerRef"
-    class="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-900 overflow-hidden"
-    tabindex="-1"
-    @keydown.esc="handleEsc"
-  >
+  <div class="h-full">
+    <div
+      v-if="article"
+      ref="containerRef"
+      class="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-900 overflow-hidden"
+      tabindex="-1"
+      @keydown.esc="handleEsc"
+    >
     <!-- Top nav -->
     <div
       class="shrink-0 px-3.5 py-2 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/60 select-none"
@@ -208,6 +209,7 @@
       </button>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -220,6 +222,7 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { useMotion } from "@vueuse/motion";
 import {
   ArrowBackOutline,
   StarOutline,
@@ -243,6 +246,8 @@ import { useConnectionStore } from "@/stores/connection";
 import ArticleContent from "@/components/ArticleContent.vue";
 import TagManager from "@/components/TagManager.vue";
 import MetaTree from "@/components/MetaTree.vue";
+import { useMotionSafe } from "@/composables/useMotionSafe";
+import * as presets from "@/motion/presets";
 import type { components } from "@rosser/shared/api";
 import type { OutlineItem } from "@/components/ArticleContent.vue";
 
@@ -256,6 +261,7 @@ const subStore = useSubscriptionStore();
 const siteStore = useSiteStore();
 const tagStore = useTagStore();
 const conn = useConnectionStore();
+const { motionEnabled } = useMotionSafe();
 
 const article = ref<ArticleOut | null>(null);
 const loading = ref(false);
@@ -266,6 +272,8 @@ const copied = ref(false);
 const containerRef = ref<HTMLDivElement | null>(null);
 const scrollRef = ref<HTMLDivElement | null>(null);
 const articleContentRef = ref<InstanceType<typeof ArticleContent> | null>(null);
+
+useMotion(scrollRef, computed(() => presets.fadeIn({ enabled: motionEnabled.value, delay: 0.1 })));
 
 const articleId = computed(() => route.params.id as string);
 

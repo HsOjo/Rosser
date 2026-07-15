@@ -140,10 +140,136 @@ body {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.12s ease-out forwards;
 }
 
 .animate-slideDown {
-  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideDown 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Accessibility: disable non-essential animations when requested */
+.disable-animations *,
+.disable-animations *::before,
+.disable-animations *::after {
+  transition-duration: 0.01ms !important;
+  transition-delay: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
+/* Keep loading spinners functional */
+.disable-animations .animate-spin,
+.disable-animations .animate-spin::before,
+.disable-animations .animate-spin::after {
+  animation-duration: 0.8s !important;
+  animation-iteration-count: infinite !important;
+}
+
+/* Page transition (router-view) */
+.page-slide-forward-enter-active,
+.page-slide-forward-leave-active,
+.page-slide-backward-enter-active,
+.page-slide-backward-leave-active {
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease;
+}
+
+/* Forward: push - new page enters from right, old page leaves to left */
+.page-slide-forward-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.page-slide-forward-leave-to {
+  transform: translateX(-30%);
+  opacity: 0;
+}
+
+/* Backward: pop - new page enters from left, old page leaves to right */
+.page-slide-backward-enter-from {
+  transform: translateX(-30%);
+  opacity: 0.8;
+}
+
+.page-slide-backward-enter-to {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.page-slide-backward-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* Drawer transition */
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.drawer-enter-active .drawer-panel,
+.drawer-leave-active .drawer-panel {
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+}
+
+.drawer-enter-from .drawer-panel,
+.drawer-leave-to .drawer-panel {
+  transform: translateX(-100%);
+}
+
+/* Modal / dialog transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.modal-enter-active .modal-panel,
+.modal-leave-active .modal-panel {
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-panel,
+.modal-leave-to .modal-panel {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* Generic fade transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Dropdown menu transition */
+.menu-enter-active,
+.menu-leave-active {
+  transition: opacity 0.1s ease, transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
+  transform: scale(0.98) translateY(-2px);
+}
+
+.menu-enter-to,
+.menu-leave-from {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 

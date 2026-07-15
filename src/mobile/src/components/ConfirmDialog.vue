@@ -1,10 +1,11 @@
 <template>
-  <div
-    v-if="visible"
-    class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-    @click.self="onCancel"
-  >
-    <div class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
+  <Transition name="modal" appear>
+    <div
+      v-if="visible"
+      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      @click.self="onCancel"
+    >
+      <div class="modal-panel w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl">
       <div class="flex items-center gap-2 text-brand">
         <slot name="icon" />
         <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
@@ -33,7 +34,8 @@
         </button>
       </div>
     </div>
-  </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">

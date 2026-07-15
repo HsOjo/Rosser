@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="cellRef"
     class="group py-3.5 cursor-pointer transition-all flex flex-col gap-1.5 relative"
     data-testid="article-cell"
     @click="$emit('open', art.id)"
@@ -95,11 +96,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useMotion } from "@vueuse/motion";
 import { StarOutline, EyeOffOutline } from "@vicons/ionicons5";
 import { relativeTime, buildFileUrl } from "@rosser/shared";
 import { useSubscriptionStore } from "@/stores/subscription";
 import { useSiteStore } from "@/stores/site";
 import { useConnectionStore } from "@/stores/connection";
+import { useMotionSafe } from "@/composables/useMotionSafe";
+import * as presets from "@/motion/presets";
 import type { components } from "@rosser/shared/api";
 
 type ArticleListItem = components["schemas"]["ArticleListItem"];
@@ -109,9 +113,11 @@ const props = withDefaults(
   defineProps<{
     art: ArticleListItem;
     showSource?: boolean;
+    index?: number;
   }>(),
   {
     showSource: true,
+    index: 0,
   }
 );
 
@@ -125,8 +131,17 @@ const { t, locale } = useI18n();
 const subStore = useSubscriptionStore();
 const siteStore = useSiteStore();
 const conn = useConnectionStore();
+const { motionEnabled } = useMotionSafe();
 
+const cellRef = ref<HTMLDivElement | null>(null);
 const feedIcon = ref("");
+
+useMotion(
+  cellRef,
+  computed(() =>
+    presets.slideUp({ enabled: motionEnabled.value, delay: props.index * 0.02 })
+  )
+);
 
 const feed = computed(() =>
   subStore.subscriptions.find((s) => s.id === props.art.subscription_id)

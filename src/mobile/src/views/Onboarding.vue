@@ -1,8 +1,9 @@
 <template>
   <div class="h-full flex flex-col bg-white dark:bg-zinc-900">
     <div class="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
-      <!-- Step 1: Preferences -->
-      <div v-if="step === 1" class="w-full max-w-xs space-y-6 animate-fadeIn">
+      <Transition name="fade" mode="out-in">
+        <!-- Step 1: Preferences -->
+        <div v-if="step === 1" key="step1" class="w-full max-w-xs space-y-6 animate-fadeIn">
         <div class="text-center space-y-2">
           <h1 class="text-2xl font-black text-slate-900 dark:text-zinc-50">
             {{ t("welcomeTitle") }}
@@ -55,7 +56,7 @@
       </div>
 
       <!-- Step 2: Connection -->
-      <div v-else-if="step === 2" class="w-full max-w-xs space-y-6 animate-fadeIn">
+      <div v-else-if="step === 2" key="step2" class="w-full max-w-xs space-y-6 animate-fadeIn">
         <div class="text-center space-y-2">
           <h1 class="text-xl font-black text-slate-900 dark:text-zinc-50">
             {{ t("onboardingTitle") }}
@@ -93,6 +94,7 @@
           {{ error }}
         </p>
       </div>
+      </Transition>
     </div>
 
     <!-- Bottom actions -->

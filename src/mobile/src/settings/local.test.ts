@@ -18,12 +18,13 @@ describe("local UI settings", () => {
   it("returns defaults initially", () => {
     expect(uiSettings.value.theme).toBe("auto");
     expect(uiSettings.value.locale).toBe("zh-CN");
+    expect(uiSettings.value.disableAnimations).toBe(false);
   });
 
   it("saves and loads ui settings to localStorage", () => {
-    saveUISettings({ theme: "dark", locale: "en" });
+    saveUISettings({ theme: "dark", locale: "en", disableAnimations: true });
     expect(localStorage.getItem(UI_STORAGE_KEY)).toBe(
-      JSON.stringify({ theme: "dark", locale: "en" })
+      JSON.stringify({ theme: "dark", locale: "en", disableAnimations: true })
     );
   });
 

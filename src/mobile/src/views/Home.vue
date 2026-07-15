@@ -61,10 +61,11 @@
           />
         </button>
 
-        <div
-          v-if="showMenu"
-          class="absolute right-0 top-full mt-1.5 min-w-[160px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-xl shadow-lg p-1.5 z-30 flex flex-col gap-0.5"
-        >
+        <Transition name="menu" appear>
+          <div
+            v-if="showMenu"
+            class="menu-panel absolute right-0 top-full mt-1.5 min-w-[160px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-xl shadow-lg p-1.5 z-30 flex flex-col gap-0.5"
+          >
           <button
             v-if="hasUnread"
             class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
@@ -111,19 +112,21 @@
             {{ t("settings") }}
           </button>
         </div>
+        </Transition>
       </div>
     </header>
 
     <!-- Query Tools Dialog -->
-    <div
-      v-if="showQueryTools"
-      data-testid="query-tools-dialog"
-      class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-      @click.self="showQueryTools = false"
-    >
+    <Transition name="modal" appear>
       <div
-        class="w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl"
+        v-if="showQueryTools"
+        data-testid="query-tools-dialog"
+        class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+        @click.self="showQueryTools = false"
       >
+        <div
+          class="modal-panel w-full max-w-[320px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-xl"
+        >
         <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100">
           {{ t("queryTools") }}
         </h4>
@@ -147,7 +150,8 @@
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </Transition>
 
     <!-- Article list -->
     <div ref="listRef" class="flex-1 overflow-y-auto px-4 relative" @scroll="saveScrollTop">
@@ -157,14 +161,14 @@
         />
       </div>
 
-      <div v-else-if="artStore.articles.length === 0" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+      <div v-else-if="artStore.articles.length === 0" class="py-12 text-center text-slate-400 dark:text-zinc-500 animate-fadeIn">
         <component :is="AppsOutline" class="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-700 mb-2" />
         <p class="text-xs max-w-[200px] mx-auto leading-relaxed">{{ t("noData") }}</p>
       </div>
 
       <div v-else class="divide-y divide-slate-100 dark:divide-zinc-800/40">
         <SwipeCell
-          v-for="art in artStore.articles"
+          v-for="(art, index) in artStore.articles"
           :key="art.id"
           :actions="swipeActions(art)"
           @action="(key) => handleSwipeAction(art.id, key)"
@@ -172,6 +176,7 @@
           <ArticleCell
             :art="art"
             :show-source="filter.type !== 'subscription'"
+            :index="index"
             @open="openArticle"
             @star="toggleStar"
             @hide="toggleHide"
@@ -208,14 +213,16 @@
     </div>
 
     <!-- Nav drawer -->
-    <NavDrawer
-      v-if="showDrawer"
-      :active-filter="filter.type"
-      :active-filter-id="filter.id"
-      @close="showDrawer = false"
-      @add-feed="$router.push('/manage')"
-      @select="onSelectFilter"
-    />
+    <Transition name="drawer" appear>
+      <NavDrawer
+        v-if="showDrawer"
+        :active-filter="filter.type"
+        :active-filter-id="filter.id"
+        @close="showDrawer = false"
+        @add-feed="$router.push('/manage')"
+        @select="onSelectFilter"
+      />
+    </Transition>
 
     <!-- Mark all read confirm -->
     <ConfirmDialog

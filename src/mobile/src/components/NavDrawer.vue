@@ -1,7 +1,7 @@
 <template>
   <div class="absolute inset-0 bg-black/60 z-50 flex" @click.self="$emit('close')">
     <div
-      class="w-[280px] h-full bg-white dark:bg-zinc-900 border-r border-slate-100 dark:border-zinc-800 p-4 flex flex-col z-50 relative shadow-2xl animate-fadeIn"
+      class="drawer-panel w-[280px] h-full bg-white dark:bg-zinc-900 border-r border-slate-100 dark:border-zinc-800 p-4 flex flex-col z-50 relative shadow-2xl"
     >
       <!-- Brand bar -->
       <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-zinc-800 pb-3">
