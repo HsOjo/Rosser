@@ -264,7 +264,7 @@ const conn = useConnectionStore();
 const { motionEnabled } = useMotionSafe();
 
 const article = ref<ArticleOut | null>(null);
-const loading = ref(false);
+const loading = ref(true);
 const headings = ref<OutlineItem[]>([]);
 const showOutline = ref(true);
 const showMeta = ref(false);
@@ -315,7 +315,10 @@ const displayDate = computed(() => {
 });
 
 async function load() {
-  if (!articleId.value) return;
+  if (!articleId.value) {
+    loading.value = false;
+    return;
+  }
   loading.value = true;
   try {
     const data = await artStore.fetchOne(articleId.value);
