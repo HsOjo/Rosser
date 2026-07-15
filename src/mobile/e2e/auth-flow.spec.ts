@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const API_URL = process.env.ROSSER_API_URL || "http://127.0.0.1:8000";
+const API_URL = process.env.ROSSER_API_URL || "http://localhost:18000";
 const TOKEN = process.env.ROSSER_TOKEN || "dev-token-change-me";
 
 async function clearStorage(page: import("@playwright/test").Page) {
@@ -75,6 +75,8 @@ async function seedSubscription(): Promise<{ categoryId: string; subscriptionId:
 }
 
 async function cleanupCategoryByTitle(title: string) {
+  // 只清理测试过程中创建的 e2e- 前缀资源，避免误删真实数据
+  if (!title.startsWith("e2e-")) return;
   const res = await fetch(`${API_URL}/api/categories`, {
     headers: { Authorization: `Bearer ${TOKEN}` },
   });
@@ -89,6 +91,8 @@ async function cleanupCategoryByTitle(title: string) {
 }
 
 async function cleanupTagByTitle(title: string) {
+  // 只清理测试过程中创建的 e2e- 前缀资源，避免误删真实数据
+  if (!title.startsWith("e2e-")) return;
   const res = await fetch(`${API_URL}/api/tags`, {
     headers: { Authorization: `Bearer ${TOKEN}` },
   });
