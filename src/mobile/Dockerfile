@@ -9,17 +9,22 @@ WORKDIR /app
 # Copy workspace root configuration
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-# Copy all workspace packages (required for pnpm lockfile validation).
-# mobile doesn't depend on frontend, but the lockfile was generated with the full workspace.
-COPY src/shared ./src/shared
-COPY src/frontend ./src/frontend
-COPY src/mobile ./src/mobile
+# Copy package manifests only for the packages involved in this build.
+# This layer is cached unless package.json or the lockfile changes.
+COPY src/shared/package.json ./src/shared/package.json
+COPY src/mobile/package.json ./src/mobile/package.json
 
 # Remove unrelated workspace packages from this build's scope.
 RUN sed -i '/- "src\/frontend"/d' pnpm-workspace.yaml
 
-# Install only mobile and its dependencies
+# Install only mobile and its dependencies.
+# Because source files are not yet copied, dependency install is cached across
+# source-only changes.
 RUN pnpm --filter @rosser/mobile... install --frozen-lockfile
+
+# Copy source files after dependencies are installed to maximize cache hits.
+COPY src/shared ./src/shared
+COPY src/mobile ./src/mobile
 
 # Build shared package first
 RUN pnpm --filter @rosser/shared build
