@@ -46,7 +46,10 @@ const transitionName = ref("page-slide-forward");
 router.beforeEach((to, from) => {
   const toDepth = typeof to.meta.depth === "number" ? to.meta.depth : 0;
   const fromDepth = typeof from.meta.depth === "number" ? from.meta.depth : 0;
-  transitionName.value = toDepth < fromDepth ? "page-slide-backward" : "page-slide-forward";
+  // 移动端回退（特别是 iOS 右滑返回）系统已经自带手势转场，
+  // 自定义转场会让“上一页”再播放一次，并在 keep-alive 缓存后容易暂停在半路上，
+  // 因此回退时禁用应用内转场，前进时保留。
+  transitionName.value = toDepth < fromDepth ? "page-none" : "page-slide-forward";
 });
 
 onMounted(() => {

@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onDeactivated } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMotion } from "@vueuse/motion";
 import { StarOutline, EyeOffOutline } from "@vicons/ionicons5";
@@ -136,12 +136,18 @@ const { motionEnabled } = useMotionSafe();
 const cellRef = ref<HTMLDivElement | null>(null);
 const feedIcon = ref("");
 
-useMotion(
+const motion = useMotion(
   cellRef,
   computed(() =>
     presets.slideUp({ enabled: motionEnabled.value, delay: props.index * 0.02 })
   )
 );
+
+// Home 被 keep-alive 缓存，切走时若 cell 动效还没播完会被暂停在中间，
+// 切回来后就会残留“卡动画”。deactivate 时直接落到最终态。
+onDeactivated(() => {
+  motion?.set("enter");
+});
 
 const feed = computed(() =>
   subStore.subscriptions.find((s) => s.id === props.art.subscription_id)

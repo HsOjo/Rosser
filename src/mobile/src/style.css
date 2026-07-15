@@ -201,6 +201,14 @@ body {
   opacity: 0;
 }
 
+/* Back navigation: disable the custom transition so the previous page is shown
+   immediately. This avoids duplicating the iOS swipe-back gesture and prevents
+   the cached page from being left mid-animation when the user navigates away. */
+.page-none-enter-active,
+.page-none-leave-active {
+  transition: none;
+}
+
 /* Drawer transition */
 .drawer-enter-active,
 .drawer-leave-active {
