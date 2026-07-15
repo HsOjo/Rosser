@@ -70,6 +70,7 @@
   "next": "下一步",
   "markAllReadConfirm": "确定要将所有文章标记为已读吗？",
   "deleteConfirm": "确定要删除吗？此操作不可撤销。",
+  "fetchAllConfirm": "立即抓取全部订阅吗？这可能会消耗较多流量。",
   "fetchAll": "抓取全部",
   "orderBy": "排序",
   "outline": "文档大纲",

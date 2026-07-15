@@ -15,7 +15,7 @@
 
       <button
         class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400"
-        @click="fetchAll"
+        @click="openFetchAllConfirm"
       >
         <component
           :is="RefreshOutline"
@@ -147,7 +147,7 @@
                   </button>
                   <button
                     class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-                    @click="deleteSubscription(sub.id)"
+                    @click="openDeleteSubscriptionConfirm(sub.id)"
                   >
                     <component :is="TrashOutline" class="w-3.5 h-3.5" />
                   </button>
@@ -206,7 +206,7 @@
                   </button>
                   <button
                     class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-                    @click="deleteSubscription(sub.id)"
+                    @click="openDeleteSubscriptionConfirm(sub.id)"
                   >
                     <component :is="TrashOutline" class="w-3.5 h-3.5" />
                   </button>
@@ -251,7 +251,7 @@
             </button>
             <button
               class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-              @click="deleteCategory(cat.id)"
+              @click="openDeleteCategoryConfirm(cat.id)"
             >
               <component :is="TrashOutline" class="w-3.5 h-3.5" />
             </button>
@@ -383,6 +383,22 @@
         </div>
       </div>
     </div>
+    <!-- Confirm dialog -->
+    <ConfirmDialog
+      v-model:visible="showConfirm"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      @confirm="onConfirmAction"
+      @cancel="pendingDeleteId = null"
+    >
+      <template #icon>
+        <component
+          :is="confirmIcon"
+          class="w-5 h-5 shrink-0"
+          :class="confirmIconClass"
+        />
+      </template>
+    </ConfirmDialog>
   </div>
 </template>
 
@@ -404,6 +420,7 @@ import {
   useSiteStore,
 } from "@/stores";
 import { useConnectionStore } from "@/stores/connection";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import type { components } from "@rosser/shared/api";
 
 const { t } = useI18n();
@@ -428,6 +445,52 @@ const refreshingSiteId = ref<string | null>(null);
 const newCategoryName = ref("");
 
 const editingSub = ref<components["schemas"]["SubscriptionOut"] | null>(null);
+
+const showConfirm = ref(false);
+const confirmType = ref<"deleteSubscription" | "deleteCategory" | "fetchAll">(
+  "fetchAll"
+);
+const pendingDeleteId = ref<string | null>(null);
+
+const confirmTitle = computed(() => {
+  switch (confirmType.value) {
+    case "deleteSubscription":
+    case "deleteCategory":
+      return t("delete");
+    case "fetchAll":
+      return t("fetchAll");
+  }
+});
+
+const confirmMessage = computed(() => {
+  switch (confirmType.value) {
+    case "deleteSubscription":
+    case "deleteCategory":
+      return t("deleteConfirm");
+    case "fetchAll":
+      return t("fetchAllConfirm");
+  }
+});
+
+const confirmIcon = computed(() => {
+  switch (confirmType.value) {
+    case "deleteSubscription":
+    case "deleteCategory":
+      return TrashOutline;
+    case "fetchAll":
+      return RefreshOutline;
+  }
+});
+
+const confirmIconClass = computed(() => {
+  switch (confirmType.value) {
+    case "deleteSubscription":
+    case "deleteCategory":
+      return "text-red-500";
+    case "fetchAll":
+      return "text-brand";
+  }
+});
 
 const subscriptionsByCategory = (catId: string) =>
   subStore.subscriptions.filter((s) => s.category_id === catId);
@@ -520,7 +583,7 @@ async function fetchOne(id: string) {
   }
 }
 
-async function fetchAll() {
+async function doFetchAll() {
   fetchingAll.value = true;
   try {
     await subStore.fetchAllNow();
@@ -544,7 +607,6 @@ async function saveSubscription() {
 }
 
 async function deleteSubscription(id: string) {
-  if (!confirm(t("deleteConfirm"))) return;
   await subStore.remove(id);
 }
 
@@ -563,8 +625,43 @@ function editCategory(cat: components["schemas"]["CategoryOut"]) {
 }
 
 async function deleteCategory(id: string) {
-  if (!confirm(t("deleteConfirm"))) return;
   await catStore.remove(id);
+}
+
+function openDeleteSubscriptionConfirm(id: string) {
+  pendingDeleteId.value = id;
+  confirmType.value = "deleteSubscription";
+  showConfirm.value = true;
+}
+
+function openDeleteCategoryConfirm(id: string) {
+  pendingDeleteId.value = id;
+  confirmType.value = "deleteCategory";
+  showConfirm.value = true;
+}
+
+function openFetchAllConfirm() {
+  confirmType.value = "fetchAll";
+  showConfirm.value = true;
+}
+
+async function onConfirmAction() {
+  switch (confirmType.value) {
+    case "deleteSubscription":
+      if (pendingDeleteId.value) {
+        await deleteSubscription(pendingDeleteId.value);
+      }
+      break;
+    case "deleteCategory":
+      if (pendingDeleteId.value) {
+        await deleteCategory(pendingDeleteId.value);
+      }
+      break;
+    case "fetchAll":
+      await doFetchAll();
+      break;
+  }
+  pendingDeleteId.value = null;
 }
 
 async function refreshSiteFavicon(id: string) {

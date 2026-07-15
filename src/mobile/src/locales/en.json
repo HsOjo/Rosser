@@ -70,6 +70,7 @@
   "next": "Next",
   "markAllReadConfirm": "Mark all articles as read?",
   "deleteConfirm": "Are you sure? This cannot be undone.",
+  "fetchAllConfirm": "Fetch all subscriptions now? This may consume more traffic.",
   "fetchAll": "Fetch All",
   "orderBy": "Order",
   "outline": "Outline",
