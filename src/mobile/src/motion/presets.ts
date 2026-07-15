@@ -22,7 +22,7 @@ export function fadeIn({ enabled, delay = 0 }: PresetOptions): MotionVariants<"e
     initial: { opacity: enabled ? 0 : 1 },
     enter: {
       opacity: 1,
-      transition: transition(enabled, 0.12, delay),
+      transition: transition(enabled, 0.2, delay),
     },
   };
 }
@@ -33,7 +33,7 @@ export function slideUp({ enabled, delay = 0 }: PresetOptions): MotionVariants<"
     enter: {
       opacity: 1,
       y: 0,
-      transition: transition(enabled, 0.12, delay, [0.16, 1, 0.3, 1]),
+      transition: transition(enabled, 0.2, delay, [0.16, 1, 0.3, 1]),
     },
   };
 }
@@ -44,12 +44,12 @@ export function scaleIn({ enabled }: PresetOptions): MotionVariants<"enter" | "l
     enter: {
       opacity: 1,
       scale: 1,
-      transition: transition(enabled, 0.1, 0, "easeOut"),
+      transition: transition(enabled, 0.2, 0, "easeOut"),
     },
     leave: {
       opacity: 0,
       scale: 0.98,
-      transition: transition(enabled, 0.1),
+      transition: transition(enabled, 0.2),
     },
   };
 }
@@ -59,11 +59,11 @@ export function drawerSlide({ enabled }: PresetOptions): MotionVariants<"enter" 
     initial: { x: enabled ? "-100%" : 0 },
     enter: {
       x: 0,
-      transition: transition(enabled, 0.12, 0, [0.16, 1, 0.3, 1]),
+      transition: transition(enabled, 0.2, 0, [0.16, 1, 0.3, 1]),
     },
     leave: {
       x: enabled ? "-100%" : 0,
-      transition: transition(enabled, 0.1),
+      transition: transition(enabled, 0.2),
     },
   };
 }
@@ -74,12 +74,12 @@ export function pageSlide({ enabled }: PresetOptions): MotionVariants<"enter" | 
     enter: {
       x: 0,
       opacity: 1,
-      transition: transition(enabled, 0.12, 0, [0.16, 1, 0.3, 1]),
+      transition: transition(enabled, 0.2, 0, [0.16, 1, 0.3, 1]),
     },
     leave: {
       x: enabled ? "-20%" : 0,
       opacity: enabled ? 0 : 1,
-      transition: transition(enabled, 0.1),
+      transition: transition(enabled, 0.2),
     },
   };
 }

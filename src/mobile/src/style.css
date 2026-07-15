@@ -140,11 +140,11 @@ body {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.12s ease-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
 }
 
 .animate-slideDown {
-  animation: slideDown 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Accessibility: disable non-essential animations when requested */
@@ -171,7 +171,7 @@ body {
 .page-slide-forward-leave-active,
 .page-slide-backward-enter-active,
 .page-slide-backward-leave-active {
-  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
 /* Forward: push - new page enters from right, old page leaves to left */
@@ -212,12 +212,12 @@ body {
 /* Drawer transition */
 .drawer-enter-active,
 .drawer-leave-active {
-  transition: opacity 0.12s ease;
+  transition: opacity 0.2s ease;
 }
 
 .drawer-enter-active .drawer-panel,
 .drawer-leave-active .drawer-panel {
-  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .drawer-enter-from,
@@ -233,12 +233,12 @@ body {
 /* Modal / dialog transition */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.12s ease;
+  transition: opacity 0.2s ease;
 }
 
 .modal-enter-active .modal-panel,
 .modal-leave-active .modal-panel {
-  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
 .modal-enter-from,
@@ -255,7 +255,7 @@ body {
 /* Generic fade transition */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.12s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
@@ -266,7 +266,7 @@ body {
 /* Dropdown menu transition */
 .menu-enter-active,
 .menu-leave-active {
-  transition: opacity 0.1s ease, transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-enter-from,
