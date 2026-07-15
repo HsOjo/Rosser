@@ -96,7 +96,7 @@
     </div>
 
     <!-- Bottom actions -->
-    <div class="p-4 border-t border-slate-100 dark:border-zinc-800 safe-bottom"
+    <div class="p-4 border-t border-slate-100 dark:border-zinc-800"
     >
       <div class="flex gap-3">
         <button
