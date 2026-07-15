@@ -1,6 +1,10 @@
 <template>
   <div class="h-full w-full flex flex-col bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <keep-alive include="Home">
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
 
     <!-- Global backend initializing overlay -->
     <div

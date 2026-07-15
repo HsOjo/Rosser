@@ -150,7 +150,7 @@
     </div>
 
     <!-- Article list -->
-    <div ref="listRef" class="flex-1 overflow-y-auto px-4 relative">
+    <div ref="listRef" class="flex-1 overflow-y-auto px-4 relative" @scroll="saveScrollTop">
       <div v-if="artStore.loading && artStore.articles.length === 0" class="py-12 text-center">
         <div
           class="w-8 h-8 border-2 border-slate-200 dark:border-zinc-700 border-t-brand rounded-full animate-spin mx-auto"
@@ -218,8 +218,10 @@ import {
   watch,
   onMounted,
   onUnmounted,
+  onActivated,
+  onDeactivated,
 } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
   MenuOutline,
@@ -255,6 +257,8 @@ import NavDrawer, { type FilterType } from "@/components/NavDrawer.vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { api, buildFileUrl } from "@rosser/shared";
 
+defineOptions({ name: "Home" });
+
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
@@ -274,6 +278,20 @@ const searchQuery = ref("");
 const sentinelRef = ref<HTMLDivElement | null>(null);
 const listRef = ref<HTMLDivElement | null>(null);
 const menuRef = ref<HTMLDivElement | null>(null);
+const savedScrollTop = ref(0);
+
+function saveScrollTop() {
+  savedScrollTop.value = listRef.value?.scrollTop || 0;
+}
+
+function restoreScrollTop() {
+  requestAnimationFrame(() => {
+    if (listRef.value) {
+      listRef.value.scrollTop = savedScrollTop.value;
+    }
+  });
+}
+
 const loadMoreObserver = ref<IntersectionObserver | null>(null);
 type SortOrder = NonNullable<ArticleListQuery["order"]>;
 
@@ -629,6 +647,22 @@ onMounted(async () => {
     );
     loadMoreObserver.value.observe(sentinelRef.value);
   }
+});
+
+onBeforeRouteLeave(() => {
+  saveScrollTop();
+});
+
+onActivated(() => {
+  restoreScrollTop();
+  if (showMenu.value) {
+    window.removeEventListener("mousedown", closeMenu);
+    window.addEventListener("mousedown", closeMenu);
+  }
+});
+
+onDeactivated(() => {
+  window.removeEventListener("mousedown", closeMenu);
 });
 
 onUnmounted(() => {
