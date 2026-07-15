@@ -714,6 +714,7 @@ async def list_tasks(token: str = Depends(get_current_token)):
 @router.post("/opml/import")
 async def import_opml(file: bytes, token: str = Depends(get_current_token)):
     entries = OPMLService.parse(file)
+    new_sub_ids: list[str] = []
     async with async_session() as session:
         for entry in entries:
             existing = await session.execute(
@@ -741,8 +742,12 @@ async def import_opml(file: bytes, token: str = Depends(get_current_token)):
             )
             session.add(sub)
             await session.flush()
-            await FetchService.fetch_subscription(sub.id)
+            new_sub_ids.append(sub.id)
         await session.commit()
+
+    for sub_id in new_sub_ids:
+        asyncio.create_task(FetchService.fetch_subscription(sub_id))
+
     return {"imported": len(entries)}
 
 
