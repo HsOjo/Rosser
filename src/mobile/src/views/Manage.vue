@@ -245,7 +245,7 @@
           <div class="flex items-center gap-1">
             <button
               class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400"
-              @click="editCategory(cat)"
+              @click="openEditCategoryDialog(cat)"
             >
               <component :is="PencilOutline" class="w-3.5 h-3.5" />
             </button>
@@ -399,6 +399,15 @@
         />
       </template>
     </ConfirmDialog>
+    <!-- Input dialog -->
+    <InputDialog
+      v-model:visible="showInputDialog"
+      v-model:modelValue="inputDialogValue"
+      :title="inputDialogTitle"
+      :placeholder="t('title')"
+      @confirm="saveCategoryFromDialog"
+      @cancel="resetInputDialog"
+    />
   </div>
 </template>
 
@@ -421,6 +430,7 @@ import {
 } from "@/stores";
 import { useConnectionStore } from "@/stores/connection";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import InputDialog from "@/components/InputDialog.vue";
 import type { components } from "@rosser/shared/api";
 
 const { t } = useI18n();
@@ -491,6 +501,11 @@ const confirmIconClass = computed(() => {
       return "text-brand";
   }
 });
+
+const showInputDialog = ref(false);
+const inputDialogTitle = ref("");
+const inputDialogValue = ref("");
+const editingCategoryId = ref<string | null>(null);
 
 const subscriptionsByCategory = (catId: string) =>
   subStore.subscriptions.filter((s) => s.category_id === catId);
@@ -617,11 +632,25 @@ async function addCategory() {
   newCategoryName.value = "";
 }
 
-function editCategory(cat: components["schemas"]["CategoryOut"]) {
-  const name = prompt(t("editCategory"), cat.title);
-  if (name && name.trim()) {
-    catStore.update(cat.id, { title: name.trim() });
+function openEditCategoryDialog(cat: components["schemas"]["CategoryOut"]) {
+  editingCategoryId.value = cat.id;
+  inputDialogTitle.value = t("editCategory");
+  inputDialogValue.value = cat.title;
+  showInputDialog.value = true;
+}
+
+async function saveCategoryFromDialog() {
+  const name = inputDialogValue.value.trim();
+  if (name && editingCategoryId.value) {
+    await catStore.update(editingCategoryId.value, { title: name });
   }
+  resetInputDialog();
+}
+
+function resetInputDialog() {
+  showInputDialog.value = false;
+  inputDialogValue.value = "";
+  editingCategoryId.value = null;
 }
 
 async function deleteCategory(id: string) {
