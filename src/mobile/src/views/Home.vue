@@ -178,11 +178,31 @@
           />
         </SwipeCell>
 
-        <div ref="sentinelRef" class="py-4 flex items-center justify-center">
+        <div ref="sentinelRef" class="py-4 flex items-center justify-center min-h-[48px]">
           <div
-            v-if="loadingMore"
-            class="w-5 h-5 border-2 border-slate-200 dark:border-zinc-700 border-t-brand rounded-full animate-spin"
-          />
+            v-if="artStore.loading && artStore.articles.length > 0"
+            class="flex items-center gap-2 text-xs text-slate-400 dark:text-zinc-500"
+          >
+            <div
+              class="w-5 h-5 border-2 border-slate-200 dark:border-zinc-700 border-t-brand rounded-full animate-spin"
+            />
+            <span>{{ t("loading") }}</span>
+          </div>
+
+          <button
+            v-else-if="artStore.loadMoreError"
+            class="text-xs text-brand font-medium px-3 py-1.5 rounded-lg hover:bg-brand/5 transition-colors"
+            @click="retryLoadMore"
+          >
+            {{ t("loadMoreFailed") }}
+          </button>
+
+          <span
+            v-else-if="!hasMore && artStore.articles.length > 0"
+            class="text-xs text-slate-400 dark:text-zinc-500"
+          >
+            {{ t("noMore") }}
+          </span>
         </div>
       </div>
     </div>
@@ -297,7 +317,6 @@ type SortOrder = NonNullable<ArticleListQuery["order"]>;
 
 const order = ref<SortOrder>("publish_time desc");
 const pageSize = ref(20);
-const loadingMore = ref(false);
 
 const filter = ref<{ type: FilterType; id: string | null }>({ type: "unread", id: null });
 
@@ -441,7 +460,7 @@ const hasUnread = computed(() =>
 );
 
 const hasMore = computed(() => {
-  if (artStore.loading) return false;
+  if (artStore.loading || artStore.loadMoreError) return false;
   return artStore.articles.length < artStore.total;
 });
 
@@ -451,12 +470,11 @@ async function loadArticles() {
 }
 
 async function loadMore() {
-  loadingMore.value = true;
-  try {
-    await artStore.loadMore();
-  } finally {
-    loadingMore.value = false;
-  }
+  await artStore.loadMore();
+}
+
+async function retryLoadMore() {
+  await artStore.retryLoadMore();
 }
 
 async function refreshAll() {
@@ -637,7 +655,8 @@ onMounted(async () => {
         if (
           entry.isIntersecting &&
           hasMore.value &&
-          !loadingMore.value &&
+          !artStore.loading &&
+          !artStore.loadMoreError &&
           listRef.value!.scrollHeight > listRef.value!.clientHeight
         ) {
           loadMore();

@@ -20,6 +20,8 @@
   "notifications": "Notifications",
   "noData": "No data",
   "loading": "Loading...",
+  "noMore": "No more data",
+  "loadMoreFailed": "Load failed, tap to retry",
   "connect": "Connect",
   "baseURL": "Server URL",
   "token": "Access Token",

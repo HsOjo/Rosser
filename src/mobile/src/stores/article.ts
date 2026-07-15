@@ -14,6 +14,7 @@ export const useArticleStore = defineStore("article", () => {
   const page = ref(1);
   const size = ref(20);
   const lastParams = ref<ArticleListQuery>({});
+  const loadMoreError = ref(false);
 
   async function fetchList(params: ArticleListQuery = {}, append = false) {
     if (!append) page.value = 1;
@@ -43,8 +44,19 @@ export const useArticleStore = defineStore("article", () => {
   }
 
   async function loadMore() {
+    if (loadMoreError.value) loadMoreError.value = false;
     page.value += 1;
-    await fetchList(lastParams.value, true);
+    try {
+      await fetchList(lastParams.value, true);
+    } catch {
+      loadMoreError.value = true;
+      page.value -= 1;
+    }
+  }
+
+  async function retryLoadMore() {
+    if (!loadMoreError.value) return;
+    await loadMore();
   }
 
   async function markRead(ids: string[]) {
@@ -107,6 +119,7 @@ export const useArticleStore = defineStore("article", () => {
     articles.value = [];
     total.value = 0;
     loading.value = false;
+    loadMoreError.value = false;
     page.value = 1;
     size.value = 20;
     lastParams.value = {};
@@ -116,12 +129,14 @@ export const useArticleStore = defineStore("article", () => {
     articles,
     total,
     loading,
+    loadMoreError,
     page,
     size,
     lastParams,
     fetchList,
     refresh,
     loadMore,
+    retryLoadMore,
     markRead,
     markUnread,
     markHide,

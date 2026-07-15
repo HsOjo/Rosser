@@ -20,6 +20,8 @@
   "notifications": "通知",
   "noData": "暂无数据",
   "loading": "加载中...",
+  "noMore": "没有更多了",
+  "loadMoreFailed": "加载失败，点击重试",
   "connect": "连接",
   "baseURL": "服务器地址",
   "token": "访问令牌",
