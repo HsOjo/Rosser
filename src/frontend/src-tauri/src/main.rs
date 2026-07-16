@@ -90,7 +90,7 @@ async fn start_builtin_backend(
 
     let backend_path = app
         .path()
-        .resolve("backend/backend", tauri::path::BaseDirectory::Resource)
+        .resolve("backend/rosser-backend", tauri::path::BaseDirectory::Resource)
         .map_err(|e| e.to_string())?;
     let backend_path = if cfg!(windows) {
         backend_path.with_extension("exe")

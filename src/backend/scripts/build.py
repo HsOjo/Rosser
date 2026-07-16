@@ -30,7 +30,16 @@ def get_target_triple() -> str:
     raise RuntimeError(f"Unsupported platform: {system} {machine}")
 
 
-def write_spec(backend_dir: Path, spec_path: Path) -> None:
+def get_icon_path(frontend_dir: Path) -> Path:
+    """Return the platform-specific icon path from the Tauri assets."""
+    icons_dir = frontend_dir / "src-tauri" / "icons"
+    system = platform.system().lower()
+    if system == "darwin":
+        return icons_dir / "icon.icns"
+    return icons_dir / "icon.ico"
+
+
+def write_spec(backend_dir: Path, spec_path: Path, icon_path: Path) -> None:
     """Generate a PyInstaller spec file for onedir bundling."""
     entry = backend_dir / "app" / "main.py"
     spec_path.parent.mkdir(parents=True, exist_ok=True)
@@ -82,7 +91,8 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="backend",
+    name="rosser-backend",
+    icon={icon_path.as_posix()!r},
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -111,15 +121,21 @@ coll = COLLECT(
 def main() -> None:
     backend_dir = Path(__file__).resolve().parent.parent
     project_root = backend_dir.parent.parent
-    binaries_dir = project_root / "src" / "frontend" / "src-tauri" / "binaries"
+    frontend_dir = project_root / "src" / "frontend"
+    binaries_dir = frontend_dir / "src-tauri" / "binaries"
     spec_path = backend_dir / "scripts" / "backend-sidecar.spec"
     pyinstaller_out = binaries_dir / "backend"
     backend_dist = binaries_dir / "backend-dist"
+    icon_path = get_icon_path(frontend_dir)
     target_triple = get_target_triple()
 
     print(f"Target triple: {target_triple}")
     print(f"Backend entry: {backend_dir / 'app' / 'main.py'}")
     print(f"Output dir: {backend_dist}")
+    print(f"Icon: {icon_path}")
+
+    if not icon_path.exists():
+        raise FileNotFoundError(f"Backend icon not found: {icon_path}")
 
     # Clean previous build artifacts.
     if pyinstaller_out.exists():
@@ -134,7 +150,7 @@ def main() -> None:
     binaries_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate the PyInstaller spec.
-    write_spec(backend_dir, spec_path)
+    write_spec(backend_dir, spec_path, icon_path)
 
     # Run PyInstaller in onedir mode.
     cmd = [
