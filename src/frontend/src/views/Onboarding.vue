@@ -74,6 +74,7 @@ import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
 import { invoke } from "@tauri-apps/api/core";
 import { useConnectionStore, BUILTIN_TOKEN } from "@/stores";
+import { pollUntil } from "@/stores";
 import { detectTauri, getPlatformConfig, getUISettings, saveUISettings, hasUISettings } from "@/platform";
 import { getDefaultServerURL } from "@rosser/shared";
 
@@ -146,6 +147,16 @@ async function handleConnect() {
         const cfg = await invoke<{ port: number; token: string }>("start_builtin_backend");
         port = cfg.port;
         token = cfg.token;
+        // Wait for the bundled backend to become ready before the health check.
+        try {
+          await pollUntil(
+            () => invoke<boolean>("is_backend_ready"),
+            (ready) => ready,
+            { interval: 500, timeout: 30000 }
+          );
+        } catch {
+          throw new Error("等待内建后端启动超时");
+        }
       }
       await conn.connect(`http://127.0.0.1:${port}`, token, true);
     } else {

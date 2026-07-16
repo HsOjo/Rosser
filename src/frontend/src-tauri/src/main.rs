@@ -132,7 +132,7 @@ async fn start_builtin_backend(
         .env("ROSSER_STORAGE_DIR", &storage_dir)
         .env(
             "ROSSER_CORS_ORIGINS",
-            "https://tauri.localhost,tauri://localhost,http://localhost:1420,http://127.0.0.1:1420,http://localhost:5173,http://127.0.0.1:5173",
+            "http://tauri.localhost,tauri://localhost,https://tauri.localhost,http://localhost:1420,http://127.0.0.1:1420,http://localhost:5173,http://127.0.0.1:5173",
         );
     #[cfg(windows)]
     {

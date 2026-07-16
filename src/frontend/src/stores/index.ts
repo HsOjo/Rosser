@@ -30,7 +30,7 @@ interface BuiltinBackendConfig {
 // Fallback token used in dev mode where the backend is not bundled.
 export const BUILTIN_TOKEN = "dev-token-change-me";
 
-async function pollUntil<T>(
+export async function pollUntil<T>(
   fn: () => Promise<T>,
   predicate: (result: T) => boolean,
   options: { interval: number; timeout: number }
