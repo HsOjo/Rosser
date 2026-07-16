@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import os
-import platform
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -23,53 +22,12 @@ from app.core.database import (
     engine,
 )
 from app.core.http import load_proxy_from_db
+from app.core.process import monitor_parent
 from app.core.security import get_current_token
 from app.models import Base
 from app.services.fetch import FetchService
 
 scheduler = AsyncIOScheduler()
-
-
-def is_process_alive(pid: int) -> bool:
-    """Check whether a process with the given PID is still running."""
-    if platform.system() == "Windows":
-        import ctypes
-        from ctypes import wintypes
-
-        kernel32 = ctypes.windll.kernel32
-        SYNCHRONIZE = 0x00100000
-        PROCESS_QUERY_INFORMATION = 0x00000400
-        STILL_ACTIVE = 259
-
-        handle = kernel32.OpenProcess(
-            SYNCHRONIZE | PROCESS_QUERY_INFORMATION, False, pid
-        )
-        if not handle:
-            return False
-        try:
-            exit_code = wintypes.DWORD()
-            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
-                return False
-            return exit_code.value == STILL_ACTIVE
-        finally:
-            kernel32.CloseHandle(handle)
-    else:
-        try:
-            os.kill(pid, 0)
-            return True
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-            return True
-
-
-async def monitor_parent(parent_pid: int):
-    """Exit the process if the parent process dies."""
-    while True:
-        await asyncio.sleep(5)
-        if not is_process_alive(parent_pid):
-            print(f"Parent process {parent_pid} died, exiting")
-            os._exit(1)
 
 
 async def auto_refresh_job():

@@ -19,12 +19,6 @@ use i18n::I18n;
 /// Wraps a child process so it is killed when the wrapper is dropped.
 struct KillOnDrop(Child);
 
-impl KillOnDrop {
-    fn kill(&mut self) -> std::io::Result<()> {
-        self.0.kill()
-    }
-}
-
 impl Drop for KillOnDrop {
     fn drop(&mut self) {
         let _ = self.0.kill();
@@ -279,12 +273,15 @@ fn main() {
 
     app.run(|app_handle, event| {
         match event {
-            tauri::RunEvent::ExitRequested { .. } => {
+            // Handle both ExitRequested and Exit. On Windows, the default File -> Exit menu
+            // uses PostQuitMessage, which triggers Exit rather than ExitRequested.
+            tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => {
                 let state = app_handle.state::<BackendHandle>();
                 state.quitting.store(true, Ordering::Relaxed);
                 let child_opt = state.child.lock().unwrap().take();
-                if let Some(mut child) = child_opt {
-                    let _ = child.kill();
+                if let Some(child) = child_opt {
+                    // Dropping KillOnDrop sends kill() and waits for the process to exit.
+                    drop(child);
                 }
             }
             #[cfg(target_os = "macos")]
