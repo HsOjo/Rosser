@@ -2,8 +2,16 @@ import asyncio
 import json
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 from typing import Any
+
+# PyInstaller with console=False on Windows sets sys.stdout/stderr to None;
+# uvicorn's DefaultFormatter calls sys.stdout.isatty() and crashes without this.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
