@@ -124,6 +124,7 @@ async fn start_builtin_backend(
     std::fs::create_dir_all(&storage_dir).map_err(|e| e.to_string())?;
 
     let parent_pid = std::process::id();
+    let backend_base_url = format!("http://127.0.0.1:{}", port);
     let mut cmd = Command::new(&backend_path);
     cmd.env("ROSSER_PORT", port.to_string())
         .env("ROSSER_PARENT_PID", parent_pid.to_string())
@@ -132,7 +133,7 @@ async fn start_builtin_backend(
         .env("ROSSER_STORAGE_DIR", &storage_dir)
         .env(
             "ROSSER_CORS_ORIGINS",
-            "http://tauri.localhost,tauri://localhost,https://tauri.localhost,http://localhost:1420,http://127.0.0.1:1420,http://localhost:5173,http://127.0.0.1:5173",
+            format!("tauri://localhost,http://tauri.localhost,{}", backend_base_url),
         );
     #[cfg(windows)]
     {

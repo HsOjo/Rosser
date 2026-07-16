@@ -152,7 +152,7 @@ async function handleConnect() {
           await pollUntil(
             () => invoke<boolean>("is_backend_ready"),
             (ready) => ready,
-            { interval: 500, timeout: 30000 }
+            { interval: 500, timeout: 60000 }
           );
         } catch {
           throw new Error("等待内建后端启动超时");
