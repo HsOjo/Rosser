@@ -1,4 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+process.env.ROSSER_VERSION = readFileSync(resolve(__dirname, "../../VERSION"), "utf-8").trim();
 
 export default defineConfig({
   testDir: "./e2e",

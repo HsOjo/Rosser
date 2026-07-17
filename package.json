@@ -1,8 +1,9 @@
 {
   "name": "rosser",
   "private": true,
-  "version": "0.2.0",
   "scripts": {
+    "sync:version": "python3 scripts/sync_version.py",
+    "check:version": "python3 scripts/sync_version.py --check",
     "gen:api": "pnpm --filter @rosser/shared gen:api",
     "dev:backend": "cd src/backend && cross-env ROSSER_RELOAD=1 uv run python -m app.main",
     "dev:frontend": "pnpm --filter @rosser/frontend dev",

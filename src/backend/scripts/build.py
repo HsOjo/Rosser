@@ -43,6 +43,8 @@ def write_spec(backend_dir: Path, spec_path: Path, icon_path: Path) -> None:
     """Generate a PyInstaller spec file for onedir bundling."""
     entry = backend_dir / "app" / "main.py"
     spec_path.parent.mkdir(parents=True, exist_ok=True)
+    version_file = backend_dir.parent.parent / "VERSION"
+    datas = [(str(version_file), ".")]
 
     spec = f'''# -*- mode: python ; coding: utf-8 -*-
 
@@ -50,7 +52,7 @@ a = Analysis(
     [{entry.as_posix()!r}],
     pathex=[{backend_dir.as_posix()!r}],
     binaries=[],
-    datas=[],
+    datas={datas!r},
     hiddenimports=[
         "uvicorn",
         "uvicorn.logging",

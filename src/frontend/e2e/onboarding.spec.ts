@@ -21,7 +21,7 @@ test.describe("Onboarding", () => {
 
   test("connects with remote mode", async ({ page }) => {
     await page.route("**/api/health", async (route) => {
-      await route.fulfill({ json: { status: "ok", version: "0.2.0" } });
+      await route.fulfill({ json: { status: "ok", version: process.env.ROSSER_VERSION! } });
     });
     await page.route("**/api/auth/validate", async (route) => {
       await route.fulfill({ json: { valid: true } });

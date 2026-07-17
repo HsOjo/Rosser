@@ -416,7 +416,7 @@ const editingTag = ref<Partial<TagOut> | null>(null);
 const tagToDelete = ref<string | null>(null);
 const showDeleteTagConfirm = ref(false);
 const checkingUpdate = ref(false);
-const currentVersion = ref("0.2.0");
+const currentVersion = ref(__ROSSER_VERSION__);
 const updateResult = ref({
   show: false,
   title: "",

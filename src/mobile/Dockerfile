@@ -25,6 +25,7 @@ RUN pnpm --filter @rosser/mobile... install --frozen-lockfile
 # Copy source files after dependencies are installed to maximize cache hits.
 COPY src/shared ./src/shared
 COPY src/mobile ./src/mobile
+COPY VERSION ./
 
 # Build shared package first
 RUN pnpm --filter @rosser/shared build

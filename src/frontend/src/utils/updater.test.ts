@@ -10,7 +10,7 @@ vi.mock("@rosser/shared", () => ({
 function makeResponse(haveNew: boolean) {
   return {
     data: {
-      current: "0.2.0",
+      current: __ROSSER_VERSION__,
       latest: "v0.2.1",
       have_new: haveNew,
       name: "v0.2.1",

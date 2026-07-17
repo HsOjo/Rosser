@@ -1,6 +1,5 @@
 {
   "name": "@rosser/shared",
-  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -28,7 +27,7 @@
     }
   },
   "scripts": {
-    "gen:api": "npx openapi-typescript ../../src/backend/openapi.json -o ./src/api/types.ts",
+    "gen:api": "uv run --directory ../../src/backend python scripts/export_openapi.py && npx openapi-typescript ../../src/backend/openapi.json -o ./src/api/types.ts",
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run"

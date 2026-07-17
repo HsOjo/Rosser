@@ -29,7 +29,6 @@
     }
   },
   "productName": "Rosser",
-  "version": "0.2.0",
   "identifier": "com.hsojo.rosser",
   "mainBinaryName": "Rosser",
   "plugins": {},

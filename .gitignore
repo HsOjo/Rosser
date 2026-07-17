@@ -105,6 +105,7 @@ src/frontend/src-tauri/binaries/
 # Backend / PyInstaller build artifacts
 src/backend/build/
 src/backend/scripts/backend-sidecar.spec
+src/backend/openapi.json
 
 # Mobile / PWA
 src/mobile/dist/

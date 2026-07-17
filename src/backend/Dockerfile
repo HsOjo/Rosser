@@ -15,6 +15,7 @@ RUN touch README.md && \
     uv sync --no-dev
 
 COPY app ./app
+COPY VERSION ./
 
 ENV ROSSER_HOST=0.0.0.0
 ENV ROSSER_PORT=8000

@@ -168,7 +168,7 @@ const editingTag = ref<any>(null);
 const editTagTitle = ref("");
 const editTagColor = ref("");
 const checkingUpdate = ref(false);
-const currentVersion = ref("0.2.0");
+const currentVersion = ref(__ROSSER_VERSION__);
 
 function randomColor() {
   return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;

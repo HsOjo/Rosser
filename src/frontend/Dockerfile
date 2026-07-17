@@ -25,6 +25,7 @@ RUN pnpm --filter @rosser/frontend... install --frozen-lockfile
 # Copy source files after dependencies are installed to maximize cache hits.
 COPY src/shared ./src/shared
 COPY src/frontend ./src/frontend
+COPY VERSION ./
 
 # Build shared package first
 RUN pnpm --filter @rosser/shared build
