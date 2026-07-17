@@ -10,7 +10,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, Wry};
+use tauri::menu::{Menu, MenuItem, MenuItemBuilder};
 use tauri_plugin_notification::NotificationExt;
 
 mod i18n;
@@ -33,6 +34,13 @@ struct BackendHandle {
     token: Mutex<String>,
     started: AtomicBool,
     quitting: AtomicBool,
+}
+
+/// Holds references to the tray menu items so their labels can be updated
+/// when the application locale changes.
+struct TrayMenu {
+    show: MenuItem<Wry>,
+    quit: MenuItem<Wry>,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -166,8 +174,14 @@ fn toggle_devtools(window: tauri::WebviewWindow) {
 }
 
 #[tauri::command]
-fn set_locale(locale: String, i18n: tauri::State<'_, I18n>) {
+fn set_locale(
+    locale: String,
+    i18n: tauri::State<'_, I18n>,
+    tray_menu: tauri::State<'_, TrayMenu>,
+) {
     i18n.set_locale(&locale);
+    let _ = tray_menu.show.set_text(i18n.t("tray_show_main_window"));
+    let _ = tray_menu.quit.set_text(i18n.t("tray_quit"));
 }
 
 /// Show and focus the main window. On macOS also ensures the app is visible in
@@ -223,13 +237,37 @@ fn main() {
                 let _ = app.notification().request_permission();
             }
 
-            // Build a tray icon without a menu. Left-click always shows and focuses the main window.
+            // Build a localized tray menu and tray icon. Left-click shows/focuses the window;
+            // right-click opens the menu.
+            let i18n = app.state::<I18n>();
+            let show_item =
+                MenuItemBuilder::with_id("tray-show", i18n.t("tray_show_main_window"))
+                    .build(app)?;
+            let quit_item = MenuItemBuilder::with_id("tray-quit", i18n.t("tray_quit")).build(app)?;
+            let tray_menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+            app.manage(TrayMenu {
+                show: show_item,
+                quit: quit_item,
+            });
+
             let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.png"))
                 .map_err(|e| e.to_string())?;
             let _ = tauri::tray::TrayIconBuilder::with_id("tray")
                 .icon(tray_icon)
                 .tooltip("Rosser")
+                .menu(&tray_menu)
                 .show_menu_on_left_click(false)
+                .on_menu_event(|app, event| {
+                    match event.id().as_ref() {
+                        "tray-show" => show_and_focus_main_window(app),
+                        "tray-quit" => {
+                            let state = app.state::<BackendHandle>();
+                            state.quitting.store(true, Ordering::Relaxed);
+                            app.exit(0);
+                        }
+                        _ => {}
+                    }
+                })
                 .on_tray_icon_event(|tray, event| {
                     if let tauri::tray::TrayIconEvent::Click {
                         button: tauri::tray::MouseButton::Left,

@@ -21,6 +21,8 @@ impl I18n {
             "notification_already_running",
             "Rosser 已在后台运行，点击托盘图标打开窗口",
         );
+        zh.insert("tray_show_main_window", "显示主窗口");
+        zh.insert("tray_quit", "退出");
 
         let mut en = HashMap::new();
         en.insert(
@@ -31,6 +33,8 @@ impl I18n {
             "notification_already_running",
             "Rosser is already running. Click the tray icon to open the window.",
         );
+        en.insert("tray_show_main_window", "Show Main Window");
+        en.insert("tray_quit", "Quit");
 
         translations.insert("zh-CN", zh);
         translations.insert("en", en);
