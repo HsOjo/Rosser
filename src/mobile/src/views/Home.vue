@@ -20,7 +20,7 @@
         </button>
         <button
           class="flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 px-1.5 py-1 rounded-lg transition-colors text-left min-w-0 flex-1"
-          @click="scrollToTop"
+          @click="scrollToTop()"
         >
           <img
             v-if="streamIconUrl"
@@ -338,9 +338,9 @@ function restoreScrollTop() {
   });
 }
 
-function scrollToTop() {
+function scrollToTop(behavior: ScrollBehavior = "smooth") {
   if (listRef.value) {
-    listRef.value.scrollTo({ top: 0, behavior: "smooth" });
+    listRef.value.scrollTo({ top: 0, behavior });
   }
 }
 
@@ -615,7 +615,9 @@ function swipeActions(art: (typeof artStore.articles)[0]) {
 }
 
 function onSelectFilter(type: FilterType, id: string | null) {
+  if (filter.value.type === type && filter.value.id === id) return;
   filter.value = { type, id };
+  scrollToTop();
 }
 
 function openQueryTools() {
@@ -698,12 +700,14 @@ watch(searchQuery, () => {
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     syncQuery();
+    scrollToTop("auto");
     loadArticles();
   }, 300);
 });
 
 watch([() => filter.value.type, () => filter.value.id, order, pageSize], () => {
   syncQuery();
+  scrollToTop("auto");
   loadArticles();
 });
 
