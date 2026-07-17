@@ -4,6 +4,16 @@ import { invoke } from "@tauri-apps/api/core";
 import { api, normalizeBaseURL, setBaseURL, setAuthToken, wsClient } from "@rosser/shared";
 import { getPlatformConfig, savePlatformConfig, isTauri } from "@/platform";
 
+function isValidJsonResponse(body: unknown): boolean {
+  if (typeof body !== "string") return false;
+  try {
+    JSON.parse(body);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 let wsHandlersRegistered = false;
 
 function registerWebSocketHandlers() {
@@ -107,24 +117,58 @@ export const useConnectionStore = defineStore("connection", () => {
     setAuthToken(t);
 
     // All connections must be reachable before we switch to the main page.
-    // Poll the health endpoint with retries for up to 10 seconds.
+    // Poll the health endpoint, but only retry for network-level failures.
+    // Any HTTP response (including non-2xx) means the server has responded and
+    // we should stop and report the actual status instead of retrying.
+    let healthResult: { error?: unknown; response?: Response; body?: string } | undefined;
     try {
-      await pollUntil(
+      healthResult = await pollUntil(
         async () => {
           try {
-            const { error } = await api.GET("/api/health");
-            return error;
+            // Use parseAs: "text" so a non-JSON response (e.g. HTML fallback from
+            // the dev server) does not throw a SyntaxError and is treated as a
+            // server-level response instead of a network error.
+            const result = await api.GET("/api/health", { parseAs: "text" } as any);
+            return { error: result.error, response: result.response, body: result.data as string };
           } catch (e) {
-            return e;
+            return { error: e, response: undefined, body: undefined };
           }
         },
-        (error) => !error,
+        (result) => result.response !== undefined,
         { interval: 1000, timeout: 10000 }
       );
     } catch {
       setBaseURL("");
       setAuthToken("");
       throw new Error(`无法连接到服务器: ${url}`);
+    }
+
+    if (
+      healthResult?.response?.status !== 200 ||
+      !isValidJsonResponse(healthResult.body)
+    ) {
+      setBaseURL("");
+      setAuthToken("");
+      throw new Error(`服务器返回错误: ${healthResult?.response?.status ?? "unknown"}`);
+    }
+
+    // Validate token; use text parsing for the same reason as health check.
+    const validateResult = await api.GET("/api/auth/validate", { parseAs: "text" } as any);
+    const validateStatus = (validateResult.response as Response | undefined)?.status;
+    if (validateStatus !== 200) {
+      setBaseURL("");
+      setAuthToken("");
+      if (validateStatus === 401) {
+        throw new Error("访问令牌无效");
+      }
+      throw new Error(
+        validateStatus ? `服务器返回错误: ${validateStatus}` : `无法连接到服务器: ${url}`
+      );
+    }
+    if (!isValidJsonResponse(validateResult.data)) {
+      setBaseURL("");
+      setAuthToken("");
+      throw new Error("服务器返回错误");
     }
 
     baseURL.value = normalized;

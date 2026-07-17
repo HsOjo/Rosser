@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 from app.api import router
 from app.core.config import settings
+from app.core import config
 from app.core.database import (
     async_session,
     cleanup_orphan_articles,
@@ -31,7 +32,8 @@ from app.core.database import (
 )
 from app.core.http import load_proxy_from_db
 from app.core.process import monitor_parent
-from app.core.security import get_current_token
+from app.core.security import get_current_token, verify_token
+from app.core.version import APP_VERSION
 from app.models import Base
 from app.services.fetch import FetchService
 
@@ -106,7 +108,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Rosser",
-    version="0.2.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -150,7 +152,7 @@ manager = ConnectionManager()
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     token = websocket.query_params.get("token")
-    if not token or token != settings.rosser_token:
+    if not token or not verify_token(token, config.settings.rosser_token):
         await websocket.close(code=1008)
         return
 

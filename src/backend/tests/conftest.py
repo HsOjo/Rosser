@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import Settings
 from app.core.database import create_engine
 
+from app.core.security import hash_token
+
 TEST_TOKEN = "test-token-123"
 
 
@@ -88,4 +90,4 @@ async def client():
 
 @pytest.fixture
 def auth_headers():
-    return {"Authorization": f"Bearer {TEST_TOKEN}"}
+    return {"Authorization": f"Bearer {hash_token(TEST_TOKEN)}"}

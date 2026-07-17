@@ -592,6 +592,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check For Update */
+        get: operations["check_for_update_api_update_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Validate Token */
+        get: operations["validate_token_api_auth_validate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -915,6 +949,32 @@ export interface components {
             result?: string | null;
             /** Error */
             error?: string | null;
+        };
+        /** TokenValidateOut */
+        TokenValidateOut: {
+            /** Valid */
+            valid: boolean;
+        };
+        /** UpdateCheckOut */
+        UpdateCheckOut: {
+            /** Current */
+            current: string;
+            /** Latest */
+            latest: string;
+            /** Have New */
+            have_new: boolean;
+            /** Name */
+            name: string;
+            /** Tag Name */
+            tag_name: string;
+            /** Published At */
+            published_at: string;
+            /** Html Url */
+            html_url: string;
+            /** Body */
+            body: string;
+            /** Download Url */
+            download_url?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -2204,6 +2264,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+        };
+    };
+    check_for_update_api_update_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateCheckOut"];
+                };
+            };
+        };
+    };
+    validate_token_api_auth_validate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenValidateOut"];
                 };
             };
         };

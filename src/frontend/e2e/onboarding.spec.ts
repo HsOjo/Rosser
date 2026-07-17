@@ -23,6 +23,9 @@ test.describe("Onboarding", () => {
     await page.route("**/api/health", async (route) => {
       await route.fulfill({ json: { status: "ok", version: "0.2.0" } });
     });
+    await page.route("**/api/auth/validate", async (route) => {
+      await route.fulfill({ json: { valid: true } });
+    });
 
     await page.getByRole("button", { name: /下一步|Next/ }).click();
     await page.getByPlaceholder(/服务器地址|Server URL/).fill("http://localhost:8000");

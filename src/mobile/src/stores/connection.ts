@@ -35,12 +35,22 @@ export const useConnectionStore = defineStore("connection", () => {
     setAuthToken(t);
 
     try {
-      const { error } = await api.GET("/api/health");
-      if (error) throw error;
+      const { response } = await api.GET("/api/auth/validate", { parseAs: "text" } as any);
+      const status = (response as Response | undefined)?.status;
+      if (status !== 200) {
+        setBaseURL("");
+        setAuthToken("");
+        if (status === 401) {
+          throw new Error("访问令牌无效");
+        }
+        throw new Error(
+          status ? `服务器返回错误: ${status}` : `无法连接到服务器: ${url}`
+        );
+      }
     } catch (e: any) {
       setBaseURL("");
       setAuthToken("");
-      throw new Error(`无法连接到服务器: ${url}`);
+      throw new Error(e.message || `无法连接到服务器: ${url}`);
     }
 
     baseURL.value = normalized;

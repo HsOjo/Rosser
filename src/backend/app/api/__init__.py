@@ -10,6 +10,8 @@ from app.core.config import settings
 from app.core.database import async_session
 from app.core.http import load_proxy_from_db, validate_proxy_url
 from app.core.security import get_current_token
+from app.core.updater import check_update
+from app.core.version import APP_VERSION
 from app.models import Article, ArticleState, Category, Notification, Setting, Site, Subscription, Tag, Task
 from app.schemas import (
     ArticleIds,
@@ -36,6 +38,8 @@ from app.schemas import (
     TagOut,
     TagUpdate,
     TaskOut,
+    TokenValidateOut,
+    UpdateCheckOut,
 )
 from app.services.fetch import FetchService
 from app.services.opml import OPMLService
@@ -765,4 +769,32 @@ async def export_opml(token: str = Depends(get_current_token)):
 
 @router.get("/health", response_model=HealthOut)
 async def health():
-    return HealthOut(status="ok", version="0.2.0")
+    return HealthOut(status="ok", version=APP_VERSION)
+
+
+# --- Update ---
+
+@router.get("/update", response_model=UpdateCheckOut)
+async def check_for_update(token: str = Depends(get_current_token)):
+    try:
+        release, have_new = await check_update()
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
+    return UpdateCheckOut(
+        current=APP_VERSION,
+        latest=release.tag_name,
+        have_new=have_new,
+        name=release.name,
+        tag_name=release.tag_name,
+        published_at=release.published_at,
+        html_url=release.html_url,
+        body=release.body,
+        download_url=release.download_url,
+    )
+
+
+# --- Auth ---
+
+@router.get("/auth/validate", response_model=TokenValidateOut)
+async def validate_token(token: str = Depends(get_current_token)):
+    return TokenValidateOut(valid=True)

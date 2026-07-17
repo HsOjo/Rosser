@@ -219,5 +219,21 @@ class HealthOut(BaseSchema):
     version: str
 
 
+class UpdateCheckOut(BaseSchema):
+    current: str
+    latest: str
+    have_new: bool
+    name: str
+    tag_name: str
+    published_at: str
+    html_url: str
+    body: str
+    download_url: str | None = None
+
+
+class TokenValidateOut(BaseSchema):
+    valid: bool
+
+
 class ArticleTagRequest(BaseSchema):
     tag_ids: list[str]

@@ -1837,6 +1837,52 @@
           }
         }
       }
+    },
+    "/api/update": {
+      "get": {
+        "summary": "Check For Update",
+        "operationId": "check_for_update_api_update_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCheckOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/validate": {
+      "get": {
+        "summary": "Validate Token",
+        "operationId": "validate_token_api_auth_validate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenValidateOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2814,6 +2860,78 @@
           "progress"
         ],
         "title": "TaskOut"
+      },
+      "TokenValidateOut": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid"
+        ],
+        "title": "TokenValidateOut"
+      },
+      "UpdateCheckOut": {
+        "properties": {
+          "current": {
+            "type": "string",
+            "title": "Current"
+          },
+          "latest": {
+            "type": "string",
+            "title": "Latest"
+          },
+          "have_new": {
+            "type": "boolean",
+            "title": "Have New"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "tag_name": {
+            "type": "string",
+            "title": "Tag Name"
+          },
+          "published_at": {
+            "type": "string",
+            "title": "Published At"
+          },
+          "html_url": {
+            "type": "string",
+            "title": "Html Url"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current",
+          "latest",
+          "have_new",
+          "name",
+          "tag_name",
+          "published_at",
+          "html_url",
+          "body"
+        ],
+        "title": "UpdateCheckOut"
       },
       "ValidationError": {
         "properties": {

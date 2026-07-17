@@ -1,4 +1,5 @@
 import createClient from "openapi-fetch";
+import { sha256 } from "js-sha256";
 import type { paths, components } from "./types.js";
 
 export type { paths, components };
@@ -10,7 +11,7 @@ let _client = createClient<paths>({ baseUrl: undefined, headers: {} });
 function createClientInstance() {
   return createClient<paths>({
     baseUrl: _baseURL || undefined,
-    headers: _authToken ? { Authorization: `Bearer ${_authToken}` } : {},
+    headers: _authToken ? { Authorization: `Bearer ${sha256(_authToken)}` } : {},
   });
 }
 

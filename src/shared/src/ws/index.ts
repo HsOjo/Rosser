@@ -1,3 +1,5 @@
+import { sha256 } from "js-sha256";
+
 export class WSClient {
   private ws: WebSocket | null = null;
   private url = "";
@@ -16,7 +18,7 @@ export class WSClient {
   private _connect() {
     if (this.ws) return;
     try {
-      const fullUrl = `${this.url}?token=${encodeURIComponent(this.token)}`;
+      const fullUrl = `${this.url}?token=${encodeURIComponent(sha256(this.token))}`;
       this.ws = new WebSocket(fullUrl);
       this.ws.onopen = () => {
         this.emit("open", {});

@@ -4,9 +4,17 @@ export function normalizeBaseURL(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-export function getDefaultServerURL(): string {
+export function getDefaultServerURL(isDev = import.meta.env?.DEV): string {
   if (typeof window === "undefined") return "";
-  return window.location.origin;
+  const origin = window.location.origin;
+  // Browser dev/prod can use the current origin when served together with the backend.
+  // Tauri/Capacitor webviews use custom schemes (e.g. tauri://localhost) which cannot be
+  // used as an API base URL, so fall back to the dev backend URL in development.
+  if (origin.startsWith("http://") || origin.startsWith("https://")) {
+    return origin;
+  }
+  if (isDev) return "http://localhost:8000";
+  return "";
 }
 
 export async function signFileUrl(fileId: string, exp: number, secret: string): Promise<string> {

@@ -11,9 +11,12 @@ setup("authenticate", async ({ page }) => {
     localStorage.setItem("rosser_ui", JSON.stringify({ theme: "auto", locale: "zh-CN" }));
   });
 
-  // Mock health check and settings APIs
+  // Mock health check, token validation and settings APIs
   await page.route("**/api/health", async (route) => {
     await route.fulfill({ json: { status: "ok", version: "0.2.0" } });
+  });
+  await page.route("**/api/auth/validate", async (route) => {
+    await route.fulfill({ json: { valid: true } });
   });
   await page.route("**/api/settings", async (route) => {
     await route.fulfill({ json: { proxy: { enabled: false, url: null }, ui: { theme: "auto" } } });

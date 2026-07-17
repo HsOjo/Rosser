@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { sha256 } from "js-sha256";
 import { WSClient } from "./index.js";
 
 // Minimal WebSocket mock
@@ -41,11 +42,11 @@ describe("WSClient", () => {
     vi.useFakeTimers();
   });
 
-  it("connects with token in query string", () => {
+  it("connects with token hash in query string", () => {
     const ws = new WSClient();
     ws.connect("ws://localhost:8000/ws", "my-token");
     expect(MockWebSocket.instances.length).toBe(1);
-    expect(MockWebSocket.instances[0].url).toContain("token=my-token");
+    expect(MockWebSocket.instances[0].url).toContain(`token=${sha256("my-token")}`);
   });
 
   it("emits open event", () => {

@@ -70,7 +70,7 @@ describe("utils", () => {
   });
 
   describe("getDefaultServerURL", () => {
-    it("returns window.location.origin in browser", () => {
+    it("returns window.location.origin for HTTP origins", () => {
       const originalWindow = globalThis.window;
       try {
         Object.defineProperty(globalThis, "window", {
@@ -79,6 +79,42 @@ describe("utils", () => {
           writable: true,
         });
         expect(getDefaultServerURL()).toBe("http://localhost:5173");
+      } finally {
+        Object.defineProperty(globalThis, "window", {
+          value: originalWindow,
+          configurable: true,
+          writable: true,
+        });
+      }
+    });
+
+    it("falls back to dev backend URL for non-HTTP origins in dev mode", () => {
+      const originalWindow = globalThis.window;
+      try {
+        Object.defineProperty(globalThis, "window", {
+          value: { location: { origin: "tauri://localhost" } },
+          configurable: true,
+          writable: true,
+        });
+        expect(getDefaultServerURL(true)).toBe("http://localhost:8000");
+      } finally {
+        Object.defineProperty(globalThis, "window", {
+          value: originalWindow,
+          configurable: true,
+          writable: true,
+        });
+      }
+    });
+
+    it("returns empty string for non-HTTP origins in production mode", () => {
+      const originalWindow = globalThis.window;
+      try {
+        Object.defineProperty(globalThis, "window", {
+          value: { location: { origin: "tauri://localhost" } },
+          configurable: true,
+          writable: true,
+        });
+        expect(getDefaultServerURL(false)).toBe("");
       } finally {
         Object.defineProperty(globalThis, "window", {
           value: originalWindow,

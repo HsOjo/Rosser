@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.config import settings
+from app.core import config
 
 security = HTTPBearer(auto_error=False)
 
@@ -23,11 +23,23 @@ def verify_file_url(file_id: str, exp: int, sig: str, secret: str) -> bool:
     return hmac.compare_digest(expected, sig)
 
 
+def hash_token(token: str) -> str:
+    """Return the SHA-256 hex digest of the provided token."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def verify_token(token_hash: str, expected_token: str) -> bool:
+    """Compare an incoming token hash with the expected token hash in constant time."""
+    return hmac.compare_digest(token_hash, hash_token(expected_token))
+
+
 async def get_current_token(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> str:
-    # Allow token in query param for WebSocket
+    # The client is expected to send the SHA-256 hash of the token in the
+    # Authorization header (or query param for WebSocket) so the raw token is
+    # never transmitted over the wire.
     token: Optional[str] = None
     if credentials:
         token = credentials.credentials
@@ -40,7 +52,7 @@ async def get_current_token(
             detail="Missing authorization",
         )
 
-    if token != settings.rosser_token:
+    if not verify_token(token, config.settings.rosser_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
