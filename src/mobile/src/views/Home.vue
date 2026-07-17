@@ -93,6 +93,15 @@
 
           <button
             class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            data-testid="menu-item-refresh-page"
+            @click="onMenuRefreshPage"
+          >
+            <component :is="ReloadOutline" class="w-4 h-4" />
+            {{ t("refreshPage") }}
+          </button>
+
+          <button
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
             data-testid="menu-item-refresh"
             @click="onMenuRefresh"
           >
@@ -260,6 +269,7 @@ import {
   MenuOutline,
   SearchOutline,
   RefreshOutline,
+  ReloadOutline,
   NotificationsOutline,
   SettingsOutline,
   StarOutline,
@@ -621,6 +631,11 @@ function openMarkAllRead() {
 function onMenuRefresh() {
   showMenu.value = false;
   refreshAll();
+}
+
+function onMenuRefreshPage() {
+  showMenu.value = false;
+  window.location.reload();
 }
 
 function onMenuNotifications() {

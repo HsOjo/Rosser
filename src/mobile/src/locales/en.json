@@ -72,6 +72,7 @@
   "deleteConfirm": "Are you sure? This cannot be undone.",
   "fetchAllConfirm": "Fetch all subscriptions now? This may consume more traffic.",
   "fetchAll": "Fetch All",
+  "refreshPage": "Refresh Page",
   "orderBy": "Order",
   "outline": "Outline",
   "metaViewer": "Meta Inspector",

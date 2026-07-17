@@ -72,6 +72,7 @@
   "deleteConfirm": "确定要删除吗？此操作不可撤销。",
   "fetchAllConfirm": "立即抓取全部订阅吗？这可能会消耗较多流量。",
   "fetchAll": "抓取全部",
+  "refreshPage": "刷新页面",
   "orderBy": "排序",
   "outline": "文档大纲",
   "metaViewer": "元数据检查器",
