@@ -9,6 +9,10 @@ def _get_version_file() -> Path:
         meipass = getattr(sys, "_MEIPASS", None)
         if meipass:
             return Path(meipass) / "VERSION"
+    # Container layout: VERSION is copied to /app/VERSION
+    container_path = Path("/app/VERSION")
+    if container_path.exists():
+        return container_path
     # Development path: version.py is at src/backend/app/core/version.py
     return Path(__file__).resolve().parents[4] / "VERSION"
 

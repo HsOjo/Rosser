@@ -9,12 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml uv.lock ./
+COPY src/backend/pyproject.toml src/backend/uv.lock ./
 RUN touch README.md && \
     pip install uv && \
     uv sync --no-dev
 
-COPY app ./app
+COPY src/backend/app ./app
 COPY VERSION ./
 
 ENV ROSSER_HOST=0.0.0.0
