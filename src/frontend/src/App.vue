@@ -2,6 +2,7 @@
   <n-config-provider :theme="theme">
     <n-message-provider>
       <n-dialog-provider>
+        <UpdateHandler />
         <div v-if="loading" class="backend-loading">
           <n-spin size="large" />
           <p>{{ t("loadingBackend") }}</p>
@@ -16,9 +17,11 @@
 import { computed, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { darkTheme, lightTheme } from "naive-ui";
+import { useMessage } from "naive-ui";
 import { useConnectionStore } from "@/stores";
 import { getUISettings, saveUISettings, detectTauri, setupAppMenu, getEffectiveTheme } from "@/platform";
 import { invoke } from "@tauri-apps/api/core";
+import UpdateHandler from "@/components/UpdateHandler.vue";
 
 const { t } = useI18n();
 const conn = useConnectionStore();
@@ -62,7 +65,7 @@ mediaQuery.addEventListener("change", () => {
 
 onMounted(async () => {
   if (await detectTauri()) {
-    await setupAppMenu(t("reload"), t("preferences"), t("developerTools"));
+    await setupAppMenu(t("reload"), t("preferences"), t("developerTools"), t("checkUpdate"));
   }
 });
 </script>

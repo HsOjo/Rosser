@@ -1842,6 +1842,23 @@
       "get": {
         "summary": "Check For Update",
         "operationId": "check_for_update_api_update_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Force"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1852,13 +1869,18 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/auth/validate": {
@@ -2874,6 +2896,24 @@
         ],
         "title": "TokenValidateOut"
       },
+      "UpdateAsset": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url"
+        ],
+        "title": "UpdateAsset"
+      },
       "UpdateCheckOut": {
         "properties": {
           "current": {
@@ -2918,6 +2958,14 @@
               }
             ],
             "title": "Download Url"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/UpdateAsset"
+            },
+            "type": "array",
+            "title": "Assets",
+            "default": []
           }
         },
         "type": "object",

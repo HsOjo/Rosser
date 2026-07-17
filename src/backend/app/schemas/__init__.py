@@ -219,6 +219,11 @@ class HealthOut(BaseSchema):
     version: str
 
 
+class UpdateAsset(BaseSchema):
+    name: str
+    url: str
+
+
 class UpdateCheckOut(BaseSchema):
     current: str
     latest: str
@@ -229,6 +234,7 @@ class UpdateCheckOut(BaseSchema):
     html_url: str
     body: str
     download_url: str | None = None
+    assets: list[UpdateAsset] = []
 
 
 class TokenValidateOut(BaseSchema):

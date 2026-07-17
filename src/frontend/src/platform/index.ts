@@ -156,7 +156,8 @@ let _menuSetupDone = false;
 export async function setupAppMenu(
   reloadText: string,
   preferencesText: string,
-  devToolsText: string
+  devToolsText: string,
+  checkUpdateText: string
 ) {
   if (_menuSetupDone || !(await detectTauri())) return;
   _menuSetupDone = true;
@@ -184,6 +185,20 @@ export async function setupAppMenu(
   } else {
     const editMenu = await findOrCreateEditSubmenu(menu, Submenu);
     await editMenu.append(prefsItem);
+  }
+
+  const checkUpdateItem = await MenuItem.new({
+    id: "check-update",
+    text: checkUpdateText,
+    action: () => {
+      emit("menu:check-update");
+    },
+  });
+  if (appMenu) {
+    await appMenu.insert(checkUpdateItem, 3);
+  } else {
+    const editMenu = await findOrCreateEditSubmenu(menu, Submenu);
+    await editMenu.append(checkUpdateItem);
   }
 
   const viewMenu = await findOrCreateViewSubmenu(menu, Submenu);

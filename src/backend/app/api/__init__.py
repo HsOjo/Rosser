@@ -775,9 +775,9 @@ async def health():
 # --- Update ---
 
 @router.get("/update", response_model=UpdateCheckOut)
-async def check_for_update(token: str = Depends(get_current_token)):
+async def check_for_update(force: bool = False, token: str = Depends(get_current_token)):
     try:
-        release, have_new = await check_update()
+        release, have_new = await check_update(force=force)
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
     return UpdateCheckOut(
@@ -790,6 +790,7 @@ async def check_for_update(token: str = Depends(get_current_token)):
         html_url=release.html_url,
         body=release.body,
         download_url=release.download_url,
+        assets=release.assets,
     )
 
 

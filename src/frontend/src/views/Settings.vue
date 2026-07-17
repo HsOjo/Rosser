@@ -34,6 +34,15 @@
               <n-button @click="logout">{{ t('disconnect') }}</n-button>
             </n-space>
           </n-card>
+
+          <n-card :title="t('about')" size="small">
+            <n-space vertical>
+              <n-descriptions :column="1" label-placement="top">
+                <n-descriptions-item :label="t('currentVersion')">{{ currentVersion }}</n-descriptions-item>
+              </n-descriptions>
+              <n-button :loading="checkingUpdate" @click="handleCheckUpdate">{{ t('checkUpdate') }}</n-button>
+            </n-space>
+          </n-card>
         </n-space>
       </n-tab-pane>
 
@@ -129,7 +138,8 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
 import { useConnectionStore, useSettingsStore, useTagStore } from "@/stores";
-import { getUISettings, saveUISettings, isTauri } from "@/platform";
+import { getUISettings, saveUISettings, isTauri, openExternal } from "@/platform";
+import { checkForUpdate } from "@/utils/updater";
 import { api, maskToken } from "@rosser/shared";
 
 const router = useRouter();
@@ -157,6 +167,8 @@ const savingTag = ref(false);
 const editingTag = ref<any>(null);
 const editTagTitle = ref("");
 const editTagColor = ref("");
+const checkingUpdate = ref(false);
+const currentVersion = ref("0.2.0");
 
 function randomColor() {
   return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
@@ -281,6 +293,23 @@ async function saveEditTag() {
 async function removeTag(id: string) {
   await tagStore.remove(id);
   message.success(t('saved'));
+}
+
+async function handleCheckUpdate() {
+  checkingUpdate.value = true;
+  try {
+    const result = await checkForUpdate();
+    if (result.haveNew) {
+      message.success(t('updateFound', { version: result.latest }));
+      await openExternal(result.htmlUrl);
+    } else {
+      message.success(t('noUpdate'));
+    }
+  } catch (e: any) {
+    message.error(t('networkError'));
+  } finally {
+    checkingUpdate.value = false;
+  }
 }
 
 function logout() {

@@ -86,5 +86,15 @@
   "serverInfo": "Server Info",
   "proxyEnabled": "Enable Proxy",
   "animations": "Animations",
-  "disableAnimations": "Disable animations"
+  "disableAnimations": "Disable animations",
+  "about": "About",
+  "currentVersion": "Current Version",
+  "checkUpdate": "Check for Updates",
+  "checkingUpdate": "Checking for updates...",
+  "updateFound": "Update found: {version}",
+  "noUpdate": "Already up to date",
+  "noUpdateDetail": "You are already on the latest version.",
+  "networkError": "Network error",
+  "releaseTime": "Release Time",
+  "download": "Download"
 }

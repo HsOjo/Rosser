@@ -955,6 +955,13 @@ export interface components {
             /** Valid */
             valid: boolean;
         };
+        /** UpdateAsset */
+        UpdateAsset: {
+            /** Name */
+            name: string;
+            /** Url */
+            url: string;
+        };
         /** UpdateCheckOut */
         UpdateCheckOut: {
             /** Current */
@@ -975,6 +982,11 @@ export interface components {
             body: string;
             /** Download Url */
             download_url?: string | null;
+            /**
+             * Assets
+             * @default []
+             */
+            assets: components["schemas"]["UpdateAsset"][];
         };
         /** ValidationError */
         ValidationError: {
@@ -2270,7 +2282,9 @@ export interface operations {
     };
     check_for_update_api_update_get: {
         parameters: {
-            query?: never;
+            query?: {
+                force?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2284,6 +2298,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UpdateCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
