@@ -94,7 +94,7 @@ env.bak/
 venv.bak/
 
 # Alembic
-alembic.ini
+/alembic.ini
 
 # Tauri
 src/frontend/src-tauri/target/
