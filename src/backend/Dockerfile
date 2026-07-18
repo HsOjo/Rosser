@@ -15,11 +15,16 @@ RUN touch README.md && \
     uv sync --no-dev
 
 COPY src/backend/app ./app
+COPY src/backend/alembic ./alembic
+COPY src/backend/alembic.ini ./
+COPY src/backend/scripts/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY VERSION ./
+
+RUN chmod +x ./docker-entrypoint.sh
 
 ENV ROSSER_HOST=0.0.0.0
 ENV ROSSER_PORT=8000
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./docker-entrypoint.sh"]
