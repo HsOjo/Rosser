@@ -6,12 +6,13 @@ cd /app
 # Initialize or migrate the database before starting the server.
 # This handles three states:
 #   1. Fresh database: create tables and stamp at the current Alembic head.
-#   2. Existing database without Alembic tracking: determine whether it matches
-#      the current head or the previous revision, then stamp appropriately and
-#      upgrade if needed.
+#   2. Existing database without Alembic tracking: compare the actual schema
+#      with the current model metadata. If it matches, stamp at head. If it is
+#      behind, stamp at the head's down_revision and upgrade to apply the
+#      missing changes.
 #   3. Tracked database: run pending Alembic migrations.
 uv run python - <<'PY'
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, inspect
 from alembic.config import Config
 from alembic import command
 from alembic.script import ScriptDirectory
@@ -21,6 +22,22 @@ from app.models import Base
 # Use a synchronous URL because this script runs before the async app starts.
 db_url = settings.db_url.replace("+aiosqlite", "")
 engine = create_engine(db_url)
+
+
+def schema_matches_head(inspector, actual_tables, metadata):
+    """Return True if the database already has all tables and columns expected by the current model."""
+    for table_name in metadata.tables:
+        if table_name not in actual_tables:
+            print(f"Table missing: {table_name}")
+            return False
+        actual_columns = {c["name"] for c in inspector.get_columns(table_name)}
+        expected_columns = {c.name for c in metadata.tables[table_name].columns}
+        missing = expected_columns - actual_columns
+        if missing:
+            print(f"Table {table_name} missing columns: {missing}")
+            return False
+    return True
+
 
 try:
     inspector = inspect(engine)
@@ -36,19 +53,14 @@ try:
         command.stamp(config, "head")
         print("Database initialized with current schema and stamped at head.")
     elif not alembic_exists:
-        # Existing database created before Alembic was introduced.  We need to
-        # determine whether its schema already matches the current head or is
-        # one revision behind, so we can stamp and upgrade safely.
-        columns = {c["name"] for c in inspector.get_columns("article_state")}
-        read_time_exists = "read_time" in columns
-
-        if read_time_exists:
-            # Schema already matches the current head; just start tracking it.
+        # Existing database created before Alembic was introduced.  Compare its
+        # schema with the current model to decide whether it is already at head.
+        if schema_matches_head(inspector, tables, Base.metadata):
             command.stamp(config, "head")
             print("Existing database schema matches head; stamped at head.")
         else:
-            # Schema is at the revision before head.  Stamp at the head's
-            # down_revision and run the upgrade to apply the missing change.
+            # Schema is behind head.  Stamp at the head's down_revision and run
+            # the upgrade so that Alembic applies the missing changes.
             script = ScriptDirectory.from_config(config)
             head_rev = script.get_revision("head")
             down_revision = head_rev.down_revision
