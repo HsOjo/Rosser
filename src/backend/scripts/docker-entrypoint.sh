@@ -4,12 +4,17 @@ set -e
 cd /app
 
 # Initialize or migrate the database before starting the server.
-# This handles both fresh databases (created by Base.metadata.create_all and
-# stamped at the current Alembic head) and existing tracked databases.
+# This handles three states:
+#   1. Fresh database: create tables and stamp at the current Alembic head.
+#   2. Existing database without Alembic tracking: determine whether it matches
+#      the current head or the previous revision, then stamp appropriately and
+#      upgrade if needed.
+#   3. Tracked database: run pending Alembic migrations.
 uv run python - <<'PY'
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from alembic.config import Config
 from alembic import command
+from alembic.script import ScriptDirectory
 from app.core.config import settings
 from app.models import Base
 
@@ -31,10 +36,34 @@ try:
         command.stamp(config, "head")
         print("Database initialized with current schema and stamped at head.")
     elif not alembic_exists:
-        # Existing database created by an older app version that did not use
-        # Alembic. Stamp it at the current head so future migrations run cleanly.
-        command.stamp(config, "head")
-        print("Existing database stamped at head.")
+        # Existing database created before Alembic was introduced.  We need to
+        # determine whether its schema already matches the current head or is
+        # one revision behind, so we can stamp and upgrade safely.
+        columns = {c["name"] for c in inspector.get_columns("article_state")}
+        read_time_exists = "read_time" in columns
+
+        if read_time_exists:
+            # Schema already matches the current head; just start tracking it.
+            command.stamp(config, "head")
+            print("Existing database schema matches head; stamped at head.")
+        else:
+            # Schema is at the revision before head.  Stamp at the head's
+            # down_revision and run the upgrade to apply the missing change.
+            script = ScriptDirectory.from_config(config)
+            head_rev = script.get_revision("head")
+            down_revision = head_rev.down_revision
+
+            if down_revision:
+                # For merge points down_revision can be a tuple; use the first parent.
+                target = down_revision[0] if isinstance(down_revision, tuple) else down_revision
+                command.stamp(config, target)
+                print(f"Existing database stamped at {target} and will be upgraded to head.")
+            else:
+                # Head is the first revision; it creates the schema itself.
+                pass
+
+            command.upgrade(config, "head")
+            print("Database migrated to head.")
     else:
         # Tracked database: run pending migrations.
         command.upgrade(config, "head")
