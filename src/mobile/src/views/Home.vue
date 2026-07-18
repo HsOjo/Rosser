@@ -282,6 +282,7 @@ import {
   FolderOutline,
   GlobeOutline,
   NewspaperOutline,
+  TimeOutline,
 } from "@vicons/ionicons5";
 import {
   useArticleStore,
@@ -389,6 +390,8 @@ const streamTitle = computed(() => {
   switch (filter.value.type) {
     case "unread":
       return t("unread");
+    case "recent":
+      return t("recent");
     case "starred":
       return t("starred");
     case "hidden":
@@ -418,6 +421,8 @@ const streamIcon = computed(() => {
   switch (filter.value.type) {
     case "unread":
       return MailUnreadOutline;
+    case "recent":
+      return TimeOutline;
     case "starred":
       return StarOutline;
     case "hidden":
@@ -494,6 +499,11 @@ const queryParams = computed<ArticleListQuery>(() => {
     case "unread":
       params.is_read = false;
       params.is_hide = false;
+      break;
+    case "recent":
+      params.is_read = true;
+      params.is_hide = false;
+      params.order = "read_time desc";
       break;
     case "starred":
       params.is_star = true;

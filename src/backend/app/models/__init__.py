@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, JSON, ForeignKey, Integer, String, Table, Text, UniqueConstraint
+from sqlalchemy import Column, DateTime, JSON, ForeignKey, Integer, String, Table, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -93,6 +94,7 @@ class ArticleState(Base):
     is_read: Mapped[bool] = mapped_column(default=False)
     is_hide: Mapped[bool] = mapped_column(default=False)
     is_star: Mapped[bool] = mapped_column(default=False)
+    read_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     article: Mapped["Article"] = relationship(back_populates="state")
 

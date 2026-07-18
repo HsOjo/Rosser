@@ -68,9 +68,11 @@ const { t } = useI18n();
 const pageSizes = [20, 50, 100];
 
 const sortOptions = computed(() => [
-  { value: "publish_time_desc" as SortOrder, label: t("sortPublishTimeDesc") },
-  { value: "publish_time_asc" as SortOrder, label: t("sortPublishTimeAsc") },
-  { value: "title_asc" as SortOrder, label: t("sortTitleAsc") },
-  { value: "title_desc" as SortOrder, label: t("sortTitleDesc") },
+  { value: "publish_time desc" as SortOrder, label: t("sortPublishTimeDesc") },
+  { value: "publish_time asc" as SortOrder, label: t("sortPublishTimeAsc") },
+  { value: "title asc" as SortOrder, label: t("sortTitleAsc") },
+  { value: "title desc" as SortOrder, label: t("sortTitleDesc") },
+  { value: "read_time desc" as SortOrder, label: t("sortReadTimeDesc") },
+  { value: "read_time asc" as SortOrder, label: t("sortReadTimeAsc") },
 ]);
 </script>

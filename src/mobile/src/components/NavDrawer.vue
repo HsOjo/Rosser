@@ -271,6 +271,7 @@ import {
   ChevronForwardOutline,
   CloseOutline,
   LayersOutline,
+  TimeOutline,
 } from "@vicons/ionicons5";
 import { buildFileUrl } from "@rosser/shared";
 import {
@@ -284,6 +285,7 @@ import {
 export type FilterType =
   | "all"
   | "unread"
+  | "recent"
   | "starred"
   | "hidden"
   | "subscription"
@@ -357,6 +359,13 @@ const fixedItems = computed(() => [
     label: t("unread"),
     icon: MailUnreadOutline,
     iconClass: "text-blue-500 dark:text-blue-400",
+  },
+  {
+    key: "recent",
+    filter: "recent" as FilterType,
+    label: t("recent"),
+    icon: TimeOutline,
+    iconClass: "text-slate-500 dark:text-zinc-400",
   },
   {
     key: "starred",

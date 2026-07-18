@@ -260,6 +260,7 @@ import {
   FolderOutline,
   FolderOpenOutline,
   NewspaperOutline,
+  TimeOutline,
 } from "@vicons/ionicons5";
 import { h } from "vue";
 import { useI18n } from "vue-i18n";
@@ -301,6 +302,7 @@ const selectedSite = ref<string | undefined>(undefined);
 const selectedTag = ref<string | undefined>(undefined);
 const selectedTagTitle = ref<string | undefined>(undefined);
 const selectedIsRead = ref<boolean | undefined>(undefined);
+const selectedIsRecent = ref(false);
 const selectedIsStar = ref<boolean | undefined>(undefined);
 const selectedIsHide = ref<boolean | undefined>(undefined);
 const searchInput = ref("");
@@ -315,6 +317,8 @@ const orderOptions = [
   { label: t('sortPublishTimeAsc'), value: "publish_time asc" },
   { label: t('sortTitleAsc'), value: "title asc" },
   { label: t('sortTitleDesc'), value: "title desc" },
+  { label: t('sortReadTimeDesc'), value: "read_time desc" },
+  { label: t('sortReadTimeAsc'), value: "read_time asc" },
 ];
 
 const isDark = computed(() => getEffectiveTheme(ui.value.theme) === "dark");
@@ -344,6 +348,7 @@ const selectedTitle = computed(() => {
     return site?.title || t('articles');
   }
   if (selectedTagTitle.value) return selectedTagTitle.value;
+  if (selectedIsRecent.value) return t('recent');
   if (selectedIsRead.value === false) return `${t('unread')} ${t('articles')}`;
   if (selectedIsStar.value === true) return `${t('starred')} ${t('articles')}`;
   if (selectedIsHide.value === true) return `${t('hidden')} ${t('articles')}`;
@@ -422,7 +427,7 @@ function applyQuery() {
   } else if (typeof q.tag === "string") {
     const tag = tagStore.tags.find((t: any) => t.title === q.tag);
     if (tag) key = `tag-${tag.id}`;
-  } else if (typeof q.filter === "string" && ["unread", "starred", "hidden"].includes(q.filter)) {
+  } else if (typeof q.filter === "string" && ["unread", "recent", "starred", "hidden"].includes(q.filter)) {
     key = q.filter;
   }
 
@@ -444,6 +449,7 @@ function syncQuery() {
   else if (selectedCategory.value) query.cat = selectedCategory.value;
   else if (selectedSite.value) query.site = selectedSite.value;
   else if (selectedTagTitle.value) query.tag = selectedTagTitle.value;
+  else if (selectedIsRecent.value) query.filter = "recent";
   else if (selectedIsRead.value === false) query.filter = "unread";
   else if (selectedIsStar.value === true) query.filter = "starred";
   else if (selectedIsHide.value === true) query.filter = "hidden";
@@ -469,6 +475,7 @@ watch(
     selectedSite.value,
     selectedTagTitle.value,
     selectedIsRead.value,
+    selectedIsRecent.value,
     selectedIsStar.value,
     selectedIsHide.value,
     searchInput.value,
@@ -570,6 +577,7 @@ const menuOptions = computed(() => {
   const items: any[] = [
     { key: "all", label: t('all'), icon: renderIcon(AppsOutline) },
     { key: "unread", label: t('unread'), icon: renderIcon(MailUnreadOutline) },
+    { key: "recent", label: t('recent'), icon: renderIcon(TimeOutline) },
     { key: "starred", label: t('starred'), icon: renderIcon(StarOutline) },
     { key: "hidden", label: t('hidden'), icon: renderIcon(EyeOffOutline) },
   ];
@@ -842,6 +850,7 @@ function onMenuSelect(key: string) {
   selectedTag.value = undefined;
   selectedTagTitle.value = undefined;
   selectedIsRead.value = undefined;
+  selectedIsRecent.value = false;
   selectedIsStar.value = undefined;
   selectedIsHide.value = undefined;
   applyMenuKey(key);
@@ -850,6 +859,10 @@ function onMenuSelect(key: string) {
 function applyMenuKey(key: string) {
   if (key === "unread") {
     selectedIsRead.value = false;
+  } else if (key === "recent") {
+    selectedIsRecent.value = true;
+    selectedIsRead.value = true;
+    order.value = "read_time desc";
   } else if (key === "starred") {
     selectedIsStar.value = true;
   } else if (key === "hidden") {

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -291,6 +292,17 @@ async def list_articles(
         if is_hide is None:
             need_state_join = True
 
+        # Ordering by article_state columns requires the state join as well.
+        # Normalize "col_dir" or "col_asc" to "col dir" while preserving
+        # underscores inside the column name (e.g. read_time).
+        state_order_cols = {"read_time", "update_time", "create_time"}
+        order_norm = order
+        if " " not in order and "_" in order:
+            order_norm = " ".join(order.rsplit("_", 1))
+        order_col = order_norm.split()[0] if order_norm else ""
+        if order_col in state_order_cols:
+            need_state_join = True
+
         if need_state_join:
             stmt = stmt.join(ArticleState)
             count_stmt = count_stmt.join(ArticleState)
@@ -307,10 +319,13 @@ async def list_articles(
                 stmt = stmt.where(ArticleState.is_hide == False)
                 count_stmt = count_stmt.where(ArticleState.is_hide == False)
 
-        parts = order.split()
+        parts = order_norm.split()
         if len(parts) == 2:
             col_name, direction = parts
-            col = getattr(Article, col_name, Article.publish_time)
+            if col_name in state_order_cols:
+                col = getattr(ArticleState, col_name, ArticleState.update_time)
+            else:
+                col = getattr(Article, col_name, Article.publish_time)
             stmt = stmt.order_by(col.desc() if direction == "desc" else col.asc())
         else:
             stmt = stmt.order_by(Article.publish_time.desc())
@@ -383,6 +398,7 @@ async def mark_read(data: ArticleIds, token: str = Depends(get_current_token)):
             state = result.scalar_one_or_none()
             if state:
                 state.is_read = True
+                state.read_time = datetime.now(timezone.utc)
         await session.commit()
     return None
 
@@ -395,6 +411,7 @@ async def mark_unread(data: ArticleIds, token: str = Depends(get_current_token))
             state = result.scalar_one_or_none()
             if state:
                 state.is_read = False
+                state.read_time = None
         await session.commit()
     return None
 
@@ -449,7 +466,7 @@ async def mark_unhide(data: ArticleIds, token: str = Depends(get_current_token))
 
 @router.post("/articles/read-before-days", status_code=status.HTTP_204_NO_CONTENT)
 async def mark_read_before_days(days: int, token: str = Depends(get_current_token)):
-    from datetime import datetime, timedelta, timezone
+    from datetime import timedelta
     async with async_session() as session:
         cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = await session.execute(
@@ -460,6 +477,7 @@ async def mark_read_before_days(days: int, token: str = Depends(get_current_toke
         )
         for state in result.scalars().all():
             state.is_read = True
+            state.read_time = datetime.now(timezone.utc)
         await session.commit()
     return None
 

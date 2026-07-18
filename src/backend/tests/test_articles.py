@@ -70,6 +70,39 @@ class TestArticles:
         assert data["total"] == 1
         assert data["items"][0]["is_read"] is True
 
+    async def test_recent_sort_uses_state_read_time(self, client, auth_headers):
+        from datetime import datetime, timezone
+        from sqlalchemy import select
+        from app.core.database import async_session
+        from app.models import ArticleState
+
+        sub_id = await self._create_subscription(client, auth_headers)
+        art1 = await self._create_article(client, auth_headers, sub_id, "Article 1")
+        art2 = await self._create_article(client, auth_headers, sub_id, "Article 2")
+
+        async with async_session() as session:
+            states = (await session.execute(
+                select(ArticleState).where(ArticleState.article_id.in_([art1, art2]))
+            )).scalars().all()
+            for st in states:
+                st.is_read = True
+                if st.article_id == art1:
+                    st.read_time = datetime(2024, 1, 1, tzinfo=timezone.utc)
+                else:
+                    st.read_time = datetime(2024, 1, 2, tzinfo=timezone.utc)
+            await session.commit()
+
+        resp = await client.get(
+            "/api/articles",
+            headers=auth_headers,
+            params={"is_read": True, "order": "read_time desc"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 2
+        assert data["items"][0]["id"] == art2
+        assert data["items"][1]["id"] == art1
+
     async def test_mark_star(self, client, auth_headers):
         sub_id = await self._create_subscription(client, auth_headers)
         art_id = await self._create_article(client, auth_headers, sub_id)
