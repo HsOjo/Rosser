@@ -120,10 +120,11 @@
                 {{ $t('lastFetch') }}: {{ selectedFetchTime ? relativeTime(selectedFetchTime) : $t('neverFetched') }}
               </div>
             </div>
-            <n-space>
-              <n-select v-model:value="order" :options="orderOptions" style="width: 140px" size="small" />
-              <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
-            </n-space>
+          <n-space>
+            <n-select v-model:value="sortField" :options="sortFieldOptions" style="width: 120px" size="small" :disabled="selectedIsRecent" />
+            <n-select v-model:value="sortDirection" :options="sortDirectionOptions" style="width: 90px" size="small" :disabled="selectedIsRecent" />
+            <n-button size="small" @click="markAllRead">{{ $t('markAllRead') }}</n-button>
+          </n-space>
           </div>
           <div style="flex: 1; overflow: auto; min-height: 0;">
             <article-list
@@ -308,17 +309,24 @@ const selectedIsHide = ref<boolean | undefined>(undefined);
 const searchInput = ref("");
 const debouncedSearch = ref("");
 const searchVisible = ref(false);
-const order = ref("publish_time desc");
+const sortField = ref<"publish_time" | "title" | "read_time">("publish_time");
+const sortDirection = ref<"asc" | "desc">("desc");
+const order = computed(() => {
+  if (selectedIsRecent.value) return "read_time desc";
+  return `${sortField.value} ${sortDirection.value}`;
+});
 const openedArticleId = ref<string | undefined>(undefined);
 const ready = ref(false);
 
-const orderOptions = [
-  { label: t('sortPublishTimeDesc'), value: "publish_time desc" },
-  { label: t('sortPublishTimeAsc'), value: "publish_time asc" },
-  { label: t('sortTitleAsc'), value: "title asc" },
-  { label: t('sortTitleDesc'), value: "title desc" },
-  { label: t('sortReadTimeDesc'), value: "read_time desc" },
-  { label: t('sortReadTimeAsc'), value: "read_time asc" },
+const sortFieldOptions = [
+  { label: t('sortFieldPublishTime'), value: "publish_time" },
+  { label: t('sortFieldTitle'), value: "title" },
+  { label: t('sortFieldReadTime'), value: "read_time" },
+];
+
+const sortDirectionOptions = [
+  { label: t('sortDirectionAsc'), value: "asc" },
+  { label: t('sortDirectionDesc'), value: "desc" },
 ];
 
 const isDark = computed(() => getEffectiveTheme(ui.value.theme) === "dark");
@@ -438,7 +446,12 @@ function applyQuery() {
   searchInput.value = search;
   debouncedSearch.value = search;
 
-  order.value = typeof q.order === "string" ? q.order : "publish_time desc";
+  sortField.value = typeof q.field === "string" && ["publish_time", "title", "read_time"].includes(q.field)
+    ? (q.field as typeof sortField.value)
+    : "publish_time";
+  sortDirection.value = typeof q.dir === "string" && ["asc", "desc"].includes(q.dir)
+    ? (q.dir as typeof sortDirection.value)
+    : "desc";
   openedArticleId.value = typeof q.article === "string" ? q.article : undefined;
 }
 
@@ -455,7 +468,8 @@ function syncQuery() {
   else if (selectedIsHide.value === true) query.filter = "hidden";
 
   if (searchInput.value.trim()) query.search = searchInput.value.trim();
-  if (order.value !== "publish_time desc") query.order = order.value;
+  query.field = sortField.value;
+  query.dir = sortDirection.value;
   if (openedArticleId.value) query.article = openedArticleId.value;
 
   const current = route.query;
@@ -862,7 +876,8 @@ function applyMenuKey(key: string) {
   } else if (key === "recent") {
     selectedIsRecent.value = true;
     selectedIsRead.value = true;
-    order.value = "read_time desc";
+    sortField.value = "read_time";
+    sortDirection.value = "desc";
   } else if (key === "starred") {
     selectedIsStar.value = true;
   } else if (key === "hidden") {

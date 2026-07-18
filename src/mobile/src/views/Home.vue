@@ -154,7 +154,12 @@
           class="w-full text-xs py-2 px-3 rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 focus:border-brand outline-none"
         />
 
-        <FilterDrawer v-model="order" v-model:page-size="pageSize" />
+        <FilterDrawer
+          v-model:field="sortField"
+          v-model:direction="sortDirection"
+          v-model:page-size="pageSize"
+          :disabled="filter.type === 'recent'"
+        />
 
         <div class="flex justify-end pt-1">
           <button
@@ -296,7 +301,7 @@ import {
 import type { ArticleListQuery } from "@/stores/article";
 import ArticleCell from "@/components/ArticleCell.vue";
 import SwipeCell from "@/components/SwipeCell.vue";
-import FilterDrawer from "@/components/FilterDrawer.vue";
+import FilterDrawer, { type SortField, type SortDirection } from "@/components/FilterDrawer.vue";
 import NavDrawer, { type FilterType } from "@/components/NavDrawer.vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { api, buildFileUrl } from "@rosser/shared";
@@ -379,9 +384,9 @@ function onDrawerTouchEnd(e: TouchEvent) {
 }
 
 const loadMoreObserver = ref<IntersectionObserver | null>(null);
-type SortOrder = NonNullable<ArticleListQuery["order"]>;
-
-const order = ref<SortOrder>("publish_time desc");
+const sortField = ref<SortField>("publish_time");
+const sortDirection = ref<SortDirection>("desc");
+const order = computed(() => `${sortField.value} ${sortDirection.value}`);
 const pageSize = ref(20);
 
 const filter = ref<{ type: FilterType; id: string | null }>({ type: "unread", id: null });
@@ -683,8 +688,11 @@ function applyQuery() {
   if (q.id) {
     filter.value.id = q.id as string;
   }
-  if (q.order) {
-    order.value = (q.order as SortOrder) || "publish_time desc";
+  if (q.field) {
+    sortField.value = (q.field as SortField) || "publish_time";
+  }
+  if (q.dir) {
+    sortDirection.value = (q.dir as SortDirection) || "desc";
   }
   if (q.search) {
     searchQuery.value = q.search as string;
@@ -699,7 +707,8 @@ function syncQuery() {
   const q: Record<string, string> = {};
   if (filter.value.type !== "unread") q.filter = filter.value.type;
   if (filter.value.id) q.id = filter.value.id;
-  if (order.value) q.order = order.value;
+  q.field = sortField.value;
+  q.dir = sortDirection.value;
   if (searchQuery.value) q.search = searchQuery.value;
   if (pageSize.value !== 20) q.size = String(pageSize.value);
   router.replace({ query: Object.keys(q).length ? q : {} });
@@ -715,7 +724,7 @@ watch(searchQuery, () => {
   }, 300);
 });
 
-watch([() => filter.value.type, () => filter.value.id, order, pageSize], () => {
+watch([() => filter.value.type, () => filter.value.id, sortField, sortDirection, pageSize], () => {
   syncQuery();
   scrollToTop("auto");
   loadArticles();
