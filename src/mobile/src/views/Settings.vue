@@ -110,10 +110,19 @@
           <div class="text-[10px] font-bold text-slate-400 uppercase">
             {{ t("about") }}
           </div>
+          <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+            {{ t("appDescription") }}
+          </p>
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">{{ t("currentVersion") }}</span>
             <span class="text-xs text-slate-500 dark:text-zinc-400 font-mono">{{ currentVersion }}</span>
           </div>
+          <button
+            class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-700/60 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold text-xs rounded-xl transition-colors"
+            @click="openGithub"
+          >
+            {{ t("visitGithub") }}
+          </button>
           <button
             class="w-full py-2 bg-brand hover:bg-brand-hover disabled:bg-slate-300 dark:disabled:bg-zinc-600 text-white font-bold text-xs rounded-xl transition-colors"
             :disabled="checkingUpdate"
@@ -417,6 +426,11 @@ const tagToDelete = ref<string | null>(null);
 const showDeleteTagConfirm = ref(false);
 const checkingUpdate = ref(false);
 const currentVersion = ref(__ROSSER_VERSION__);
+const GITHUB_URL = "https://github.com/HsOjo/Rosser";
+
+function openGithub() {
+  window.open(GITHUB_URL, "_blank");
+}
 const updateResult = ref({
   show: false,
   title: "",

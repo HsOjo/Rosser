@@ -94,6 +94,8 @@
   "connection": "Connection",
   "disconnect": "Disconnect",
   "about": "About",
+  "appDescription": "Rosser is an RSS reader rebuilt with modern technologies.",
+  "visitGithub": "Visit GitHub",
   "currentVersion": "Current Version",
   "checkUpdate": "Check for Updates",
   "checkingUpdate": "Checking for updates...",

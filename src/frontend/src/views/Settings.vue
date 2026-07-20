@@ -37,10 +37,14 @@
 
           <n-card :title="t('about')" size="small">
             <n-space vertical>
+              <n-text depth="3">{{ t('appDescription') }}</n-text>
               <n-descriptions :column="1" label-placement="top">
                 <n-descriptions-item :label="t('currentVersion')">{{ currentVersion }}</n-descriptions-item>
               </n-descriptions>
-              <n-button :loading="checkingUpdate" @click="handleCheckUpdate">{{ t('checkUpdate') }}</n-button>
+              <n-space>
+                <n-button :loading="checkingUpdate" @click="handleCheckUpdate">{{ t('checkUpdate') }}</n-button>
+                <n-button @click="openExternal(GITHUB_URL)">{{ t('visitGithub') }}</n-button>
+              </n-space>
             </n-space>
           </n-card>
         </n-space>
@@ -169,6 +173,7 @@ const editTagTitle = ref("");
 const editTagColor = ref("");
 const checkingUpdate = ref(false);
 const currentVersion = ref(__ROSSER_VERSION__);
+const GITHUB_URL = "https://github.com/HsOjo/Rosser";
 
 function randomColor() {
   return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;

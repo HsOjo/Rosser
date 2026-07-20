@@ -92,6 +92,8 @@
   "animations": "动画",
   "disableAnimations": "禁用动画",
   "about": "关于",
+  "appDescription": "Rosser 是一款使用现代技术重新构建的 RSS 阅读器。",
+  "visitGithub": "访问 GitHub",
   "currentVersion": "当前版本",
   "checkUpdate": "检查更新",
   "checkingUpdate": "正在检查更新...",
