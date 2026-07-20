@@ -6,6 +6,8 @@
           v-for="art in artStore.articles"
           :key="art.id"
           :article="art"
+          :show-source="showSource"
+          :is-hide="isHide"
           @click="openArticle(art)"
           @mark-read="markRead(art)"
           @mark-unread="markUnread(art)"
@@ -52,6 +54,7 @@ const props = defineProps<{
   order?: string;
   drawerTarget?: HTMLElement | null;
   openedArticleId?: string;
+  showSource?: boolean;
 }>();
 
 const emit = defineEmits<{

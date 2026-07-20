@@ -140,6 +140,7 @@
               :is-hide="selectedIsHide"
               :order="order"
               :opened-article-id="openedArticleId"
+              :show-source="!selectedSubscription && !selectedSite"
               @refresh="onArticleRefresh"
               @update:opened-article-id="openedArticleId = $event"
             />
