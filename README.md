@@ -1,6 +1,6 @@
 # Rosser
 
-Rosser is an RSS reader rebuilt with modern technologies.
+Rosser is a self-hosted, cross-platform RSS reader. It brings a desktop client, a mobile H5 interface, and a unified web entry under one lightweight backend, so you can follow your feeds on your own infrastructure.
 
 English | [中文说明](README_CN.md)
 
